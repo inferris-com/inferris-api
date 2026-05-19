@@ -1,0 +1,5 @@
+@baseUrl = http://localhost:3000
+
+### Get all players
+
+GET {{baseUrl}}/players
