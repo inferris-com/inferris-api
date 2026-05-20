@@ -1,77 +1,63 @@
 import type { Selectable } from "kysely";
-import type { PlayerBadges, PlayerProfiles, PlayerRanks, Players } from "../../db/types.js";
-import type { PlayerResponse, PlayerSummaryResponse } from "./player.response.types.js";
+import type { Servers, ServerAccessPolicies, Lockdowns } from "../../db/types.js";
+import type {AccessResponse, LockdownResponse, ServerResponse} from "./server.response.types.js";
 import { int8ToString, int8ToStringOrDefault } from "../../shared/db/int8.js";
 
-type PlayerBase = Pick<
-  Selectable<Players>,
+type ServerResponseRow = Pick<
+  Selectable<Servers>,
   | "id"
-  | "username"
-  | "flags"
-  | "orbs"
-  | "chat_channel"
-  | "last_server_id"
+  | "name"
+  | "type"
+  | "environment"
+  | "status"
+  | "port"
+  | "version"
+  | "last_started_at_ms"
+  | "last_heartbeat_at_ms"
   | "created_at_ms"
-  | "last_seen_at_ms"
+  | "last_updated_at_ms"
 >;
 
-type PlayerProfileBase = Pick<
-  Selectable<PlayerProfiles>,
-  "bio" | "pronouns" | "featured_badge_id" | "locale" | "preferences"
->;
-
-type PlayerRankAssignmentBase = Pick<Selectable<PlayerRanks>, "group_key" | "rank_key">;
-
-type PlayerBadgeAssignmentBase = Pick<Selectable<PlayerBadges>, "badge_id">;
-
-type PlayerSummaryRow = Pick<
-  Selectable<Players>,
-  "id" | "username" | "flags" | "orbs" | "chat_channel"
->;
-
-export function toPlayerSummaryResponse(row: PlayerSummaryRow): PlayerSummaryResponse {
+export function toServerResponse(servers: ServerResponseRow): ServerResponse{
   return {
-    id: row.id,
-    username: row.username,
-    flags: int8ToStringOrDefault(row.flags, "0"),
-    orbs: int8ToStringOrDefault(row.orbs, "0"),
-    chatChannel: row.chat_channel ?? "global",
-  };
+    id: servers.id,
+    name: servers.name,
+    type: servers.type,
+    environment: servers.environment,
+    status: servers.status,
+    port: servers.port,
+    version: servers.version,
+
+    lastStartedAtMs: int8ToString(servers.last_started_at_ms),
+    lastHeartbeatAtMs: int8ToString(servers.last_heartbeat_at_ms),
+
+    createdAtMs: int8ToStringOrDefault(servers.created_at_ms, "0"),
+    lastUpdatedAtMs: int8ToString(servers.last_updated_at_ms)
+  }
 }
 
-export function toPlayerResponse(input: {
-  player: PlayerBase;
-  profile: PlayerProfileBase | null;
-  rankAssignments: PlayerRankAssignmentBase[];
-  badgeAssignments: PlayerBadgeAssignmentBase[];
-}): PlayerResponse {
-  const { player, profile, rankAssignments, badgeAssignments } = input;
-
+export function toAccessResponse(access: Selectable<ServerAccessPolicies>): AccessResponse{
   return {
-    id: player.id,
-    username: player.username,
-    flags: int8ToStringOrDefault(player.flags, "0"),
-    orbs: int8ToStringOrDefault(player.orbs, "0"),
-    chatChannel: player.chat_channel ?? "global",
+    id: access.server_id,
+    mode: access.mode,
+    note: access.note,
+    requiredPermissionId: access.required_permission_id ? access.required_permission_id : null,
+    requiredRankKey: access.required_rank_key ? access.required_rank_key : null,
+    createdAtMs: access.created_at_ms,
+    updatedAtMs: access.updated_at_ms ? access.updated_at_ms : null,
+  }
+}
 
-    profile: profile
-      ? {
-          bio: profile.bio,
-          pronouns: profile.pronouns,
-          badges: badgeAssignments.map((assignment) => assignment.badge_id),
-          featuredBadgeId: profile.featured_badge_id,
-          locale: profile.locale ?? "en_US",
-          preferences: profile.preferences,
-        }
-      : null,
-
-    rankAssignments: rankAssignments.map((assignment) => ({
-      groupKey: assignment.group_key,
-      rankKey: assignment.rank_key,
-    })),
-
-    createdAtMs: int8ToStringOrDefault(player.created_at_ms, "0"),
-    lastSeenAtMs: int8ToString(player.last_seen_at_ms),
-    lastServerId: player.last_server_id,
-  };
+export function toLockdownResponse(lockdown: Selectable<Lockdowns>): LockdownResponse {
+  return {
+    id: lockdown.id,
+    scope: lockdown.scope,
+    serverId: lockdown.server_id ? lockdown.server_id : null,
+    requiredRankKey: lockdown.required_rank_key ? lockdown.required_rank_key : null,
+    reason: lockdown.reason,
+    issuedByActorId: lockdown.issued_by_actor_id,
+    isActive: lockdown.is_active,
+    startedAtMs: lockdown.starts_at_ms,
+    endsAtMs: lockdown.ends_at_ms ? lockdown.ends_at_ms : null
+  }
 }

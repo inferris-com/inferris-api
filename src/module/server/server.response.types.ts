@@ -1,3 +1,5 @@
+import {serverAccessTypeSchema} from "./server.schemas.js";
+
 export type ChatChannel = "global" | "staff" | "testing";
 
 export type PlayerSummaryResponse = {
@@ -8,28 +10,38 @@ export type PlayerSummaryResponse = {
   chatChannel: ChatChannel;
 };
 
-export type PlayerResponse = {
+export type ServerResponse = {
   id: string;
-  username: string;
-  flags: string;
-  orbs: string;
-  chatChannel: ChatChannel;
+  name: string;
+  type: string,
+  environment: string,
+  status: string,
+  port: number | null,
+  version: string,
+  lastStartedAtMs: string | null,
+  lastHeartbeatAtMs: string | null,
+  createdAtMs: string,
+  lastUpdatedAtMs: string | null
+};
 
-  profile: {
-    bio: string | null;
-    pronouns: string | null;
-    badges: number[];
-    featuredBadgeId: number | null;
-    locale: string;
-    preferences: unknown;
-  } | null;
+export type AccessResponse = {
+  id: string
+  mode: string,
+  requiredPermissionId: string | null,
+  requiredRankKey: string | null,
+  note: string | null,
+  createdAtMs: string,
+  updatedAtMs: string | null,
+};
 
-  rankAssignments: Array<{
-    groupKey: string;
-    rankKey: string;
-  }>;
-
-  createdAtMs: string;
-  lastSeenAtMs: string | null;
-  lastServerId: string | null;
+export type LockdownResponse = {
+  id: string,
+  scope: string,
+  serverId: string | null,
+  requiredRankKey: string | null,
+  reason: string,
+  issuedByActorId: string,
+  isActive: boolean,
+  startedAtMs: string,
+  endsAtMs: string | null
 };
