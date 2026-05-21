@@ -2,7 +2,7 @@ import z from "zod";
 import {BigIntStringSchema} from "../../shared/common.schemas.js";
 
 // Types
-export const serverTypeSchema = z.enum(["paper", "velocity", "other"]);
+export const serverTypeSchema = z.enum(["paper", "velocity", "unspecified"]);
 export const serverEnvTypeSchema = z.enum(["production", "beta", "alpha", "development"]);
 export const serverStatusTypeSchema = z.enum(["online", "offline"]);
 export const serverAccessTypeSchema = z.enum(["open", "min_rank", "permission"]);
@@ -23,7 +23,7 @@ export const createServerBodySchema = z
     environment: serverEnvTypeSchema,
     status: serverStatusTypeSchema.optional(),
 
-    accessMode: serverAccessTypeSchema,
+    accessMode: serverAccessTypeSchema.optional(),
 
     port: z.int().min(1).max(65535),
     version: z.string().optional(),

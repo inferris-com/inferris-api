@@ -232,6 +232,13 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE INDEX idx_players_chat_channel ON players (chat_channel);
   CREATE INDEX idx_players_last_server ON players (last_server_id) WHERE last_server_id IS NOT NULL;
 
+  CREATE TABLE player_identities
+  (
+    player_id     uuid PRIMARY KEY REFERENCES players (id) ON DELETE CASCADE,
+    mojang_uuid   uuid   NOT NULL UNIQUE,
+    created_at_ms BIGINT NOT NULL DEFAULT get_unix_ms()
+  );
+
   CREATE TABLE actors
   (
     id                 uuid PRIMARY KEY     DEFAULT gen_random_uuid(),

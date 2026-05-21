@@ -1,16 +1,40 @@
-import {sql, type Kysely, type Transaction} from "kysely";
+import type { Kysely } from "kysely";
 
-import type {DB} from "../../db/types.js";
-import type {ServerRepository} from "./server.repository.js";
-import type {ServerResponse} from "./server.response.types.js";
-import {toServerResponse} from "./server.mapper.js";
-
-type DbExecutor = Kysely<DB> | Transaction<DB>;
+import type { DB } from "../../db/types.js";
+import type { CreateServerBody } from "./server.schemas.js";
+import type { CreateResult } from "../../shared/results.types.js";
 
 export class PgServerRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
-  async findServerById(id: string): Promise<ServerResponse | null> {
+  async createServer(input: CreateServerBody): Promise<CreateResult> {
+    return await this.db.transaction().execute(async (trx) => {
+      const server = await trx
+        .insertInto("servers")
+        .values({
+          name: input.name,
+          type: input.type,
+          environment: input.environment,
+          status: input.status,
+          port: input.port,
+          version: input.version,
+        })
+        .onConflict((oc) => oc.column("name").doNothing())
+        .returningAll()
+        .executeTakeFirst();
+
+      if (!server) {
+        return { status: "conflict" };
+      }
+
+      return {
+        status: "created",
+        object: server,
+      };
+    });
+  }
+
+  async findServerById(id: string) {
     return this.db.transaction().execute(async (trx) => {
       const server = await trx
         .selectFrom("servers")
@@ -34,7 +58,39 @@ export class PgServerRepository {
         return null;
       }
 
-      return toServerResponse(server);
+      return server;
+    });
+  }
+
+  async findAccessPolicyByServerId(id: string) {
+    return this.db.transaction().execute(async (trx) => {
+      const server = await trx
+        .selectFrom("server_access_policies")
+        .selectAll()
+        .where("server_id", "=", id)
+        .executeTakeFirst();
+
+      if (!server) {
+        return null;
+      }
+
+      return server;
+    });
+  }
+
+  async findLockdownByServerId(id: string) {
+    return this.db.transaction().execute(async (trx) => {
+      const server = await trx
+        .selectFrom("lockdowns")
+        .selectAll()
+        .where("server_id", "=", id)
+        .executeTakeFirst();
+
+      if (!server) {
+        return null;
+      }
+
+      return server;
     });
   }
 }

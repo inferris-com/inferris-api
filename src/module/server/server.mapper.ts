@@ -1,24 +1,10 @@
 import type { Selectable } from "kysely";
-import type { Servers, ServerAccessPolicies, Lockdowns } from "../../db/types.js";
+import type { ServerAccessPolicies, Lockdowns } from "../../db/types.js";
 import type {AccessResponse, LockdownResponse, ServerResponse} from "./server.response.types.js";
 import { int8ToString, int8ToStringOrDefault } from "../../shared/db/int8.js";
+import type { ServerRecord } from "./server.repository.js";
 
-type ServerResponseRow = Pick<
-  Selectable<Servers>,
-  | "id"
-  | "name"
-  | "type"
-  | "environment"
-  | "status"
-  | "port"
-  | "version"
-  | "last_started_at_ms"
-  | "last_heartbeat_at_ms"
-  | "created_at_ms"
-  | "last_updated_at_ms"
->;
-
-export function toServerResponse(servers: ServerResponseRow): ServerResponse{
+export function toServerResponse(servers: ServerRecord): ServerResponse{
   return {
     id: servers.id,
     name: servers.name,

@@ -137,21 +137,21 @@ CREATE TYPE message_verdict AS ENUM ('allow', 'warn', 'deny');
 -- Servers
 CREATE TABLE servers
 (
-  id                   uuid PRIMARY KEY        DEFAULT gen_random_uuid(),
-  name                 TEXT           NOT NULL UNIQUE,
-  type                 server_type    NOT NULL DEFAULT 'unspecified',
+  id                   uuid PRIMARY KEY            DEFAULT gen_random_uuid(),
+  name                 TEXT               NOT NULL UNIQUE,
+  type                 server_type        NOT NULL DEFAULT 'unspecified',
 
-  environment          server_env      NOT NULL DEFAULT 'development',
-  status               server_status   NOT NULL DEFAULT 'offline',
-  port                 INT             NULL CHECK (port BETWEEN 1 AND 65535),
-  version              TEXT            NOT NULL DEFAULT 'Unspecified version',
+  environment          server_env         NOT NULL DEFAULT 'development',
+  status               server_status      NOT NULL DEFAULT 'offline',
+  port                 INT                NULL CHECK (port BETWEEN 1 AND 65535),
+  version              TEXT               NOT NULL DEFAULT 'Unspecified version',
   access_mode          server_access_mode NOT NULL DEFAULT 'open',
 
   last_started_at_ms   BIGINT,
   last_heartbeat_at_ms BIGINT,
 
-  created_at_ms        BIGINT          NOT NULL DEFAULT get_unix_ms(),
-  last_updated_at_ms   BIGINT          NULL
+  created_at_ms        BIGINT             NOT NULL DEFAULT get_unix_ms(),
+  last_updated_at_ms   BIGINT             NULL
 );
 CREATE INDEX idx_servers_type ON servers (type);
 CREATE INDEX idx_servers_environment ON servers (environment);
@@ -175,14 +175,23 @@ CREATE INDEX idx_players_flags ON players (flags);
 CREATE INDEX idx_players_chat_channel ON players (chat_channel);
 CREATE INDEX idx_players_last_server ON players (last_server_id) WHERE last_server_id IS NOT NULL;
 
+CREATE TABLE player_identities
+(
+  player_id     uuid PRIMARY KEY REFERENCES players (id) ON DELETE CASCADE,
+  mojang_uuid   uuid   NOT NULL UNIQUE,
+  created_at_ms BIGINT NOT NULL DEFAULT get_unix_ms()
+);
+CREATE UNIQUE INDEX player_identities_mojang_uuid_unique
+  ON player_identities (mojang_uuid);
+
 CREATE TABLE actors
 (
-  id                 uuid PRIMARY KEY       DEFAULT gen_random_uuid(),
+  id                 uuid PRIMARY KEY     DEFAULT gen_random_uuid(),
   name               TEXT UNIQUE NULL,
-  type               actor_type  NOT NULL   DEFAULT 'unspecified',
+  type               actor_type  NOT NULL DEFAULT 'unspecified',
   player_id          UUID        NULL
     REFERENCES players (id) ON DELETE SET NULL,
-  created_at_ms      BIGINT      NOT NULL   DEFAULT get_unix_ms(),
+  created_at_ms      BIGINT      NOT NULL DEFAULT get_unix_ms(),
   last_updated_at_ms BIGINT      NULL
 );
 CREATE UNIQUE INDEX uq_actors_player_id ON actors (player_id) WHERE player_id IS NOT NULL;
@@ -190,17 +199,17 @@ CREATE INDEX idx_actors_type ON actors (type);
 
 CREATE TABLE argus_users
 (
-  id            UUID PRIMARY KEY             DEFAULT gen_random_uuid(),
-  username      VARCHAR(100)        NOT NULL UNIQUE,
-  email         VARCHAR(100)        NOT NULL UNIQUE,
-  password_hash TEXT                NOT NULL,
+  id            UUID PRIMARY KEY              DEFAULT gen_random_uuid(),
+  username      VARCHAR(100)         NOT NULL UNIQUE,
+  email         VARCHAR(100)         NOT NULL UNIQUE,
+  password_hash TEXT                 NOT NULL,
 
   role          argus_account_role   NOT NULL DEFAULT 'moderator',
   minecraft_id  UUID                 NULL REFERENCES players (id) ON DELETE SET NULL,
   account_state argus_account_status NOT NULL DEFAULT 'active',
 
-  created_at_ms BIGINT              NOT NULL DEFAULT get_unix_ms(),
-  updated_at_ms BIGINT              NULL
+  created_at_ms BIGINT               NOT NULL DEFAULT get_unix_ms(),
+  updated_at_ms BIGINT               NULL
 );
 CREATE INDEX idx_argus_users_role ON argus_users (role);
 CREATE INDEX idx_argus_users_account_state ON argus_users (account_state);
@@ -284,24 +293,24 @@ CREATE INDEX idx_ranks_active ON ranks (tier DESC) WHERE is_active = TRUE;
 -- Permission Nodes (atomic abilities)
 CREATE TABLE permission_nodes
 (
-  id            UUID PRIMARY KEY          DEFAULT gen_random_uuid(),
-  key           TEXT             NOT NULL UNIQUE,
-  description   TEXT   NULL,
+  id            UUID PRIMARY KEY             DEFAULT gen_random_uuid(),
+  key           TEXT                NOT NULL UNIQUE,
+  description   TEXT                NULL,
   category      permission_category NOT NULL DEFAULT 'general',
-  is_active     BOOLEAN          NOT NULL DEFAULT TRUE,
-  created_at_ms BIGINT           NOT NULL DEFAULT get_unix_ms(),
-  updated_at_ms BIGINT           NULL
+  is_active     BOOLEAN             NOT NULL DEFAULT TRUE,
+  created_at_ms BIGINT              NOT NULL DEFAULT get_unix_ms(),
+  updated_at_ms BIGINT              NULL
 );
 
 -- Permission Rules (bindings)
 CREATE TABLE permission_rules
 (
-  id            UUID PRIMARY KEY       DEFAULT gen_random_uuid(),
-  permission_id UUID          NOT NULL
+  id            UUID PRIMARY KEY           DEFAULT gen_random_uuid(),
+  permission_id UUID              NOT NULL
     REFERENCES permission_nodes (id) ON DELETE CASCADE,
-  group_key     VARCHAR(30)   NULL
+  group_key     VARCHAR(30)       NULL
     REFERENCES groups (key) ON DELETE CASCADE,
-  rank_key      VARCHAR(30)   NULL
+  rank_key      VARCHAR(30)       NULL
     REFERENCES ranks (key) ON DELETE CASCADE,
 
   min_rank_tier INT               NULL,
@@ -325,10 +334,10 @@ CREATE TABLE server_access_policies
 (
   server_id              UUID PRIMARY KEY REFERENCES servers (id) ON DELETE CASCADE,
   mode                   server_access_mode NOT NULL DEFAULT 'open',
-  required_permission_id uuid   NULL REFERENCES permission_nodes (id) ON DELETE SET NULL,
-  required_rank_key      VARCHAR(30) NULL REFERENCES ranks (key) ON DELETE SET NULL,
+  required_permission_id uuid               NULL REFERENCES permission_nodes (id) ON DELETE SET NULL,
+  required_rank_key      VARCHAR(30)        NULL REFERENCES ranks (key) ON DELETE SET NULL,
 
-  note                   TEXT   NULL,
+  note                   TEXT               NULL,
 
   created_at_ms          BIGINT             NOT NULL DEFAULT get_unix_ms(),
   updated_at_ms          BIGINT             NULL,
@@ -364,7 +373,7 @@ CREATE TABLE lockdowns
   is_active          BOOLEAN               NOT NULL DEFAULT TRUE,
 
   starts_at_ms       BIGINT                NOT NULL DEFAULT get_unix_ms(),
-  ends_at_ms         BIGINT NULL,
+  ends_at_ms         BIGINT                NULL,
 
   created_at_ms      BIGINT                NOT NULL DEFAULT get_unix_ms(),
   updated_at_ms      BIGINT                NULL,
@@ -390,13 +399,13 @@ CREATE TABLE player_session_events
 (
   id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-  player_id          UUID             NOT NULL
+  player_id          UUID   NOT NULL
     REFERENCES players (id) ON DELETE CASCADE,
 
-  server_id          UUID             NOT NULL
+  server_id          UUID   NOT NULL
     REFERENCES servers (id) ON DELETE RESTRICT,
 
-  connected_at_ms    BIGINT           NOT NULL DEFAULT get_unix_ms(),
+  connected_at_ms    BIGINT NOT NULL  DEFAULT get_unix_ms(),
   disconnected_at_ms BIGINT NULL,
 
   disconnect_reason  TEXT   NULL,
@@ -426,14 +435,14 @@ CREATE TABLE player_sessions_current
   player_id        UUID PRIMARY KEY
     REFERENCES players (id) ON DELETE CASCADE,
 
-  server_id        UUID        NOT NULL
+  server_id        UUID   NOT NULL
     REFERENCES servers (id) ON DELETE RESTRICT,
 
-  session_event_id UUID        NOT NULL UNIQUE
+  session_event_id UUID   NOT NULL UNIQUE
     REFERENCES player_session_events (id) ON DELETE CASCADE,
 
-  connected_at_ms  BIGINT      NOT NULL DEFAULT get_unix_ms(),
-  updated_at_ms    BIGINT      NULL
+  connected_at_ms  BIGINT NOT NULL DEFAULT get_unix_ms(),
+  updated_at_ms    BIGINT NULL
 );
 CREATE INDEX idx_player_sessions_current_server
   ON player_sessions_current (server_id);
@@ -445,9 +454,9 @@ CREATE TABLE badges
   id            INT PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
   key           TEXT    NOT NULL UNIQUE,
   label         TEXT    NOT NULL,
-  description   TEXT NULL,
-  color         TEXT NULL,
-  emoji         TEXT NULL,
+  description   TEXT    NULL,
+  color         TEXT    NULL,
+  emoji         TEXT    NULL,
   display_order INT     NOT NULL DEFAULT 0,
   is_active     BOOLEAN NOT NULL DEFAULT TRUE
 );
@@ -474,7 +483,7 @@ CREATE TABLE player_ranks
   group_key            VARCHAR(30) NOT NULL REFERENCES groups (key) ON DELETE CASCADE,
   rank_key             VARCHAR(30) NOT NULL REFERENCES ranks (key) ON DELETE CASCADE,
   assigned_at_ms       BIGINT      NOT NULL DEFAULT get_unix_ms(),
-  assigned_by_actor_id UUID NULL REFERENCES actors (id) ON DELETE RESTRICT,
+  assigned_by_actor_id UUID        NULL REFERENCES actors (id) ON DELETE RESTRICT,
   source               TEXT        NULL,
 
   PRIMARY KEY (player_id, rank_key)
@@ -498,7 +507,7 @@ CREATE TABLE player_flag_definitions
   flag_key      TEXT PRIMARY KEY,
   bit_position  INT          NOT NULL UNIQUE CHECK (bit_position BETWEEN 0 AND 62),
   label         VARCHAR(100) NOT NULL UNIQUE,
-  description   TEXT   NULL,
+  description   TEXT         NULL,
   is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
   created_at_ms BIGINT       NOT NULL DEFAULT get_unix_ms(),
   updated_at_ms BIGINT       NULL

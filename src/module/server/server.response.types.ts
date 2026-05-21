@@ -1,5 +1,3 @@
-import {serverAccessTypeSchema} from "./server.schemas.js";
-
 export type ChatChannel = "global" | "staff" | "testing";
 
 export type PlayerSummaryResponse = {

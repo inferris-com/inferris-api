@@ -1,31 +1,30 @@
-import type {AccessResponse, LockdownResponse, ServerResponse} from "./server.response.types.js";
+import type { Selectable } from "kysely";
+
+import type { Servers } from "../../db/types.js";
+import type { AccessResponse, LockdownResponse } from "./server.response.types.js";
 import type {
   CreateLockdownBody,
   CreateServerBody,
-  ReplaceServerAccessBody, UpdateLockdownBody, UpdateServerAccessBody,
-  UpdateServerBody
+  ReplaceServerAccessBody,
+  UpdateLockdownBody,
+  UpdateServerAccessBody,
+  UpdateServerBody,
 } from "./server.schemas.js";
 
 export interface ServerRepository {
-  findServerById(id: string): Promise<ServerResponse | null>;
+  findServerById(id: string): Promise<Servers | null>;
   findAccessPolicyByServerId(id: string): Promise<AccessResponse | null>;
   findLockdownById(id: string): Promise<LockdownResponse | null>;
 
-  createServer(input: CreateServerBody): Promise<ServerResponse | null>;
+  createServer(input: CreateServerBody): Promise<Servers | null>;
   createAccessPolicy(input: ReplaceServerAccessBody): Promise<AccessResponse | null>;
   createLockdown(input: CreateLockdownBody): Promise<LockdownResponse | null>;
 
-  updateServer(input: UpdateServerBody): Promise<ServerResponse | null>;
+  updateServer(input: UpdateServerBody): Promise<Servers | null>;
   updateAccessPolicy(input: UpdateServerAccessBody): Promise<AccessResponse | null>;
   updateLockdown(input: UpdateLockdownBody): Promise<LockdownResponse | null>;
 
   deleteServer(id: string): Promise<boolean>;
   deleteAccessPolicy(id: string): Promise<boolean>;
   deleteLockdown(id: string): Promise<boolean>;
-
-  // listPlayers(query: ListPlayersQuery): Promise<PlayerSummaryResponse[]>;
-  // findPlayerById(id: string): Promise<PlayerResponse | null>;
-  // createPlayer(input: CreatePlayerBody): Promise<CreatePlayerResult>;
-  // updatePlayer(id: string, input: UpdatePlayerBody): Promise<PlayerResponse | null>;
-  // deletePlayer(id: string, options: DeletePlayerOptions): Promise<boolean>;
 }

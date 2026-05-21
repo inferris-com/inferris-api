@@ -1,14 +1,13 @@
 import { sql, type Kysely, type Transaction } from "kysely";
 
 import type { DB } from "../../db/types.js";
-import { toPlayerResponse, toPlayerSummaryResponse } from "./player.mapper.js";
 import type {
   CreatePlayerResult,
   DeletePlayerOptions,
+  PlayerDetailsRecord,
   PlayerRepository,
 } from "./player.repository.js";
 import type { CreatePlayerBody, ListPlayersQuery, UpdatePlayerBody } from "./player.schemas.js";
-import type { PlayerResponse, PlayerSummaryResponse } from "./player.response.types.js";
 
 type DbExecutor = Kysely<DB> | Transaction<DB>;
 
@@ -19,8 +18,8 @@ export class PgPlayerRepository implements PlayerRepository {
     limit,
     offset,
     username,
-  }: ListPlayersQuery): Promise<PlayerSummaryResponse[]> {
-    const rows = await this.db
+  }: ListPlayersQuery) {
+    return this.db
       .selectFrom("players")
       .select([
         "players.id",
@@ -35,12 +34,10 @@ export class PgPlayerRepository implements PlayerRepository {
       .limit(limit)
       .offset(offset)
       .execute();
-
-    return rows.map(toPlayerSummaryResponse);
   }
 
-  async findPlayerById(id: string): Promise<PlayerResponse | null> {
-    return this.loadPlayerResponse(this.db, id);
+  async findPlayerById(id: string): Promise<PlayerDetailsRecord | null> {
+    return this.loadPlayerDetails(this.db, id);
   }
 
   async createPlayer(input: CreatePlayerBody): Promise<CreatePlayerResult> {
@@ -129,11 +126,11 @@ export class PgPlayerRepository implements PlayerRepository {
           .executeTakeFirstOrThrow();
       }
 
-      return { status: "created", player: await this.loadPlayerResponseOrThrow(trx, id) };
+      return { status: "created", player: await this.loadPlayerDetailsOrThrow(trx, id) };
     });
   }
 
-  async updatePlayer(id: string, input: UpdatePlayerBody): Promise<PlayerResponse | null> {
+  async updatePlayer(id: string, input: UpdatePlayerBody): Promise<PlayerDetailsRecord | null> {
     return this.db.transaction().execute(async (trx) => {
       const playerExists = await trx
         .selectFrom("players")
@@ -184,7 +181,7 @@ export class PgPlayerRepository implements PlayerRepository {
           .executeTakeFirstOrThrow();
       }
 
-      return this.loadPlayerResponseOrThrow(trx, id);
+      return this.loadPlayerDetailsOrThrow(trx, id);
     });
   }
 
@@ -219,10 +216,10 @@ export class PgPlayerRepository implements PlayerRepository {
     });
   }
 
-  private async loadPlayerResponse(
+  private async loadPlayerDetails(
     executor: DbExecutor,
     id: string,
-  ): Promise<PlayerResponse | null> {
+  ): Promise<PlayerDetailsRecord | null> {
     const player = await executor
       .selectFrom("players")
       .select([
@@ -264,19 +261,19 @@ export class PgPlayerRepository implements PlayerRepository {
         .execute(),
     ]);
 
-    return toPlayerResponse({
+    return {
       player,
       profile: profile ?? null,
       rankAssignments,
       badgeAssignments,
-    });
+    };
   }
 
-  private async loadPlayerResponseOrThrow(
+  private async loadPlayerDetailsOrThrow(
     executor: DbExecutor,
     id: string,
-  ): Promise<PlayerResponse> {
-    const player = await this.loadPlayerResponse(executor, id);
+  ): Promise<PlayerDetailsRecord> {
+    const player = await this.loadPlayerDetails(executor, id);
 
     if (!player) {
       throw new Error(`Expected player ${id} to exist after repository write.`);

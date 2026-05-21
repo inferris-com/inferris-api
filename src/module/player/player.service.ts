@@ -1,4 +1,5 @@
 import { PlayerAlreadyExistsError, PlayerNotFoundError } from "./player.errors.js";
+import { toPlayerResponse, toPlayerSummaryResponse } from "./player.mapper.js";
 import type { DeletePlayerOptions, PlayerRepository } from "./player.repository.js";
 import type { PlayerResponse, PlayerSummaryResponse } from "./player.response.types.js";
 import type { CreatePlayerBody, ListPlayersQuery, UpdatePlayerBody } from "./player.schemas.js";
@@ -7,7 +8,8 @@ export class PlayerService {
   constructor(private readonly repository: PlayerRepository) {}
 
   async listPlayers(query: ListPlayersQuery): Promise<PlayerSummaryResponse[]> {
-    return this.repository.listPlayers(query);
+    const players = await this.repository.listPlayers(query);
+    return players.map(toPlayerSummaryResponse);
   }
 
   async getPlayer(id: string): Promise<PlayerResponse> {
@@ -17,7 +19,7 @@ export class PlayerService {
       throw new PlayerNotFoundError(id);
     }
 
-    return player;
+    return toPlayerResponse(player);
   }
 
   async createPlayer(input: CreatePlayerBody): Promise<PlayerResponse> {
@@ -27,7 +29,7 @@ export class PlayerService {
       throw new PlayerAlreadyExistsError(input.id);
     }
 
-    return result.player;
+    return toPlayerResponse(result.player);
   }
 
   async updatePlayer(id: string, input: UpdatePlayerBody): Promise<PlayerResponse> {
@@ -37,7 +39,7 @@ export class PlayerService {
       throw new PlayerNotFoundError(id);
     }
 
-    return player;
+    return toPlayerResponse(player);
   }
 
   async deletePlayer(id: string, options: DeletePlayerOptions): Promise<void> {

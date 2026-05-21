@@ -1,35 +1,8 @@
-import type { Selectable } from "kysely";
-import type { PlayerBadges, PlayerProfiles, PlayerRanks, Players } from "../../db/types.js";
-import type { PlayerResponse, PlayerSummaryResponse } from "./player.response.types.js";
 import { int8ToString, int8ToStringOrDefault } from "../../shared/db/int8.js";
+import type { PlayerDetailsRecord, PlayerSummaryRecord } from "./player.repository.js";
+import type { PlayerResponse, PlayerSummaryResponse } from "./player.response.types.js";
 
-type PlayerBase = Pick<
-  Selectable<Players>,
-  | "id"
-  | "username"
-  | "flags"
-  | "orbs"
-  | "chat_channel"
-  | "last_server_id"
-  | "created_at_ms"
-  | "last_seen_at_ms"
->;
-
-type PlayerProfileBase = Pick<
-  Selectable<PlayerProfiles>,
-  "bio" | "pronouns" | "featured_badge_id" | "locale" | "preferences"
->;
-
-type PlayerRankAssignmentBase = Pick<Selectable<PlayerRanks>, "group_key" | "rank_key">;
-
-type PlayerBadgeAssignmentBase = Pick<Selectable<PlayerBadges>, "badge_id">;
-
-type PlayerSummaryRow = Pick<
-  Selectable<Players>,
-  "id" | "username" | "flags" | "orbs" | "chat_channel"
->;
-
-export function toPlayerSummaryResponse(row: PlayerSummaryRow): PlayerSummaryResponse {
+export function toPlayerSummaryResponse(row: PlayerSummaryRecord): PlayerSummaryResponse {
   return {
     id: row.id,
     username: row.username,
@@ -39,12 +12,7 @@ export function toPlayerSummaryResponse(row: PlayerSummaryRow): PlayerSummaryRes
   };
 }
 
-export function toPlayerResponse(input: {
-  player: PlayerBase;
-  profile: PlayerProfileBase | null;
-  rankAssignments: PlayerRankAssignmentBase[];
-  badgeAssignments: PlayerBadgeAssignmentBase[];
-}): PlayerResponse {
+export function toPlayerResponse(input: PlayerDetailsRecord): PlayerResponse {
   const { player, profile, rankAssignments, badgeAssignments } = input;
 
   return {

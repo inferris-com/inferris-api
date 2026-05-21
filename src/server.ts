@@ -9,6 +9,7 @@ import { PlayerService } from "./module/player/player.service.js";
 import { pinoHttp } from "pino-http";
 import {createServerRouter} from "./module/server/server.route.js";
 import {PgServerRepository} from "./module/server/server.pg-repository.js";
+import { ServerService } from "./module/server/server.service.js";
 
 type ServerProps = {
   host?: string;
@@ -35,7 +36,7 @@ export function createApp() {
     res.json({ ok: true });
   });
   app.use("/players", createPlayerRouter(new PlayerService(new PgPlayerRepository(db))));
-  app.use("/servers", createServerRouter(new PgServerRepository(db)));
+  app.use("/servers", createServerRouter(new ServerService(new PgServerRepository(db))));
 
   // Middlewares
   app.use(errorHandler);
