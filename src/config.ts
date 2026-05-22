@@ -11,6 +11,8 @@ const envSchema = z.object({
   DATABASE_URL: z.url().default("postgres://dev:dev@localhost:5432/devdb"),
   DB_POOL_SIZE: z.coerce.number().int().positive().default(10),
   REDIS_URL: z.url().default("redis://localhost:6379"),
+  REDIS_CONNECT_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
+  REDIS_RECONNECT_MAX_DELAY_MS: z.coerce.number().int().nonnegative().default(3000),
 });
 
 const env = envSchema.parse(process.env);
@@ -32,6 +34,8 @@ export const config = {
   },
   redis: {
     url: env.REDIS_URL,
+    connectTimeoutMs: env.REDIS_CONNECT_TIMEOUT_MS,
+    reconnectMaxDelayMs: env.REDIS_RECONNECT_MAX_DELAY_MS,
   },
 } as const;
 

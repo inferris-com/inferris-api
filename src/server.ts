@@ -1,4 +1,5 @@
 import express from "express";
+import type { Server as HttpServer } from "node:http";
 
 import { db } from "./db/index.js";
 import { errorHandler } from "./error/app-error.js";
@@ -13,6 +14,7 @@ import { ServerService } from "./module/server/server.service.js";
 import { createActorRouter } from "./module/actor/actor.route.js";
 import { ActorService } from "./module/actor/actor.service.js";
 import { ActorPgRepository } from "./module/actor/actor.pg-repository.js";
+import { connectRedis, disconnectRedis } from "./redis/index.js";
 
 type ServerProps = {
   host?: string;
@@ -48,10 +50,52 @@ export function createApp() {
   return app;
 }
 
-export function startServer({ host = "0.0.0.0", port = 3000 }: ServerProps) {
+export async function startServer({ host = "0.0.0.0", port = 3000 }: ServerProps) {
+  await connectRedis();
+
   const app = createApp();
 
-  app.listen(port, host, () => {
+  const server = app.listen(port, host, () => {
     console.log(`Listening on ${host}:${port}`);
+  });
+
+  registerShutdown(server);
+
+  return server;
+}
+
+function registerShutdown(server: HttpServer) {
+  const shutdown = (signal: NodeJS.Signals) => {
+    logger.info({ signal }, "Shutting down server");
+
+    void closeServer(server)
+      .then(() => Promise.all([disconnectRedis(), db.destroy()]))
+      .then(() => {
+        process.exit(0);
+      })
+      .catch((error: unknown) => {
+        logger.error({ error }, "Shutdown failed");
+        process.exit(1);
+      });
+  };
+
+  process.once("SIGINT", (signal) => {
+    shutdown(signal);
+  });
+  process.once("SIGTERM", (signal) => {
+    shutdown(signal);
+  });
+}
+
+function closeServer(server: HttpServer) {
+  return new Promise<void>((resolve, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
   });
 }

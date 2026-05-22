@@ -1,5 +1,3 @@
-import type { Selectable } from "kysely";
-
 import type { Servers } from "../../db/types.js";
 import type { AccessResponse, LockdownResponse } from "./server.response.types.js";
 import type {
@@ -7,7 +5,6 @@ import type {
   CreateServerBody,
   ReplaceServerAccessBody,
   UpdateLockdownBody,
-  UpdateServerAccessBody,
   UpdateServerBody,
 } from "./server.schemas.js";
 
@@ -21,7 +18,7 @@ export interface ServerRepository {
   createLockdown(input: CreateLockdownBody): Promise<LockdownResponse | null>;
 
   updateServer(input: UpdateServerBody): Promise<Servers | null>;
-  updateAccessPolicy(input: UpdateServerAccessBody): Promise<AccessResponse | null>;
+  updateAccessPolicy(input: ReplaceServerAccessBody): Promise<AccessResponse | null>;
   updateLockdown(input: UpdateLockdownBody): Promise<LockdownResponse | null>;
 
   deleteServer(id: string): Promise<boolean>;
