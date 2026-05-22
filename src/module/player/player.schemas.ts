@@ -10,6 +10,10 @@ export const playerRankAssignmentParamsSchema = playerIdParamsSchema.extend({
   rankKey: z.string().trim().min(1).max(64),
 });
 
+export const playerBadgeAssignmentParamsSchema = playerIdParamsSchema.extend({
+  badgeId: z.coerce.number().int().positive(),
+});
+
 export const listPlayersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(25),
   offset: z.coerce.number().int().min(0).default(0),
@@ -71,6 +75,13 @@ export const replacePlayerRankAssignmentBodySchema = z
   })
   .strict();
 
+export const createPlayerBadgeAssignmentBodySchema = z
+  .object({
+    badgeId: z.int().positive(),
+    source: z.string().max(64).nullable().optional(),
+  })
+  .strict();
+
 export const deletePlayerQuerySchema = z
   .object({
     hard: z
@@ -82,11 +93,13 @@ export const deletePlayerQuerySchema = z
 
 export type PlayerIdParams = z.infer<typeof playerIdParamsSchema>;
 export type PlayerRankAssignmentParams = z.infer<typeof playerRankAssignmentParamsSchema>;
+export type PlayerBadgeAssignmentParams = z.infer<typeof playerBadgeAssignmentParamsSchema>;
 
 export type ListPlayersQuery = z.infer<typeof listPlayersQuerySchema>;
 export type DeletePlayerQuery = z.infer<typeof deletePlayerQuerySchema>;
 
 export type CreatePlayerBody = z.infer<typeof createPlayerBodySchema>;
+export type CreatePlayerBadgeAssignmentBody = z.infer<typeof createPlayerBadgeAssignmentBodySchema>;
 export type ReplaceRankAssignmentBody = z.infer<typeof replacePlayerRankAssignmentBodySchema>;
 export type UpdatePlayerBody = z.infer<typeof updatePlayerBodySchema>;
 export type UpdateProfileBody = z.infer<typeof updatePlayerProfileBodySchema>;

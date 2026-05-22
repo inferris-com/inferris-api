@@ -25,3 +25,16 @@ export class PlayerAlreadyExistsError extends ConflictError {
     this.playerId = playerId;
   }
 }
+
+export class BadgeNotFoundError extends NotFoundError {
+  readonly badgeId: number;
+
+  constructor(badgeId: number) {
+    super({
+      code: "BADGE_NOT_FOUND",
+      message: "Badge not found.",
+    });
+
+    this.badgeId = badgeId;
+  }
+}

@@ -1,5 +1,10 @@
-import { PlayerAlreadyExistsError, PlayerNotFoundError } from "./player.errors.js";
 import {
+  BadgeNotFoundError,
+  PlayerAlreadyExistsError,
+  PlayerNotFoundError,
+} from "./player.errors.js";
+import {
+  toPlayerBadgeAssignmentResponse,
   toPlayerProfileResponse,
   toPlayerRankAssignmentResponse,
   toPlayerResponse,
@@ -7,6 +12,7 @@ import {
 } from "./player.mapper.js";
 import type { DeletePlayerOptions } from "./player.repository.js";
 import type {
+  PlayerBadgeAssignmentResponse,
   PlayerProfileResponse,
   PlayerRankAssignmentResponse,
   PlayerResponse,
@@ -14,6 +20,7 @@ import type {
 } from "./player.response.types.js";
 import type {
   CreatePlayerBody,
+  CreatePlayerBadgeAssignmentBody,
   ListPlayersQuery,
   ReplaceRankAssignmentBody,
   UpdatePlayerBody,
@@ -47,6 +54,16 @@ export class PlayerService {
     }
 
     return toPlayerProfileResponse(player);
+  }
+
+  async listBadgeAssignments(playerId: string): Promise<PlayerBadgeAssignmentResponse[]> {
+    const badges = await this.repository.listBadgeAssignments(playerId);
+
+    if (!badges) {
+      throw new PlayerNotFoundError(playerId);
+    }
+
+    return badges.map(toPlayerBadgeAssignmentResponse);
   }
 
   async createPlayer(input: CreatePlayerBody): Promise<PlayerResponse> {
@@ -98,6 +115,23 @@ export class PlayerService {
     return toPlayerRankAssignmentResponse(assignment);
   }
 
+  async createBadgeAssignment(
+    playerId: string,
+    input: CreatePlayerBadgeAssignmentBody,
+  ): Promise<PlayerBadgeAssignmentResponse> {
+    const result = await this.repository.createBadgeAssignment(playerId, input);
+
+    if (result.status === "player_not_found") {
+      throw new PlayerNotFoundError(playerId);
+    }
+
+    if (result.status === "badge_not_found") {
+      throw new BadgeNotFoundError(input.badgeId);
+    }
+
+    return toPlayerBadgeAssignmentResponse(result.badge);
+  }
+
   async deletePlayer(id: string, options: DeletePlayerOptions): Promise<void> {
     const deleted = await this.repository.deletePlayer(id, options);
 
@@ -111,6 +145,18 @@ export class PlayerService {
 
     if (!deleted) {
       throw new PlayerNotFoundError(playerId);
+    }
+  }
+
+  async deleteBadgeAssignment(playerId: string, badgeId: number): Promise<void> {
+    const result = await this.repository.deleteBadgeAssignment(playerId, badgeId);
+
+    if (result.status === "player_not_found") {
+      throw new PlayerNotFoundError(playerId);
+    }
+
+    if (result.status === "badge_not_found") {
+      throw new BadgeNotFoundError(badgeId);
     }
   }
 }

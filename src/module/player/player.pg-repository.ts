@@ -10,6 +10,7 @@ import type {
 } from "./player.repository.js";
 import type {
   CreatePlayerBody,
+  CreatePlayerBadgeAssignmentBody,
   ListPlayersQuery,
   ReplaceRankAssignmentBody,
   UpdatePlayerBody,
@@ -54,6 +55,28 @@ export class PlayerPgRepository implements PlayerRepository {
       if (!profile) return null;
 
       return profile;
+    });
+  }
+
+  async listBadgeAssignments(playerId: string) {
+    return this.db.transaction().execute(async (trx) => {
+      const playerExists = await trx
+        .selectFrom("players")
+        .select("id")
+        .where("id", "=", playerId)
+        .where("deleted_at_ms", "is", null)
+        .executeTakeFirst();
+
+      if (!playerExists) {
+        return null;
+      }
+
+      return await trx
+        .selectFrom("player_badges")
+        .selectAll()
+        .where("player_id", "=", playerId)
+        .orderBy("badge_id", "asc")
+        .execute();
     });
   }
 
@@ -275,6 +298,48 @@ export class PlayerPgRepository implements PlayerRepository {
     });
   }
 
+  async createBadgeAssignment(playerId: string, input: CreatePlayerBadgeAssignmentBody) {
+    return this.db.transaction().execute(async (trx) => {
+      const playerExists = await trx
+        .selectFrom("players")
+        .select("id")
+        .where("id", "=", playerId)
+        .where("deleted_at_ms", "is", null)
+        .executeTakeFirst();
+
+      if (!playerExists) {
+        return { status: "player_not_found" } as const;
+      }
+
+      const badgeExists = await trx
+        .selectFrom("badges")
+        .select("id")
+        .where("id", "=", input.badgeId)
+        .executeTakeFirst();
+
+      if (!badgeExists) {
+        return { status: "badge_not_found" } as const;
+      }
+
+      const badge = await trx
+        .insertInto("player_badges")
+        .values({
+          player_id: playerId,
+          badge_id: input.badgeId,
+          source: input.source ?? null,
+        })
+        .onConflict((oc) =>
+          oc.columns(["player_id", "badge_id"]).doUpdateSet({
+            source: input.source ?? null,
+          }),
+        )
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+      return { status: "assigned", badge } as const;
+    });
+  }
+
   async deletePlayer(id: string, { hard }: DeletePlayerOptions): Promise<boolean> {
     if (hard) {
       const result = await this.db.deleteFrom("players").where("id", "=", id).executeTakeFirst();
@@ -320,6 +385,33 @@ export class PlayerPgRepository implements PlayerRepository {
         .executeTakeFirst();
 
       return result.numDeletedRows > 0n;
+    });
+  }
+
+  async deleteBadgeAssignment(playerId: string, badgeId: number) {
+    return this.db.transaction().execute(async (trx) => {
+      const playerExists = await trx
+        .selectFrom("players")
+        .select("id")
+        .where("id", "=", playerId)
+        .where("deleted_at_ms", "is", null)
+        .executeTakeFirst();
+
+      if (!playerExists) {
+        return { status: "player_not_found" } as const;
+      }
+
+      const result = await trx
+        .deleteFrom("player_badges")
+        .where("player_id", "=", playerId)
+        .where("badge_id", "=", badgeId)
+        .executeTakeFirst();
+
+      if (result.numDeletedRows === 0n) {
+        return { status: "badge_not_found" } as const;
+      }
+
+      return { status: "deleted" } as const;
     });
   }
 

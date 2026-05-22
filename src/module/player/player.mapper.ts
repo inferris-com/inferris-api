@@ -1,11 +1,13 @@
 import { int8ToStringOrNull, int8ToStringOrDefault, int8ToString } from "../../shared/db/int8.js";
 import type {
+  PlayerBadgeRow,
   PlayerDetailsRecord,
   PlayerProfileRow,
   PlayerRankRow,
   PlayerSummaryRecord,
 } from "./player.repository.js";
 import type {
+  PlayerBadgeAssignmentResponse,
   PlayerProfileResponse,
   PlayerRankAssignmentResponse,
   PlayerResponse,
@@ -62,8 +64,8 @@ export function toPlayerProfileResponse(input: PlayerProfileRow): PlayerProfileR
     pronouns: input.pronouns,
     featuredBadgeId: input.featured_badge_id,
     locale: input.locale,
-    preferences: input.preferences
-  }
+    preferences: input.preferences,
+  };
 }
 
 export function toPlayerRankAssignmentResponse(input: PlayerRankRow): PlayerRankAssignmentResponse {
@@ -73,6 +75,17 @@ export function toPlayerRankAssignmentResponse(input: PlayerRankRow): PlayerRank
     rankKey: input.rank_key,
     assignedAtMs: int8ToString(input.assigned_at_ms),
     assignedByActorId: input.assigned_by_actor_id,
-    source: input.source
-  }
+    source: input.source,
+  };
+}
+
+export function toPlayerBadgeAssignmentResponse(
+  input: PlayerBadgeRow,
+): PlayerBadgeAssignmentResponse {
+  return {
+    playerId: input.player_id,
+    badgeId: input.badge_id,
+    earnedAtMs: int8ToString(input.earned_at_ms),
+    source: input.source,
+  };
 }

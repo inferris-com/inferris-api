@@ -4,6 +4,7 @@ import type { ParamsDictionary } from "express-serve-static-core";
 import { validateRequest } from "../../middleware/validation.js";
 import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
 import type {
+  PlayerBadgeAssignmentResponse,
   PlayerProfileResponse,
   PlayerRankAssignmentResponse,
   PlayerResponse,
@@ -12,10 +13,13 @@ import type {
 import type { PlayerService } from "./player.service.js";
 import {
   type CreatePlayerBody,
+  type CreatePlayerBadgeAssignmentBody,
   type DeletePlayerQuery,
   type ListPlayersQuery,
+  type PlayerBadgeAssignmentParams,
   type PlayerIdParams,
   type PlayerRankAssignmentParams,
+  createPlayerBadgeAssignmentBodySchema,
   replacePlayerRankAssignmentBodySchema,
   type ReplaceRankAssignmentBody,
   type UpdatePlayerBody,
@@ -26,6 +30,7 @@ import {
   createPlayerBodySchema,
   deletePlayerQuerySchema,
   listPlayersQuerySchema,
+  playerBadgeAssignmentParamsSchema,
   playerIdParamsSchema,
   playerRankAssignmentParamsSchema,
   updatePlayerBodySchema,
@@ -59,12 +64,33 @@ export function createPlayerRouter(service: PlayerService): Router {
     res.json(body);
   };
 
+  const listBadgeAssignments: RequestHandler<PlayerIdParams> = async (req, res) => {
+    const badges = await service.listBadgeAssignments(req.params.playerId);
+    const body: ApiListSuccess<PlayerBadgeAssignmentResponse> = {
+      data: badges,
+      meta: { count: badges.length },
+    };
+
+    res.json(body);
+  };
+
   const createPlayer: RequestHandler<ParamsDictionary, unknown, CreatePlayerBody> = async (
     req,
     res,
   ) => {
     const player = await service.createPlayer(req.body);
     const body: ApiSuccess<PlayerResponse> = { data: player };
+
+    res.status(201).json(body);
+  };
+
+  const createBadgeAssignment: RequestHandler<
+    PlayerIdParams,
+    unknown,
+    CreatePlayerBadgeAssignmentBody
+  > = async (req, res) => {
+    const badge = await service.createBadgeAssignment(req.params.playerId, req.body);
+    const body: ApiSuccess<PlayerBadgeAssignmentResponse> = { data: badge };
 
     res.status(201).json(body);
   };
@@ -120,10 +146,29 @@ export function createPlayerRouter(service: PlayerService): Router {
     res.status(204).send();
   };
 
+  const deleteBadgeAssignment: RequestHandler<PlayerBadgeAssignmentParams> = async (req, res) => {
+    await service.deleteBadgeAssignment(req.params.playerId, req.params.badgeId);
+
+    res.status(204).send();
+  };
+
   router.get("/", validateRequest({ query: listPlayersQuerySchema }), listPlayers);
   router.get("/:playerId", validateRequest({ params: playerIdParamsSchema }), getPlayer);
   router.get("/:playerId/profile", validateRequest({ params: playerIdParamsSchema }), getProfile);
+  router.get(
+    "/:playerId/badges",
+    validateRequest({ params: playerIdParamsSchema }),
+    listBadgeAssignments,
+  );
   router.post("/", validateRequest({ body: createPlayerBodySchema }), createPlayer);
+  router.post(
+    "/:playerId/badges",
+    validateRequest({
+      params: playerIdParamsSchema,
+      body: createPlayerBadgeAssignmentBodySchema,
+    }),
+    createBadgeAssignment,
+  );
   router.put(
     "/:playerId/ranks/:groupKey/:rankKey",
     validateRequest({
@@ -157,6 +202,11 @@ export function createPlayerRouter(service: PlayerService): Router {
     "/:playerId/ranks/:groupKey/:rankKey",
     validateRequest({ params: playerRankAssignmentParamsSchema }),
     deleteRankAssignment,
+  );
+  router.delete(
+    "/:playerId/badges/:badgeId",
+    validateRequest({ params: playerBadgeAssignmentParamsSchema }),
+    deleteBadgeAssignment,
   );
 
   return router;

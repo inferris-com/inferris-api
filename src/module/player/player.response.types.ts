@@ -36,19 +36,26 @@ export type PlayerResponse = {
 };
 
 export type PlayerProfileResponse = {
-  playerId: string,
+  playerId: string;
   bio: string | null;
   pronouns: string | null;
   featuredBadgeId: number | null;
   locale: string;
   preferences: unknown;
-}
+};
 
 export type PlayerRankAssignmentResponse = {
-  playerId: string,
-  groupKey: string,
-  rankKey: string,
-  assignedAtMs: string,
-  assignedByActorId: string | null,
-  source: string | null
-}
+  playerId: string;
+  groupKey: string;
+  rankKey: string;
+  assignedAtMs: string;
+  assignedByActorId: string | null;
+  source: string | null;
+};
+
+export type PlayerBadgeAssignmentResponse = {
+  playerId: string;
+  badgeId: number;
+  earnedAtMs: string;
+  source: string | null;
+};
