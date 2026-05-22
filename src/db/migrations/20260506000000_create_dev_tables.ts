@@ -1,38 +1,5 @@
 import { type Kysely, sql } from "kysely";
 
-const tables = [
-  "report_comments",
-  "punishment_appeals",
-  "reports",
-  "mod_cases",
-  "chat_messages",
-  "chat_channels",
-  "player_watchlist_entries",
-  "flagged_players",
-  "player_nicknames",
-  "player_flag_definitions",
-  "punishments",
-  "player_sessions_current",
-  "player_session_events",
-  "player_badges",
-  "player_profiles",
-  "badges",
-  "lockdowns",
-  "server_access_policies",
-  "permission_rules",
-  "permission_nodes",
-  "player_ranks",
-  "ranks",
-  "groups",
-  "api_keys",
-  "argus_alerts",
-  "argus_email_verifications",
-  "argus_users",
-  "actors",
-  "players",
-  "servers",
-] as const;
-
 const types = [
   "message_verdict",
   "priority",
@@ -539,9 +506,10 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     assigned_by_actor_id UUID        NULL REFERENCES actors (id) ON DELETE RESTRICT,
     source               TEXT        NULL,
 
-    PRIMARY KEY (player_id, rank_key)
+    PRIMARY KEY (player_id, group_key)
   );
   CREATE INDEX idx_player_ranks_group_key ON player_ranks (group_key);
+  CREATE INDEX idx_player_ranks_rank_key ON player_ranks (rank_key);
   CREATE INDEX idx_player_ranks_assigned_by_actor
     ON player_ranks (assigned_by_actor_id) WHERE assigned_by_actor_id IS NOT NULL;
 
@@ -889,13 +857,31 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 }
 
 export async function down(db: Kysely<unknown>): Promise<void> {
-  for (const table of tables) {
-    await db.schema.dropTable(table).ifExists().cascade().execute();
-  }
+  await sql`DROP FUNCTION IF EXISTS sync_player_sessions_current() CASCADE`.execute(db);
+
+  await sql`
+    DO $$
+    DECLARE
+      table_record record;
+    BEGIN
+      FOR table_record IN
+        SELECT schemaname, tablename
+        FROM pg_tables
+        WHERE schemaname = 'public'
+          AND tablename NOT IN ('kysely_migration', 'kysely_migration_lock')
+      LOOP
+        EXECUTE format(
+          'DROP TABLE IF EXISTS %I.%I CASCADE',
+          table_record.schemaname,
+          table_record.tablename
+        );
+      END LOOP;
+    END $$;
+  `.execute(db);
 
   for (const type of types) {
     await sql`DROP TYPE IF EXISTS ${sql.raw(type)} CASCADE`.execute(db);
   }
 
-  await sql`DROP FUNCTION IF EXISTS get_unix_ms()`.execute(db);
+  await sql`DROP FUNCTION IF EXISTS get_unix_ms() CASCADE`.execute(db);
 }

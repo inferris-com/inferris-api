@@ -5,13 +5,10 @@ export const playerIdParamsSchema = z.object({
   playerId: z.guid({ message: "Invalid player UUID format." }),
 });
 
-export const groupKeyParamsSchema = z.object({
-  groupKey: z.guid({ message: "Invalid group UUID format." }),
-})
-
-export const rankKeyParamsSchema = z.object({
-  rankKey: z.guid({ message: "Invalid rank UUID format." }),
-})
+export const playerRankAssignmentParamsSchema = playerIdParamsSchema.extend({
+  groupKey: z.string().trim().min(1).max(64),
+  rankKey: z.string().trim().min(1).max(64),
+});
 
 export const listPlayersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(25),
@@ -56,7 +53,7 @@ export const updatePlayerProfileBodySchema = z
     featured_badge_id: z.int().optional().nullable(),
     locale: z.string().max(9).optional(),
     // Non-implemented, but allow to exist
-    preferences: z.array(z.string()).optional()
+    preferences: z.array(z.string()).optional(),
   })
   .strict()
   .refine((body) => Object.keys(body).length > 0, {
@@ -64,17 +61,15 @@ export const updatePlayerProfileBodySchema = z
   })
   .refine((body) => Object.keys(body.preferences ?? {}).length === 0, {
     message: "Player preferences are not implemented yet.",
-  })
+  });
 
 export const replacePlayerRankAssignmentBodySchema = z
   .object({
-    groupKey: z.string().nonempty(),
-    rankKey: z.string().nonempty(),
-
-    source: z.string().nullable(),
-    // We shouldn't make actor id null for `PUT`, but DB column can be null
-    assignedByActorId: z.string()
+    source: z.string().max(64).nullable().optional(),
+    // Auth is not wired here yet, so callers may provide this for now.
+    assignedByActorId: z.guid().nullable().optional(),
   })
+  .strict();
 
 export const deletePlayerQuerySchema = z
   .object({
@@ -86,8 +81,7 @@ export const deletePlayerQuerySchema = z
   .strict();
 
 export type PlayerIdParams = z.infer<typeof playerIdParamsSchema>;
-export type GroupKeyParams = z.infer<typeof groupKeyParamsSchema>;
-export type RankKeyParams = z.infer<typeof rankKeyParamsSchema>;
+export type PlayerRankAssignmentParams = z.infer<typeof playerRankAssignmentParamsSchema>;
 
 export type ListPlayersQuery = z.infer<typeof listPlayersQuerySchema>;
 export type DeletePlayerQuery = z.infer<typeof deletePlayerQuerySchema>;

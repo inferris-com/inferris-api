@@ -486,9 +486,10 @@ CREATE TABLE player_ranks
   assigned_by_actor_id UUID        NULL REFERENCES actors (id) ON DELETE RESTRICT,
   source               TEXT        NULL,
 
-  PRIMARY KEY (player_id, rank_key)
+  PRIMARY KEY (player_id, group_key)
 );
 CREATE INDEX idx_player_ranks_group_key ON player_ranks (group_key);
+CREATE INDEX idx_player_ranks_rank_key ON player_ranks (rank_key);
 CREATE INDEX idx_player_ranks_assigned_by_actor
   ON player_ranks (assigned_by_actor_id) WHERE assigned_by_actor_id IS NOT NULL;
 

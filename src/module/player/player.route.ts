@@ -5,22 +5,29 @@ import { validateRequest } from "../../middleware/validation.js";
 import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
 import type {
   PlayerProfileResponse,
+  PlayerRankAssignmentResponse,
   PlayerResponse,
   PlayerSummaryResponse,
 } from "./player.response.types.js";
 import type { PlayerService } from "./player.service.js";
-import type {
-  CreatePlayerBody,
-  DeletePlayerQuery,
-  ListPlayersQuery,
-  PlayerIdParams,
-  UpdatePlayerBody,
+import {
+  type CreatePlayerBody,
+  type DeletePlayerQuery,
+  type ListPlayersQuery,
+  type PlayerIdParams,
+  type PlayerRankAssignmentParams,
+  replacePlayerRankAssignmentBodySchema,
+  type ReplaceRankAssignmentBody,
+  type UpdatePlayerBody,
+  updatePlayerProfileBodySchema,
+  type UpdateProfileBody,
 } from "./player.schemas.js";
 import {
   createPlayerBodySchema,
   deletePlayerQuerySchema,
   listPlayersQuerySchema,
   playerIdParamsSchema,
+  playerRankAssignmentParamsSchema,
   updatePlayerBodySchema,
 } from "./player.schemas.js";
 
@@ -71,6 +78,30 @@ export function createPlayerRouter(service: PlayerService): Router {
     res.json(body);
   };
 
+  const updateRankAssignment: RequestHandler<
+    PlayerRankAssignmentParams,
+    unknown,
+    ReplaceRankAssignmentBody
+  > = async (req, res) => {
+    const assignment = await service.updateRankAssignment(
+      req.params.playerId,
+      req.params.groupKey,
+      req.params.rankKey,
+      req.body,
+    );
+    const body: ApiSuccess<PlayerRankAssignmentResponse> = { data: assignment };
+    res.json(body);
+  };
+
+  const updateProfile: RequestHandler<PlayerIdParams, unknown, UpdateProfileBody> = async (
+    req,
+    res,
+  ) => {
+    const player = await service.updateProfile(req.params.playerId, req.body);
+    const body: ApiSuccess<PlayerProfileResponse> = { data: player };
+    res.json(body);
+  };
+
   const deletePlayer: RequestHandler<PlayerIdParams, unknown, unknown, DeletePlayerQuery> = async (
     req,
     res,
@@ -79,10 +110,28 @@ export function createPlayerRouter(service: PlayerService): Router {
     res.status(204).send();
   };
 
+  const deleteRankAssignment: RequestHandler<PlayerRankAssignmentParams> = async (req, res) => {
+    await service.deleteRankAssignment(
+      req.params.playerId,
+      req.params.groupKey,
+      req.params.rankKey,
+    );
+
+    res.status(204).send();
+  };
+
   router.get("/", validateRequest({ query: listPlayersQuerySchema }), listPlayers);
   router.get("/:playerId", validateRequest({ params: playerIdParamsSchema }), getPlayer);
   router.get("/:playerId/profile", validateRequest({ params: playerIdParamsSchema }), getProfile);
   router.post("/", validateRequest({ body: createPlayerBodySchema }), createPlayer);
+  router.put(
+    "/:playerId/ranks/:groupKey/:rankKey",
+    validateRequest({
+      params: playerRankAssignmentParamsSchema,
+      body: replacePlayerRankAssignmentBodySchema,
+    }),
+    updateRankAssignment,
+  );
   router.patch(
     "/:playerId",
     validateRequest({
@@ -91,10 +140,23 @@ export function createPlayerRouter(service: PlayerService): Router {
     }),
     updatePlayer,
   );
+  router.patch(
+    "/:playerId/profile",
+    validateRequest({
+      params: playerIdParamsSchema,
+      body: updatePlayerProfileBodySchema,
+    }),
+    updateProfile,
+  );
   router.delete(
     "/:playerId",
     validateRequest({ params: playerIdParamsSchema, query: deletePlayerQuerySchema }),
     deletePlayer,
+  );
+  router.delete(
+    "/:playerId/ranks/:groupKey/:rankKey",
+    validateRequest({ params: playerRankAssignmentParamsSchema }),
+    deleteRankAssignment,
   );
 
   return router;

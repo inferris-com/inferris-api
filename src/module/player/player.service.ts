@@ -1,22 +1,25 @@
 import { PlayerAlreadyExistsError, PlayerNotFoundError } from "./player.errors.js";
 import {
   toPlayerProfileResponse,
+  toPlayerRankAssignmentResponse,
   toPlayerResponse,
   toPlayerSummaryResponse,
 } from "./player.mapper.js";
 import type { DeletePlayerOptions } from "./player.repository.js";
 import type {
   PlayerProfileResponse,
+  PlayerRankAssignmentResponse,
   PlayerResponse,
   PlayerSummaryResponse,
 } from "./player.response.types.js";
 import type {
   CreatePlayerBody,
   ListPlayersQuery,
+  ReplaceRankAssignmentBody,
   UpdatePlayerBody,
   UpdateProfileBody,
 } from "./player.schemas.js";
-import type {PlayerPgRepository} from "./player.pg-repository.js";
+import type { PlayerPgRepository } from "./player.pg-repository.js";
 
 export class PlayerService {
   constructor(private readonly repository: PlayerPgRepository) {}
@@ -72,7 +75,27 @@ export class PlayerService {
     if (!player) {
       throw new PlayerNotFoundError(id);
     }
-    return toPlayerProfileResponse(player)
+    return toPlayerProfileResponse(player);
+  }
+
+  async updateRankAssignment(
+    playerId: string,
+    groupKey: string,
+    rankKey: string,
+    input: ReplaceRankAssignmentBody,
+  ): Promise<PlayerRankAssignmentResponse> {
+    const assignment = await this.repository.replaceRankAssignment(
+      playerId,
+      groupKey,
+      rankKey,
+      input,
+    );
+
+    if (!assignment) {
+      throw new PlayerNotFoundError(playerId);
+    }
+
+    return toPlayerRankAssignmentResponse(assignment);
   }
 
   async deletePlayer(id: string, options: DeletePlayerOptions): Promise<void> {
@@ -80,6 +103,14 @@ export class PlayerService {
 
     if (!deleted) {
       throw new PlayerNotFoundError(id);
+    }
+  }
+
+  async deleteRankAssignment(playerId: string, groupKey: string, rankKey: string): Promise<void> {
+    const deleted = await this.repository.deleteRankAssignment(playerId, groupKey, rankKey);
+
+    if (!deleted) {
+      throw new PlayerNotFoundError(playerId);
     }
   }
 }
