@@ -1,11 +1,25 @@
 import { PlayerAlreadyExistsError, PlayerNotFoundError } from "./player.errors.js";
-import { toPlayerResponse, toPlayerSummaryResponse } from "./player.mapper.js";
+import {
+  toPlayerProfileResponse,
+  toPlayerResponse,
+  toPlayerSummaryResponse,
+} from "./player.mapper.js";
 import type { DeletePlayerOptions, PlayerRepository } from "./player.repository.js";
-import type { PlayerResponse, PlayerSummaryResponse } from "./player.response.types.js";
-import type { CreatePlayerBody, ListPlayersQuery, UpdatePlayerBody } from "./player.schemas.js";
+import type {
+  PlayerProfileResponse,
+  PlayerResponse,
+  PlayerSummaryResponse,
+} from "./player.response.types.js";
+import type {
+  CreatePlayerBody,
+  ListPlayersQuery,
+  UpdatePlayerBody,
+  UpdateProfileBody,
+} from "./player.schemas.js";
+import type {PlayerPgRepository} from "./player.pg-repository.js";
 
 export class PlayerService {
-  constructor(private readonly repository: PlayerRepository) {}
+  constructor(private readonly repository: PlayerPgRepository) {}
 
   async listPlayers(query: ListPlayersQuery): Promise<PlayerSummaryResponse[]> {
     const players = await this.repository.listPlayers(query);
@@ -20,6 +34,16 @@ export class PlayerService {
     }
 
     return toPlayerResponse(player);
+  }
+
+  async getProfile(playerId: string): Promise<PlayerProfileResponse> {
+    const player = await this.repository.findProfileByPlayerId(playerId);
+
+    if (!player) {
+      throw new PlayerNotFoundError(playerId);
+    }
+
+    return toPlayerProfileResponse(player);
   }
 
   async createPlayer(input: CreatePlayerBody): Promise<PlayerResponse> {
@@ -40,6 +64,15 @@ export class PlayerService {
     }
 
     return toPlayerResponse(player);
+  }
+
+  async updateProfile(id: string, input: UpdateProfileBody): Promise<PlayerProfileResponse> {
+    const player = await this.repository.updateProfile(id, input);
+
+    if (!player) {
+      throw new PlayerNotFoundError(id);
+    }
+    return toPlayerProfileResponse(player)
   }
 
   async deletePlayer(id: string, options: DeletePlayerOptions): Promise<void> {

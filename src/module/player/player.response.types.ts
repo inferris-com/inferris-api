@@ -33,3 +33,23 @@ export type PlayerResponse = {
   lastSeenAtMs: string | null;
   lastServerId: string | null;
 };
+
+export type PlayerProfileResponse = {
+  playerId: string,
+  bio: string | null;
+  pronouns: string | null;
+  // badges: number[];
+  featuredBadgeId: number | null;
+  locale: string;
+  preferences: unknown;
+}
+
+export type PlayerRankAssignmentResponse = {
+  playerId: string,
+  groupKey: string,
+  rankKey: string,
+  assignedAtMs: string,
+  assignedByActorId: string | null,
+  source: string | null
+}
+

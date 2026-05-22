@@ -1,6 +1,16 @@
-import { int8ToString, int8ToStringOrDefault } from "../../shared/db/int8.js";
-import type { PlayerDetailsRecord, PlayerSummaryRecord } from "./player.repository.js";
-import type { PlayerResponse, PlayerSummaryResponse } from "./player.response.types.js";
+import { int8ToStringOrNull, int8ToStringOrDefault, int8ToString } from "../../shared/db/int8.js";
+import type {
+  PlayerDetailsRecord,
+  PlayerProfileRow,
+  PlayerRankRow,
+  PlayerSummaryRecord,
+} from "./player.repository.js";
+import type {
+  PlayerProfileResponse,
+  PlayerRankAssignmentResponse,
+  PlayerResponse,
+  PlayerSummaryResponse,
+} from "./player.response.types.js";
 
 export function toPlayerSummaryResponse(row: PlayerSummaryRecord): PlayerSummaryResponse {
   return {
@@ -39,7 +49,29 @@ export function toPlayerResponse(input: PlayerDetailsRecord): PlayerResponse {
     })),
 
     createdAtMs: int8ToStringOrDefault(player.created_at_ms, "0"),
-    lastSeenAtMs: int8ToString(player.last_seen_at_ms),
+    lastSeenAtMs: int8ToStringOrNull(player.last_seen_at_ms),
     lastServerId: player.last_server_id,
   };
+}
+
+export function toPlayerProfileResponse(input: PlayerProfileRow): PlayerProfileResponse {
+  return {
+    playerId: input.player_id,
+    bio: input.bio,
+    pronouns: input.pronouns,
+    featuredBadgeId: input.featured_badge_id,
+    locale: input.locale,
+    preferences: input.preferences
+  }
+}
+
+export function toPlayerRankAssignmentResponse(input: PlayerRankRow): PlayerRankAssignmentResponse {
+  return {
+    playerId: input.player_id,
+    groupKey: input.group_key,
+    rankKey: input.rank_key,
+    assignedAtMs: int8ToString(input.assigned_at_ms),
+    assignedByActorId: input.assigned_by_actor_id,
+    source: input.source
+  }
 }

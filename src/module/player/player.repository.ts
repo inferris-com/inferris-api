@@ -44,10 +44,16 @@ export type DeletePlayerOptions = {
   hard: boolean;
 };
 
+// Rank assignments
+export type PlayerRankRow = Selectable<PlayerRanks>;
+export type PlayerProfileRow = Selectable<PlayerProfiles>;
+
 export interface PlayerRepository {
   listPlayers(query: ListPlayersQuery): Promise<PlayerSummaryRecord[]>;
   findPlayerById(id: string): Promise<PlayerDetailsRecord | null>;
   createPlayer(input: CreatePlayerBody): Promise<CreatePlayerResult>;
   updatePlayer(id: string, input: UpdatePlayerBody): Promise<PlayerDetailsRecord | null>;
   deletePlayer(id: string, options: DeletePlayerOptions): Promise<boolean>;
+}
+export class PlayerRanksRecord {
 }

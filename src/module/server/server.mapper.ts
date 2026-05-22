@@ -1,7 +1,7 @@
 import type { Selectable } from "kysely";
 import type { ServerAccessPolicies, Lockdowns, Servers } from "../../db/types.js";
 import type {AccessResponse, LockdownResponse, ServerResponse} from "./server.response.types.js";
-import { int8ToString, int8ToStringOrDefault } from "../../shared/db/int8.js";
+import { int8ToStringOrNull, int8ToStringOrDefault } from "../../shared/db/int8.js";
 
 export function toServerResponse(servers: Selectable<Servers>): ServerResponse{
   return {
@@ -13,11 +13,11 @@ export function toServerResponse(servers: Selectable<Servers>): ServerResponse{
     port: servers.port,
     version: servers.version,
 
-    lastStartedAtMs: int8ToString(servers.last_started_at_ms),
-    lastHeartbeatAtMs: int8ToString(servers.last_heartbeat_at_ms),
+    lastStartedAtMs: int8ToStringOrNull(servers.last_started_at_ms),
+    lastHeartbeatAtMs: int8ToStringOrNull(servers.last_heartbeat_at_ms),
 
     createdAtMs: int8ToStringOrDefault(servers.created_at_ms, "0"),
-    lastUpdatedAtMs: int8ToString(servers.last_updated_at_ms)
+    lastUpdatedAtMs: int8ToStringOrNull(servers.last_updated_at_ms)
   }
 }
 

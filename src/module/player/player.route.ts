@@ -3,7 +3,11 @@ import type { ParamsDictionary } from "express-serve-static-core";
 
 import { validateRequest } from "../../middleware/validation.js";
 import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
-import type { PlayerResponse, PlayerSummaryResponse } from "./player.response.types.js";
+import type {
+  PlayerProfileResponse,
+  PlayerResponse,
+  PlayerSummaryResponse,
+} from "./player.response.types.js";
 import type { PlayerService } from "./player.service.js";
 import type {
   CreatePlayerBody,
@@ -42,6 +46,12 @@ export function createPlayerRouter(service: PlayerService): Router {
     res.json(body);
   };
 
+  const getProfile: RequestHandler<PlayerIdParams> = async (req, res) => {
+    const player = await service.getProfile(req.params.playerId);
+    const body: ApiSuccess<PlayerProfileResponse> = { data: player };
+    res.json(body);
+  };
+
   const createPlayer: RequestHandler<ParamsDictionary, unknown, CreatePlayerBody> = async (
     req,
     res,
@@ -71,6 +81,7 @@ export function createPlayerRouter(service: PlayerService): Router {
 
   router.get("/", validateRequest({ query: listPlayersQuerySchema }), listPlayers);
   router.get("/:playerId", validateRequest({ params: playerIdParamsSchema }), getPlayer);
+  router.get("/:playerId/profile", validateRequest({ params: playerIdParamsSchema }), getProfile);
   router.post("/", validateRequest({ body: createPlayerBodySchema }), createPlayer);
   router.patch(
     "/:playerId",

@@ -1,24 +1,21 @@
-import { sql, type Kysely, type Transaction } from "kysely";
+import {type Kysely, sql, type Transaction} from "kysely";
 
-import type { DB } from "../../db/types.js";
+import type {DB} from "../../db/types.js";
 import type {
   CreatePlayerResult,
   DeletePlayerOptions,
   PlayerDetailsRecord,
+  PlayerProfileRow,
   PlayerRepository,
 } from "./player.repository.js";
-import type { CreatePlayerBody, ListPlayersQuery, UpdatePlayerBody } from "./player.schemas.js";
+import type {CreatePlayerBody, ListPlayersQuery, UpdatePlayerBody, UpdateProfileBody,} from "./player.schemas.js";
 
 type DbExecutor = Kysely<DB> | Transaction<DB>;
 
 export class PlayerPgRepository implements PlayerRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
-  async listPlayers({
-    limit,
-    offset,
-    username,
-  }: ListPlayersQuery) {
+  async listPlayers({ limit, offset, username }: ListPlayersQuery) {
     return this.db
       .selectFrom("players")
       .select([
@@ -38,6 +35,20 @@ export class PlayerPgRepository implements PlayerRepository {
 
   async findPlayerById(id: string): Promise<PlayerDetailsRecord | null> {
     return this.loadPlayerDetails(this.db, id);
+  }
+
+  async findProfileByPlayerId(id: string): Promise<PlayerProfileRow | null> {
+    return await this.db.transaction().execute(async (trx) => {
+      const profile = await trx
+        .selectFrom("player_profiles")
+        .selectAll()
+        .where("player_id", "=", id)
+        .executeTakeFirst();
+
+      if(!profile) return null;
+
+      return profile;
+    })
   }
 
   async createPlayer(input: CreatePlayerBody): Promise<CreatePlayerResult> {
@@ -82,10 +93,7 @@ export class PlayerPgRepository implements PlayerRepository {
           .where("id", "=", id)
           .executeTakeFirstOrThrow();
       } else {
-        await trx
-          .insertInto("players")
-          .values(playerInsert)
-          .executeTakeFirstOrThrow();
+        await trx.insertInto("players").values(playerInsert).executeTakeFirstOrThrow();
       }
 
       await trx
@@ -185,6 +193,67 @@ export class PlayerPgRepository implements PlayerRepository {
     });
   }
 
+  async updateProfile(id: string, input: UpdateProfileBody) {
+    return this.db.transaction().execute(async (trx) => {
+      const profileUpdate: {
+        bio?: string | null;
+        pronouns?: string | null;
+        featured_badge_id?: number | null;
+        locale?: string;
+        // preferences not implemented
+      } = {};
+
+      if (input.bio !== undefined) {
+        profileUpdate.bio = input.bio;
+      }
+      if (input.pronouns !== undefined) {
+        profileUpdate.pronouns = input.pronouns;
+      }
+      if (input.featured_badge_id !== undefined) {
+        profileUpdate.featured_badge_id = input.featured_badge_id;
+      }
+      if (input.locale !== undefined) {
+        profileUpdate.locale = input.locale;
+      }
+      // preferences not implemented
+
+      return await trx
+        .updateTable("player_profiles")
+        .set(profileUpdate)
+        .where("player_id", "=", id)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+    });
+  }
+
+  async replaceRankAssignment(playerId: string, groupKey: string, rankKey: string) {
+    return this.db.transaction().execute(async (trx) => {
+      const assignmentExists = await trx
+        .selectFrom('player_ranks')
+        .where("player_id", "=", playerId)
+        .where("group_key", "=", groupKey)
+        .where("rank_key", "=", rankKey)
+        .executeTakeFirst();
+
+      if(assignmentExists){
+        return await trx
+          .updateTable('player_ranks')
+          .set('group_key', groupKey)
+          .set("rank_key", rankKey)
+          .where("player_id", "=", playerId)
+          .where("group_key", "=", groupKey)
+          .where("rank_key", "=", rankKey)
+          .returningAll()
+          .executeTakeFirst();
+      }else{
+        return await trx
+          .insertInto("player_ranks")
+          .values({player_id: playerId, group_key: groupKey, rank_key: rankKey})
+          .executeTakeFirst();
+      }
+    })
+  }
+
   async deletePlayer(id: string, { hard }: DeletePlayerOptions): Promise<boolean> {
     if (hard) {
       const result = await this.db.deleteFrom("players").where("id", "=", id).executeTakeFirst();
@@ -214,6 +283,17 @@ export class PlayerPgRepository implements PlayerRepository {
 
       return true;
     });
+  }
+
+  async deleteRankAssignment(playerId: string, groupKey: string, rankKey: string) {
+    return this.db.transaction().execute(async (trx) => {
+      return await trx
+        .deleteFrom("player_ranks")
+        .where("player_id", "=", playerId)
+        .where("group_key", "=", groupKey)
+        .where("rank_key", "=", rankKey)
+        .executeTakeFirst();
+    })
   }
 
   private async loadPlayerDetails(
