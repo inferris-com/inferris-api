@@ -1,10 +1,31 @@
-import { ServerNotFoundError } from "./server.errors.js";
+import { ServerAlreadyExistsError, ServerNotFoundError } from "./server.errors.js";
 import { toAccessResponse, toLockdownResponse, toServerResponse } from "./server.mapper.js";
 import type { AccessResponse, LockdownResponse, ServerResponse } from "./server.response.types.js";
-import type { PgServerRepository } from "./server.pg-repository.js";
+import type { ServerPgRepository } from "./server.pg-repository.js";
+import type { CreateServerBody, UpdateServerBody } from "./server.schemas.js";
 
 export class ServerService {
-  constructor(private readonly repo: PgServerRepository) {}
+  constructor(private readonly repo: ServerPgRepository) {}
+
+  async createServer(input: CreateServerBody): Promise<ServerResponse> {
+    const result = await this.repo.createServer(input);
+
+    if (result.status === "conflict") {
+      throw new ServerAlreadyExistsError(input.name);
+    }
+
+    return toServerResponse(result.data);
+  }
+
+  async patchServer(id: string, input: UpdateServerBody): Promise<ServerResponse> {
+    const server = await this.repo.updateServerById(id, input);
+
+    if (!server) {
+      throw new ServerNotFoundError(id);
+    }
+
+    return toServerResponse(server);
+  }
 
   async getServer(id: string): Promise<ServerResponse> {
     const server = await this.repo.findServerById(id);

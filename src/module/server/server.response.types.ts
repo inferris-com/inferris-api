@@ -36,7 +36,7 @@ export type LockdownResponse = {
   id: string,
   scope: string,
   serverId: string | null,
-  requiredRankKey: string | null,
+  requiredRankKey: string,
   reason: string,
   issuedByActorId: string,
   isActive: boolean,

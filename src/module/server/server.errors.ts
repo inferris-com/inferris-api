@@ -14,15 +14,15 @@ export class ServerNotFoundError extends NotFoundError {
 }
 
 export class ServerAlreadyExistsError extends ConflictError {
-  readonly serverId: string;
+  readonly serverName: string;
 
   constructor(serverId: string) {
     super({
       code: "SERVER_ALREADY_EXISTS",
-      message: "Server already exists.",
+      message: "Server name already exists.",
     });
 
-    this.serverId = serverId;
+    this.serverName = serverId;
   }
 }
 

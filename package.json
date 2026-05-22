@@ -24,6 +24,7 @@
     "db:seed": "kysely seed:run",
     "db:seed:list": "kysely seed list",
     "db:seed:make": "kysely seed:make",
+    "db:resync": "npm run db:migrate:down && npm run db:migrate:up && npm run db:codegen && npm run db:seed",
     "dev": "tsx watch src/index.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

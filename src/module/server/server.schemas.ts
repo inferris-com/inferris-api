@@ -8,9 +8,9 @@ export const serverStatusTypeSchema = z.enum(["online", "offline"]);
 export const serverAccessTypeSchema = z.enum(["open", "min_rank", "permission"]);
 export const lockdownScopeTypeSchema = z.enum(["global", "local"]);
 
-// QUERY
+// Example: GET /servers/:serverId
 export const serverIdParamsSchema = z.object({
-  id: z.guid({message: "Invalid server UUID format."}),
+  serverId: z.guid({ message: "Invalid server UUID format." }),
 });
 
 // POST
@@ -23,10 +23,8 @@ export const createServerBodySchema = z
     environment: serverEnvTypeSchema,
     status: serverStatusTypeSchema.optional(),
 
-    accessMode: serverAccessTypeSchema.optional(),
-
-    port: z.int().min(1).max(65535),
-    version: z.string().optional(),
+    port: z.int().min(1).max(65535).nullable(),
+    version: z.string(),
   })
   .strict();
 
@@ -34,8 +32,9 @@ export const createServerBodySchema = z
 export const createLockdownBodySchema = z
   .object({
     scope: lockdownScopeTypeSchema,
-    requiredRankKey: z.string().max(30).optional(),
+    requiredRankKey: z.string().max(30),
     reason: z.string(),
+    issuedByActorId: z.guid(),
     isActive: z.boolean().optional().default(true),
     startsAtMs: BigIntStringSchema,
     endsAtMs: BigIntStringSchema.optional(),
@@ -48,6 +47,7 @@ export const replaceServerAccessBodySchema = z
     mode: serverAccessTypeSchema,
     requiredPermissionId: z.uuid(),
     requiredRankKey: z.string().max(30),
+    note: z.string().nullable()
   })
   .strict();
 
@@ -61,9 +61,7 @@ export const updateServerBodySchema = z
     environment: serverEnvTypeSchema.optional(),
     status: serverStatusTypeSchema.optional(),
 
-    accessMode: serverAccessTypeSchema.optional(),
-
-    port: z.int().min(1).max(65535).optional(),
+    port: z.int().min(1).max(65535).optional().nullable(),
     version: z.string(),
 
     lastStartedAtMs: BigIntStringSchema.optional(),
@@ -78,7 +76,7 @@ export const updateServerBodySchema = z
 export const updateServerAccessBodySchema = z
   .object({
     mode: serverAccessTypeSchema.optional(),
-    requiredPermissionId: z.uuid().optional(),
+    requiredPermissionId: z.guid().optional(),
     requiredRankKey: z.string().max(30).optional(),
   })
   .strict();
@@ -89,6 +87,7 @@ export const updateLockdownBodySchema = z
     scope: lockdownScopeTypeSchema,
     requiredRankKey: z.string().max(30).optional(),
     reason: z.string().optional(),
+    issuedByActorId: z.guid().optional(),
     isActive: z.boolean().optional(),
     startsAtMs: BigIntStringSchema.optional(),
     endsAtMs: BigIntStringSchema.optional(),
@@ -103,6 +102,7 @@ export type ServerIdParamsSchema = z.infer<typeof serverIdParamsSchema>;
 
 export type CreateServerBody = z.infer<typeof createServerBodySchema>;
 export type CreateLockdownBody = z.infer<typeof createLockdownBodySchema>;
+export type CreateLockdownInput = ServerIdParamsSchema & CreateLockdownBody;
 export type UpdateServerBody = z.infer<typeof updateServerBodySchema>;
 export type UpdateServerAccessBody = z.infer<typeof updateServerAccessBodySchema>;
 export type ReplaceServerAccessBody = z.infer<typeof replaceServerAccessBodySchema>;

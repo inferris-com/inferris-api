@@ -199,7 +199,6 @@ const seed = {
           environment: "development",
           status: "offline",
           version: "development",
-          access_mode: "open",
         },
         {
           id: ids.servers.lobby,
@@ -208,7 +207,6 @@ const seed = {
           environment: "development",
           status: "offline",
           version: "development",
-          access_mode: "open",
         },
         {
           id: ids.servers.lockdownMinigames,
@@ -217,7 +215,6 @@ const seed = {
           environment: "development",
           status: "offline",
           version: "development",
-          access_mode: "open",
         },
         {
           id: ids.servers.devMinRank,
@@ -226,7 +223,6 @@ const seed = {
           environment: "development",
           status: "offline",
           version: "development",
-          access_mode: "min_rank",
         },
         {
           id: ids.servers.devPermission,
@@ -235,7 +231,6 @@ const seed = {
           environment: "development",
           status: "offline",
           version: "development",
-          access_mode: "permission",
         },
       ])
       .execute();
@@ -544,6 +539,27 @@ const seed = {
         },
       ])
       .execute();
+
+    // Set any actor–player links
+
+    const actorPlayerLinks = [
+      {
+        actorId: ids.actors.dummy,
+        playerId: ids.players.dummy,
+      },
+      {
+        actorId: ids.actors.refrizor,
+        playerId: ids.players.refrizor,
+      },
+    ];
+
+    for (const link of actorPlayerLinks) {
+      await db
+        .updateTable("actors")
+        .set({ player_id: link.playerId })
+        .where("id", "=", link.actorId)
+        .execute();
+    }
   },
 } satisfies Seed;
 

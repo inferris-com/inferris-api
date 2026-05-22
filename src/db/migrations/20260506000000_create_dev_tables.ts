@@ -202,7 +202,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     status               server_status      NOT NULL DEFAULT 'offline',
     port                 INT                NULL CHECK (port BETWEEN 1 AND 65535),
     version              TEXT               NOT NULL DEFAULT 'Unspecified version',
-    access_mode          server_access_mode NOT NULL DEFAULT 'open',
 
     last_started_at_ms   BIGINT             NULL,
     last_heartbeat_at_ms BIGINT             NULL,
@@ -212,7 +211,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   );
   CREATE INDEX idx_servers_type ON servers (type);
   CREATE INDEX idx_servers_environment ON servers (environment);
-  CREATE INDEX idx_servers_access_mode ON servers (access_mode);
 
 --  Players
   CREATE TABLE players

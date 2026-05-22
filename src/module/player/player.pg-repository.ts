@@ -11,7 +11,7 @@ import type { CreatePlayerBody, ListPlayersQuery, UpdatePlayerBody } from "./pla
 
 type DbExecutor = Kysely<DB> | Transaction<DB>;
 
-export class PgPlayerRepository implements PlayerRepository {
+export class PlayerPgRepository implements PlayerRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
   async listPlayers({

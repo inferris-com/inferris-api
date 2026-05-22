@@ -211,6 +211,12 @@ export interface PlayerFlagDefinitions {
   updated_at_ms: Int8 | null;
 }
 
+export interface PlayerIdentities {
+  created_at_ms: Generated<Int8>;
+  mojang_uuid: string;
+  player_id: string;
+}
+
 export interface PlayerNicknames {
   created_at_ms: Generated<Int8>;
   id: Generated<number>;
@@ -355,7 +361,6 @@ export interface ServerAccessPolicies {
 }
 
 export interface Servers {
-  access_mode: Generated<ServerAccessMode>;
   created_at_ms: Generated<Int8>;
   environment: Generated<ServerEnv>;
   id: Generated<string>;
@@ -385,6 +390,7 @@ export interface DB {
   permission_rules: PermissionRules;
   player_badges: PlayerBadges;
   player_flag_definitions: PlayerFlagDefinitions;
+  player_identities: PlayerIdentities;
   player_nicknames: PlayerNicknames;
   player_profiles: PlayerProfiles;
   player_ranks: PlayerRanks;

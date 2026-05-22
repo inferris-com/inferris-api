@@ -2,7 +2,7 @@ import z from "zod";
 import { BigIntStringSchema, UsernameSchema } from "../../shared/common.schemas.js";
 
 export const playerIdParamsSchema = z.object({
-  id: z.guid({ message: "Invalid player UUID format." }),
+  playerId: z.guid({ message: "Invalid player UUID format." }),
 });
 
 export const listPlayersQuerySchema = z.object({

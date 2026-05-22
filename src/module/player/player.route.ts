@@ -37,7 +37,7 @@ export function createPlayerRouter(service: PlayerService): Router {
   };
 
   const getPlayer: RequestHandler<PlayerIdParams> = async (req, res) => {
-    const player = await service.getPlayer(req.params.id);
+    const player = await service.getPlayer(req.params.playerId);
     const body: ApiSuccess<PlayerResponse> = { data: player };
     res.json(body);
   };
@@ -56,7 +56,7 @@ export function createPlayerRouter(service: PlayerService): Router {
     req,
     res,
   ) => {
-    const player = await service.updatePlayer(req.params.id, req.body);
+    const player = await service.updatePlayer(req.params.playerId, req.body);
     const body: ApiSuccess<PlayerResponse> = { data: player };
     res.json(body);
   };
@@ -65,15 +65,15 @@ export function createPlayerRouter(service: PlayerService): Router {
     req,
     res,
   ) => {
-    await service.deletePlayer(req.params.id, { hard: req.query.hard });
+    await service.deletePlayer(req.params.playerId, { hard: req.query.hard });
     res.status(204).send();
   };
 
   router.get("/", validateRequest({ query: listPlayersQuerySchema }), listPlayers);
-  router.get("/:id", validateRequest({ params: playerIdParamsSchema }), getPlayer);
+  router.get("/:playerId", validateRequest({ params: playerIdParamsSchema }), getPlayer);
   router.post("/", validateRequest({ body: createPlayerBodySchema }), createPlayer);
   router.patch(
-    "/:id",
+    "/:playerId",
     validateRequest({
       params: playerIdParamsSchema,
       body: updatePlayerBodySchema,
@@ -81,7 +81,7 @@ export function createPlayerRouter(service: PlayerService): Router {
     updatePlayer,
   );
   router.delete(
-    "/:id",
+    "/:playerId",
     validateRequest({ params: playerIdParamsSchema, query: deletePlayerQuerySchema }),
     deletePlayer,
   );

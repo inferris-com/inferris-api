@@ -1,0 +1,14 @@
+@baseUrl = http://localhost:3000
+
+### Create server
+PATCH {{baseUrl}}/servers/d1c4fc9f-b470-4b2a-81e9-3ee4e7030036
+Content-Type: application/json
+
+{
+  "name": "gsdfsdf",
+  "type": "paper",
+  "environment": "development",
+  "status": "offline",
+  "port": null,
+  "version": "1.0"
+}

@@ -1,0 +1,14 @@
+@baseUrl = http://localhost:3000
+
+### Create server
+POST {{baseUrl}}/servers
+Content-Type: application/json
+
+{
+  "name": "Woooo",
+  "type": "paper",
+  "environment": "development",
+  "status": "offline",
+  "port": null,
+  "version": "1.0"
+}

@@ -1,10 +1,9 @@
 import type { Selectable } from "kysely";
-import type { ServerAccessPolicies, Lockdowns } from "../../db/types.js";
+import type { ServerAccessPolicies, Lockdowns, Servers } from "../../db/types.js";
 import type {AccessResponse, LockdownResponse, ServerResponse} from "./server.response.types.js";
 import { int8ToString, int8ToStringOrDefault } from "../../shared/db/int8.js";
-import type { ServerRecord } from "./server.repository.js";
 
-export function toServerResponse(servers: ServerRecord): ServerResponse{
+export function toServerResponse(servers: Selectable<Servers>): ServerResponse{
   return {
     id: servers.id,
     name: servers.name,
@@ -39,7 +38,7 @@ export function toLockdownResponse(lockdown: Selectable<Lockdowns>): LockdownRes
     id: lockdown.id,
     scope: lockdown.scope,
     serverId: lockdown.server_id ? lockdown.server_id : null,
-    requiredRankKey: lockdown.required_rank_key ? lockdown.required_rank_key : null,
+    requiredRankKey: lockdown.required_rank_key,
     reason: lockdown.reason,
     issuedByActorId: lockdown.issued_by_actor_id,
     isActive: lockdown.is_active,
