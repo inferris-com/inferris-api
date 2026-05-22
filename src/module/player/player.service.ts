@@ -4,7 +4,7 @@ import {
   toPlayerResponse,
   toPlayerSummaryResponse,
 } from "./player.mapper.js";
-import type { DeletePlayerOptions, PlayerRepository } from "./player.repository.js";
+import type { DeletePlayerOptions } from "./player.repository.js";
 import type {
   PlayerProfileResponse,
   PlayerResponse,

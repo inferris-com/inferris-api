@@ -18,11 +18,12 @@ export type PlayerResponse = {
   profile: {
     bio: string | null;
     pronouns: string | null;
-    badges: number[];
     featuredBadgeId: number | null;
     locale: string;
     preferences: unknown;
   } | null;
+
+  badges: number[];
 
   rankAssignments: Array<{
     groupKey: string;
@@ -38,7 +39,6 @@ export type PlayerProfileResponse = {
   playerId: string,
   bio: string | null;
   pronouns: string | null;
-  // badges: number[];
   featuredBadgeId: number | null;
   locale: string;
   preferences: unknown;
@@ -52,4 +52,3 @@ export type PlayerRankAssignmentResponse = {
   assignedByActorId: string | null,
   source: string | null
 }
-

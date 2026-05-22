@@ -36,12 +36,13 @@ export function toPlayerResponse(input: PlayerDetailsRecord): PlayerResponse {
       ? {
           bio: profile.bio,
           pronouns: profile.pronouns,
-          badges: badgeAssignments.map((assignment) => assignment.badge_id),
           featuredBadgeId: profile.featured_badge_id,
           locale: profile.locale ?? "en_US",
           preferences: profile.preferences,
         }
       : null,
+
+    badges: badgeAssignments.map((assignment) => assignment.badge_id),
 
     rankAssignments: rankAssignments.map((assignment) => ({
       groupKey: assignment.group_key,
