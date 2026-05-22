@@ -1,5 +1,5 @@
 import z from "zod";
-import {BigIntStringSchema} from "../../shared/common.schemas.js";
+import { BigIntStringSchema } from "../../shared/common.schemas.js";
 
 // Types
 export const serverTypeSchema = z.enum(["paper", "velocity", "unspecified"]);
@@ -47,7 +47,7 @@ export const replaceServerAccessBodySchema = z
     mode: serverAccessTypeSchema,
     requiredPermissionId: z.uuid(),
     requiredRankKey: z.string().max(30),
-    note: z.string().nullable()
+    note: z.string().nullable(),
   })
   .strict();
 
@@ -70,16 +70,10 @@ export const updateServerBodySchema = z
     createdAtMs: BigIntStringSchema.optional(),
     lastUpdatedAtMs: BigIntStringSchema.optional(),
   })
-  .strict();
-
-// PATCH
-export const updateServerAccessBodySchema = z
-  .object({
-    mode: serverAccessTypeSchema.optional(),
-    requiredPermissionId: z.guid().optional(),
-    requiredRankKey: z.string().max(30).optional(),
-  })
-  .strict();
+  .strict()
+  .refine((body) => Object.keys(body).length > 0, {
+    message: "At least one field must be provided.",
+  });
 
 // PATCH
 export const updateLockdownBodySchema = z
@@ -92,7 +86,10 @@ export const updateLockdownBodySchema = z
     startsAtMs: BigIntStringSchema.optional(),
     endsAtMs: BigIntStringSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine((body) => Object.keys(body).length > 0, {
+    message: "At least one field must be provided.",
+  });
 
 export type ServerType = z.infer<typeof serverTypeSchema>;
 export type ServerAccessType = z.infer<typeof serverAccessTypeSchema>;
@@ -104,6 +101,5 @@ export type CreateServerBody = z.infer<typeof createServerBodySchema>;
 export type CreateLockdownBody = z.infer<typeof createLockdownBodySchema>;
 export type CreateLockdownInput = ServerIdParamsSchema & CreateLockdownBody;
 export type UpdateServerBody = z.infer<typeof updateServerBodySchema>;
-export type UpdateServerAccessBody = z.infer<typeof updateServerAccessBodySchema>;
 export type ReplaceServerAccessBody = z.infer<typeof replaceServerAccessBodySchema>;
 export type UpdateLockdownBody = z.infer<typeof updateLockdownBodySchema>;

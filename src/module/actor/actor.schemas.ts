@@ -1,5 +1,5 @@
 import { z } from "zod";
-import {BigIntStringSchema} from "../../shared/common.schemas.js";
+import { BigIntStringSchema } from "../../shared/common.schemas.js";
 
 export const actorTypeSchema = z.enum(["system", "application", "user", "unspecified"]);
 
@@ -24,7 +24,10 @@ export const updateActorBodySchema = z
     createdAtMs: BigIntStringSchema.optional(),
     lastUpdatedAtMs: BigIntStringSchema.optional().nullable(),
   })
-  .strict();
+  .strict()
+  .refine((body) => Object.keys(body).length > 0, {
+    message: "At least one field must be provided.",
+  });
 
 export type ActorType = z.infer<typeof actorTypeSchema>;
 export type ActorIdParams = z.infer<typeof actorIdParamsSchema>;

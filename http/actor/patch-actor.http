@@ -5,5 +5,4 @@ PATCH {{baseUrl}}/actors/7d16b15d-bb22-4a6d-80db-6213b3d75007
 Content-Type: application/json
 
 {
-  "id": "7d16b15d-bb22-4a6d-80db-6213b3d75007"
 }

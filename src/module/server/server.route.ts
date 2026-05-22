@@ -8,7 +8,6 @@ import {
   createServerBodySchema,
   type ServerIdParamsSchema,
   serverIdParamsSchema,
-  updateServerAccessBodySchema,
   type UpdateServerBody,
   updateServerBodySchema,
 } from "./server.schemas.js";
