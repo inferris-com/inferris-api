@@ -1,0 +1,15 @@
+@baseUrl = http://localhost:3000
+
+### Create server
+POST {{baseUrl}}/servers/00000000-0000-0000-0000-000000000001/lockdown
+Content-Type: application/json
+
+{
+  "scope": "local",
+  "requiredRankKey": "admin",
+  "reason": "Test 1123",
+  "issuedByActorId": "20000000-0000-0000-0000-000000000001",
+  "isActive": true,
+  "startsAtMs": "1779428035827",
+  "endsAtMs": null
+}

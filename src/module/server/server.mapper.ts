@@ -1,9 +1,11 @@
-import type { Selectable } from "kysely";
-import type { ServerAccessPolicies, Lockdowns, Servers } from "../../db/types.js";
-import type {AccessResponse, LockdownResponse, ServerResponse} from "./server.response.types.js";
-import { int8ToStringOrNull, int8ToStringOrDefault } from "../../shared/db/int8.js";
+import type { Selectable, Updateable } from "kysely";
+import type { Lockdowns, ServerAccessPolicies, Servers } from "../../db/types.js";
+import type { AccessResponse, LockdownResponse, ServerResponse } from "./server.response.types.js";
+import { int8ToStringOrDefault, int8ToStringOrNull } from "../../shared/db/int8.js";
+import  {lockdownScopeTypeSchema, type ReplaceServerAccessBody, type UpdateLockdownBody } from "./server.schemas.js";
+import {BigIntStringSchema} from "../../shared/common.schemas.js";
 
-export function toServerResponse(servers: Selectable<Servers>): ServerResponse{
+export function toServerResponse(servers: Selectable<Servers>): ServerResponse {
   return {
     id: servers.id,
     name: servers.name,
@@ -17,11 +19,11 @@ export function toServerResponse(servers: Selectable<Servers>): ServerResponse{
     lastHeartbeatAtMs: int8ToStringOrNull(servers.last_heartbeat_at_ms),
 
     createdAtMs: int8ToStringOrDefault(servers.created_at_ms, "0"),
-    lastUpdatedAtMs: int8ToStringOrNull(servers.last_updated_at_ms)
-  }
+    lastUpdatedAtMs: int8ToStringOrNull(servers.last_updated_at_ms),
+  };
 }
 
-export function toAccessResponse(access: Selectable<ServerAccessPolicies>): AccessResponse{
+export function toAccessResponse(access: Selectable<ServerAccessPolicies>): AccessResponse {
   return {
     id: access.server_id,
     mode: access.mode,
@@ -30,7 +32,7 @@ export function toAccessResponse(access: Selectable<ServerAccessPolicies>): Acce
     requiredRankKey: access.required_rank_key ? access.required_rank_key : null,
     createdAtMs: access.created_at_ms,
     updatedAtMs: access.updated_at_ms ? access.updated_at_ms : null,
-  }
+  };
 }
 
 export function toLockdownResponse(lockdown: Selectable<Lockdowns>): LockdownResponse {
@@ -43,6 +45,29 @@ export function toLockdownResponse(lockdown: Selectable<Lockdowns>): LockdownRes
     issuedByActorId: lockdown.issued_by_actor_id,
     isActive: lockdown.is_active,
     startedAtMs: lockdown.starts_at_ms,
-    endsAtMs: lockdown.ends_at_ms ? lockdown.ends_at_ms : null
+    endsAtMs: lockdown.ends_at_ms ? lockdown.ends_at_ms : null,
+  };
+}
+
+export function toServerAccessPolicyUpdate(
+  input: ReplaceServerAccessBody,
+): Updateable<ServerAccessPolicies> {
+  return {
+    mode: input.mode,
+    required_permission_id: input.requiredPermissionId,
+    required_rank_key: input.requiredRankKey,
+    note: input.note,
+  };
+}
+
+export function toServerLockdownUpdate(input: UpdateLockdownBody): Updateable<Lockdowns> {
+  return {
+    required_rank_key: input.requiredRankKey,
+    scope: input.scope,
+    reason: input.reason,
+    issued_by_actor_id: input.issuedByActorId,
+    is_active: input.isActive,
+    starts_at_ms: input.startsAtMs,
+    ends_at_ms: input.endsAtMs,
   }
 }

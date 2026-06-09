@@ -185,12 +185,10 @@ export interface PermissionNodes {
 export interface PermissionRules {
   created_at_ms: Generated<Int8>;
   effect: Generated<PermissionEffect>;
-  group_key: string | null;
   id: Generated<string>;
-  min_rank_tier: number | null;
+  min_rank_key: string | null;
   permission_id: string;
   priority: Generated<number>;
-  rank_key: string | null;
   updated_at_ms: Int8 | null;
 }
 

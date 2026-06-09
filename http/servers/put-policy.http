@@ -1,0 +1,12 @@
+@baseUrl = http://localhost:3000
+
+### Create server
+PUT {{baseUrl}}/servers/00000000-0000-0000-0000-000000000001/access
+Content-Type: application/json
+
+{
+  "mode": "min_rank",
+  "requiredPermissionId": null,
+  "requiredRankKey": "admin",
+  "note": "sdfsdf"
+}

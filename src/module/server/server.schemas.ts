@@ -37,7 +37,7 @@ export const createLockdownBodySchema = z
     issuedByActorId: z.guid(),
     isActive: z.boolean().optional().default(true),
     startsAtMs: BigIntStringSchema,
-    endsAtMs: BigIntStringSchema.optional(),
+    endsAtMs: BigIntStringSchema.optional().nullable(),
   })
   .strict();
 
@@ -45,8 +45,8 @@ export const createLockdownBodySchema = z
 export const replaceServerAccessBodySchema = z
   .object({
     mode: serverAccessTypeSchema,
-    requiredPermissionId: z.uuid(),
-    requiredRankKey: z.string().max(30),
+    requiredPermissionId: z.uuid().nullable(),
+    requiredRankKey: z.string().max(30).nullable(),
     note: z.string().nullable(),
   })
   .strict();
@@ -68,7 +68,7 @@ export const updateServerBodySchema = z
     lastHeartbeatAtMs: BigIntStringSchema.optional(),
 
     createdAtMs: BigIntStringSchema.optional(),
-    lastUpdatedAtMs: BigIntStringSchema.optional(),
+    lastUpdatedAtMs: BigIntStringSchema.optional().nullable(),
   })
   .strict()
   .refine((body) => Object.keys(body).length > 0, {
@@ -78,13 +78,13 @@ export const updateServerBodySchema = z
 // PATCH
 export const updateLockdownBodySchema = z
   .object({
-    scope: lockdownScopeTypeSchema,
+    scope: lockdownScopeTypeSchema.optional(),
     requiredRankKey: z.string().max(30).optional(),
     reason: z.string().optional(),
     issuedByActorId: z.guid().optional(),
     isActive: z.boolean().optional(),
     startsAtMs: BigIntStringSchema.optional(),
-    endsAtMs: BigIntStringSchema.optional(),
+    endsAtMs: BigIntStringSchema.optional().nullable(),
   })
   .strict()
   .refine((body) => Object.keys(body).length > 0, {

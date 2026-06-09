@@ -126,22 +126,19 @@ const seed = {
       .values([
         {
           permission_id: ids.permissions.serverAccessDev2,
-          rank_key: "admin",
-          min_rank_tier: 100,
+          min_rank_key: "admin",
           effect: "allow",
           priority: 100,
         },
         {
           permission_id: ids.permissions.serverAccessAll,
-          rank_key: "admin",
-          min_rank_tier: 100,
+          min_rank_key: "admin",
           effect: "allow",
           priority: 100,
         },
         {
           permission_id: ids.permissions.lockdownBypass,
-          rank_key: "admin",
-          min_rank_tier: 100,
+          min_rank_key: "admin",
           effect: "allow",
           priority: 100,
         },

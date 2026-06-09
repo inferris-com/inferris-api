@@ -1,4 +1,4 @@
-import { Kysely, PostgresDialect } from "kysely";
+import { Kysely, PostgresDialect, type Transaction } from "kysely";
 import { Pool } from "pg";
 
 import { config } from "../config.js";
@@ -16,3 +16,4 @@ export function createDb(databaseUrl = config.database.url) {
 }
 
 export const db = createDb();
+export type DbExecutor = Kysely<DB> | Transaction<DB>;

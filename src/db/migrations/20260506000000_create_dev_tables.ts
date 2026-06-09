@@ -325,30 +325,27 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 -- Permission Rules (bindings)
   CREATE TABLE permission_rules
   (
-    id            UUID PRIMARY KEY           DEFAULT gen_random_uuid(),
-    permission_id UUID              NOT NULL
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    permission_id UUID NOT NULL
       REFERENCES permission_nodes (id) ON DELETE CASCADE,
-    group_key     VARCHAR(30)       NULL
-      REFERENCES groups (key) ON DELETE CASCADE,
-    rank_key      VARCHAR(30)       NULL
+
+    min_rank_key  VARCHAR(30) NULL
       REFERENCES ranks (key) ON DELETE CASCADE,
 
-    min_rank_tier INT               NULL,
     effect        permission_effect NOT NULL DEFAULT 'allow',
-    priority      INT               NOT NULL DEFAULT 0,
+    priority      INT NOT NULL DEFAULT 0,
 
-    created_at_ms BIGINT            NOT NULL DEFAULT get_unix_ms(),
-    updated_at_ms BIGINT            NULL,
+    created_at_ms BIGINT NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms BIGINT NULL,
 
-    CONSTRAINT chk_permission_rules_single_subject
-      CHECK (num_nonnulls(group_key, rank_key) = 1),
-    CONSTRAINT chk_permission_rules_min_rank_tier
-      CHECK (min_rank_tier IS NULL OR min_rank_tier >= 0)
+    CONSTRAINT uq_permission_rules_permission_min_rank
+      UNIQUE (permission_id, min_rank_key)
   );
-
-  CREATE INDEX idx_perm_rules_permission_id ON permission_rules (permission_id);
-  CREATE INDEX idx_perm_rules_group_key ON permission_rules (group_key) WHERE group_key IS NOT NULL;
-  CREATE INDEX idx_perm_rules_rank_key ON permission_rules (rank_key) WHERE rank_key IS NOT NULL;
+  CREATE INDEX idx_perm_rules_permission_id
+    ON permission_rules (permission_id);
+  CREATE INDEX idx_perm_rules_min_rank_key
+    ON permission_rules (min_rank_key);
 
   CREATE TABLE server_access_policies
   (

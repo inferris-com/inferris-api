@@ -1,0 +1,9 @@
+@baseUrl = http://localhost:3000
+
+### Create server
+PATCH {{baseUrl}}/servers/00000000-0000-0000-0000-000000000001/lockdown
+Content-Type: application/json
+
+{
+  "reason": "sdf"
+}

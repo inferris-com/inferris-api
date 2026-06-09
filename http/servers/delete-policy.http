@@ -1,0 +1,4 @@
+@baseUrl = http://localhost:3000
+
+### Create server
+DELETE {{baseUrl}}/servers/00000000-0000-0000-0000-000000000001/policy
