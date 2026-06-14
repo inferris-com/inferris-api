@@ -20,7 +20,7 @@ export function toPlayerSummaryResponse(row: PlayerSummaryRecord): PlayerSummary
     username: row.username,
     flags: int8ToStringOrDefault(row.flags, "0"),
     orbs: int8ToStringOrDefault(row.orbs, "0"),
-    chatChannel: row.chat_channel ?? "global",
+    chatChannel: row.active_channel_key,
   };
 }
 
@@ -32,7 +32,7 @@ export function toPlayerResponse(input: PlayerDetailsRecord): PlayerResponse {
     username: player.username,
     flags: int8ToStringOrDefault(player.flags, "0"),
     orbs: int8ToStringOrDefault(player.orbs, "0"),
-    chatChannel: player.chat_channel ?? "global",
+    chatChannel: player.active_channel_key,
 
     profile: profile
       ? {

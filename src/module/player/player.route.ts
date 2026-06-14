@@ -35,15 +35,33 @@ import {
   playerRankAssignmentParamsSchema,
   updatePlayerBodySchema,
 } from "./player.schemas.js";
+import { auditMutation, authorize } from "../auth/auth.middleware.js";
+import type { AuthRepository } from "../auth/auth.repository.js";
 
-export function createPlayerRouter(service: PlayerService): Router {
+export function createPlayerRouter(service: PlayerService, authRepository: AuthRepository): Router {
   const router = Router();
 
-  const listPlayers: RequestHandler<ParamsDictionary, unknown, unknown, ListPlayersQuery> = async (
-    req,
-    res,
-  ) => {
-    const players = await service.listPlayers(req.query);
+  const readPlayers = authorize(authRepository, {
+    apiScopes: ["players:read"],
+    argusRole: "moderator",
+  });
+  const writePlayers = authorize(authRepository, {
+    apiScopes: ["players:write"],
+    argusRole: "moderator",
+  });
+  const managePlayerStaffState = authorize(authRepository, {
+    apiScopes: ["players:write"],
+    argusRole: "moderator",
+    privilegedRole: "moderator",
+  });
+  const administerPlayers = authorize(authRepository, {
+    apiScopes: ["players:write"],
+    argusRole: "admin",
+    privilegedRole: "administrator",
+  });
+
+  const listPlayers: RequestHandler = async (req, res) => {
+    const players = await service.listPlayers(req.query as unknown as ListPlayersQuery);
     const body: ApiListSuccess<PlayerSummaryResponse> = {
       data: players,
       meta: { count: players.length },
@@ -113,7 +131,10 @@ export function createPlayerRouter(service: PlayerService): Router {
       req.params.playerId,
       req.params.groupKey,
       req.params.rankKey,
-      req.body,
+      {
+        ...req.body,
+        assignedByActorId: req.auth?.actorId ?? null,
+      },
     );
     const body: ApiSuccess<PlayerRankAssignmentResponse> = { data: assignment };
     res.json(body);
@@ -128,11 +149,10 @@ export function createPlayerRouter(service: PlayerService): Router {
     res.json(body);
   };
 
-  const deletePlayer: RequestHandler<PlayerIdParams, unknown, unknown, DeletePlayerQuery> = async (
-    req,
-    res,
-  ) => {
-    await service.deletePlayer(req.params.playerId, { hard: req.query.hard });
+  const deletePlayer: RequestHandler<PlayerIdParams> = async (req, res) => {
+    const query = req.query as unknown as DeletePlayerQuery;
+
+    await service.deletePlayer(req.params.playerId, { hard: query.hard });
     res.status(204).send();
   };
 
@@ -146,23 +166,49 @@ export function createPlayerRouter(service: PlayerService): Router {
     res.status(204).send();
   };
 
-  const deleteBadgeAssignment: RequestHandler<PlayerBadgeAssignmentParams> = async (req, res) => {
-    await service.deleteBadgeAssignment(req.params.playerId, req.params.badgeId);
+  const deleteBadgeAssignment: RequestHandler = async (req, res) => {
+    const params = req.params as unknown as PlayerBadgeAssignmentParams;
+
+    await service.deleteBadgeAssignment(params.playerId, params.badgeId);
 
     res.status(204).send();
   };
 
-  router.get("/", validateRequest({ query: listPlayersQuerySchema }), listPlayers);
-  router.get("/:playerId", validateRequest({ params: playerIdParamsSchema }), getPlayer);
-  router.get("/:playerId/profile", validateRequest({ params: playerIdParamsSchema }), getProfile);
+  router.get(
+    "/",
+    readPlayers,
+    validateRequest({ query: listPlayersQuerySchema }) as unknown as RequestHandler,
+    listPlayers,
+  );
+  router.get(
+    "/:playerId",
+    readPlayers,
+    validateRequest({ params: playerIdParamsSchema }),
+    getPlayer,
+  );
+  router.get(
+    "/:playerId/profile",
+    readPlayers,
+    validateRequest({ params: playerIdParamsSchema }),
+    getProfile,
+  );
   router.get(
     "/:playerId/badges",
+    readPlayers,
     validateRequest({ params: playerIdParamsSchema }),
     listBadgeAssignments,
   );
-  router.post("/", validateRequest({ body: createPlayerBodySchema }), createPlayer);
+  router.post(
+    "/",
+    writePlayers,
+    auditMutation(authRepository, "players.create"),
+    validateRequest({ body: createPlayerBodySchema }),
+    createPlayer,
+  );
   router.post(
     "/:playerId/badges",
+    managePlayerStaffState,
+    auditMutation(authRepository, "players.badges.create"),
     validateRequest({
       params: playerIdParamsSchema,
       body: createPlayerBadgeAssignmentBodySchema,
@@ -171,6 +217,8 @@ export function createPlayerRouter(service: PlayerService): Router {
   );
   router.put(
     "/:playerId/ranks/:groupKey/:rankKey",
+    managePlayerStaffState,
+    auditMutation(authRepository, "players.ranks.replace"),
     validateRequest({
       params: playerRankAssignmentParamsSchema,
       body: replacePlayerRankAssignmentBodySchema,
@@ -179,6 +227,8 @@ export function createPlayerRouter(service: PlayerService): Router {
   );
   router.patch(
     "/:playerId",
+    writePlayers,
+    auditMutation(authRepository, "players.update"),
     validateRequest({
       params: playerIdParamsSchema,
       body: updatePlayerBodySchema,
@@ -187,6 +237,8 @@ export function createPlayerRouter(service: PlayerService): Router {
   );
   router.patch(
     "/:playerId/profile",
+    writePlayers,
+    auditMutation(authRepository, "players.profile.update"),
     validateRequest({
       params: playerIdParamsSchema,
       body: updatePlayerProfileBodySchema,
@@ -195,17 +247,26 @@ export function createPlayerRouter(service: PlayerService): Router {
   );
   router.delete(
     "/:playerId",
-    validateRequest({ params: playerIdParamsSchema, query: deletePlayerQuerySchema }),
+    administerPlayers,
+    auditMutation(authRepository, "players.delete"),
+    validateRequest({
+      params: playerIdParamsSchema,
+      query: deletePlayerQuerySchema,
+    }) as unknown as RequestHandler,
     deletePlayer,
   );
   router.delete(
     "/:playerId/ranks/:groupKey/:rankKey",
+    managePlayerStaffState,
+    auditMutation(authRepository, "players.ranks.delete"),
     validateRequest({ params: playerRankAssignmentParamsSchema }),
     deleteRankAssignment,
   );
   router.delete(
     "/:playerId/badges/:badgeId",
-    validateRequest({ params: playerBadgeAssignmentParamsSchema }),
+    managePlayerStaffState,
+    auditMutation(authRepository, "players.badges.delete"),
+    validateRequest({ params: playerBadgeAssignmentParamsSchema }) as unknown as RequestHandler,
     deleteBadgeAssignment,
   );
 

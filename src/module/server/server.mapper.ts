@@ -2,8 +2,7 @@ import type { Selectable, Updateable } from "kysely";
 import type { Lockdowns, ServerAccessPolicies, Servers } from "../../db/types.js";
 import type { AccessResponse, LockdownResponse, ServerResponse } from "./server.response.types.js";
 import { int8ToStringOrDefault, int8ToStringOrNull } from "../../shared/db/int8.js";
-import  {lockdownScopeTypeSchema, type ReplaceServerAccessBody, type UpdateLockdownBody } from "./server.schemas.js";
-import {BigIntStringSchema} from "../../shared/common.schemas.js";
+import type { ReplaceServerAccessBody, UpdateLockdownBody } from "./server.schemas.js";
 
 export function toServerResponse(servers: Selectable<Servers>): ServerResponse {
   return {
@@ -65,9 +64,8 @@ export function toServerLockdownUpdate(input: UpdateLockdownBody): Updateable<Lo
     required_rank_key: input.requiredRankKey,
     scope: input.scope,
     reason: input.reason,
-    issued_by_actor_id: input.issuedByActorId,
     is_active: input.isActive,
     starts_at_ms: input.startsAtMs,
     ends_at_ms: input.endsAtMs,
-  }
+  };
 }

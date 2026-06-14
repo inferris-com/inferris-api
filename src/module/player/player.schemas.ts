@@ -70,7 +70,6 @@ export const updatePlayerProfileBodySchema = z
 export const replacePlayerRankAssignmentBodySchema = z
   .object({
     source: z.string().max(64).nullable().optional(),
-    // Auth is not wired here yet, so callers may provide this for now.
     assignedByActorId: z.guid().nullable().optional(),
   })
   .strict();

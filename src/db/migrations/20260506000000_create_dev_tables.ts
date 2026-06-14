@@ -1,8 +1,20 @@
 import { type Kysely, sql } from "kysely";
 
 const types = [
+  "severity",
+  "moderation_resource_type",
+  "moderation_link_type",
+  "moderation_evidence_type",
+  "moderation_event_type",
+  "report_resolution",
+  "mod_case_resolution",
+  "bug_report_status",
+  "moderation_case_actor_role",
+
+  "principal_type",
+  "user_privilege_role",
+  "platform",
   "message_verdict",
-  "priority",
   "punishment_appeal_status",
   "mod_case_status",
   "report_status",
@@ -43,20 +55,41 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     'admin'
     );
 
+  CREATE TYPE user_privilege_role AS ENUM (
+    'none',
+    'collaborator',
+    'moderator',
+    'administrator',
+    'superadmin'
+    );
+
+
+-- Where the request/action came from or belongs operationally
+  CREATE TYPE platform AS ENUM (
+    'minecraft',
+    'discord',
+    'argus',
+    'bot',
+    'other'
+    );
+
+-- How the request was authenticated
+  CREATE TYPE principal_type AS ENUM (
+    'argus_user',
+    'server_api_key',
+    'user_api_key',
+    'discord_bot',
+    'internal_worker',
+    'system',
+    'unknown'
+    );
+
   CREATE TYPE argus_account_status AS ENUM (
     'active',
     'suspended',
     'disabled',
     'verify_email',
     'reset_password'
-    );
-
--- Players
-
-  CREATE TYPE chat_channel AS ENUM (
-    'global',
-    'staff',
-    'testing'
     );
 
   CREATE TYPE friend_request_status AS ENUM (
@@ -72,6 +105,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE TYPE server_type AS ENUM (
     'paper',
     'velocity',
+    'vanilla',
     'unspecified'
     );
 
@@ -115,6 +149,132 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     'unspecified'
     );
 
+  -- ============================================================
+-- Shared moderation enums
+-- ============================================================
+
+  CREATE TYPE severity AS ENUM (
+    'low',
+    'medium',
+    'high',
+    'critical'
+    );
+
+  CREATE TYPE moderation_resource_type AS ENUM (
+    'actor',
+    'server',
+    'report',
+    'report_comment',
+    'appeal',
+    'mod_case',
+    'watchlist_entry',
+    'infraction',
+    'punishment',
+    'chat_message',
+    'bug_report',
+    'external_url',
+    'file'
+    );
+
+  CREATE TYPE moderation_link_type AS ENUM (
+    'related_to',
+    'evidence_for',
+    'subject_of',
+    'reporter_of',
+    'appellant_of',
+    'escalated_to',
+    'created_from',
+    'attached_to',
+    'appeals',
+    'resulted_in',
+    'duplicate_of',
+    'blocked_by',
+    'mentions',
+    'involves',
+    'resolved_by'
+    );
+
+  CREATE TYPE moderation_evidence_type AS ENUM (
+    'chat_message',
+    'chat_context',
+    'screenshot',
+    'video',
+    'server_log',
+    'command_log',
+    'bug_report',
+    'external_url',
+    'file',
+    'staff_observation',
+    'other'
+    );
+
+  CREATE TYPE moderation_event_type AS ENUM (
+    'created',
+    'updated',
+    'status_changed',
+    'priority_changed',
+    'severity_changed',
+    'assigned',
+    'triaged',
+    'comment_added',
+    'comment_edited',
+    'evidence_added',
+    'evidence_removed',
+    'linked_resource',
+    'unlinked_resource',
+    'escalated_to_case',
+    'infraction_issued',
+    'appeal_opened',
+    'appeal_closed',
+    'watchlist_added',
+    'watchlist_cleared',
+    'closed',
+    'reopened'
+    );
+
+  CREATE TYPE report_resolution AS ENUM (
+    'action_taken',
+    'no_action',
+    'insufficient_evidence',
+    'duplicate',
+    'escalated_to_case',
+    'false_report',
+    'resolved_elsewhere'
+    );
+
+  CREATE TYPE mod_case_resolution AS ENUM (
+    'action_taken',
+    'no_action',
+    'insufficient_evidence',
+    'monitoring',
+    'referred',
+    'duplicate',
+    'invalid',
+    'resolved_elsewhere'
+    );
+
+  CREATE TYPE bug_report_status AS ENUM (
+    'open',
+    'reviewing',
+    'confirmed',
+    'in_progress',
+    'resolved',
+    'duplicate',
+    'invalid',
+    'closed'
+    );
+
+  CREATE TYPE moderation_case_actor_role AS ENUM (
+    'subject',
+    'reporter',
+    'victim',
+    'witness',
+    'suspected_alt',
+    'related_actor',
+    'assigned_mod',
+    'reviewer'
+    );
+
 -- Punishments
   CREATE TYPE punishment AS ENUM (
     'ban',
@@ -149,60 +309,102 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     'withdrawn'
     );
 
-  CREATE TYPE priority AS ENUM (
-    'very_high',
-    'high',
-    'medium',
-    'low'
-    );
-
   CREATE TYPE message_verdict AS ENUM ('allow', 'warn', 'deny');
 
--- Servers
+-----------------------------------------------------------
+
   CREATE TABLE servers
   (
-    id                   uuid PRIMARY KEY            DEFAULT gen_random_uuid(),
-    name                 TEXT               NOT NULL UNIQUE,
-    type                 server_type        NOT NULL DEFAULT 'unspecified',
+    id                   uuid PRIMARY KEY       DEFAULT gen_random_uuid(),
+    name                 TEXT          NOT NULL UNIQUE,
+    type                 server_type   NOT NULL DEFAULT 'unspecified',
 
-    environment          server_env         NOT NULL DEFAULT 'development',
-    status               server_status      NOT NULL DEFAULT 'offline',
-    port                 INT                NULL CHECK (port BETWEEN 1 AND 65535),
-    version              TEXT               NOT NULL DEFAULT 'Unspecified version',
+    environment          server_env    NOT NULL DEFAULT 'development',
+    status               server_status NOT NULL DEFAULT 'offline',
+    port                 INT           NULL CHECK (port BETWEEN 1 AND 65535),
+    version              TEXT          NOT NULL DEFAULT 'Unspecified version',
 
-    last_started_at_ms   BIGINT             NULL,
-    last_heartbeat_at_ms BIGINT             NULL,
+    last_started_at_ms   BIGINT        NULL,
+    last_heartbeat_at_ms BIGINT        NULL,
 
-    created_at_ms        BIGINT             NOT NULL DEFAULT get_unix_ms(),
-    last_updated_at_ms   BIGINT             NULL
+    created_at_ms        BIGINT        NOT NULL DEFAULT get_unix_ms(),
+    last_updated_at_ms   BIGINT        NULL
   );
   CREATE INDEX idx_servers_type ON servers (type);
   CREATE INDEX idx_servers_environment ON servers (environment);
 
+  -- ============================
+--  RANKS & GROUPS
+-- ============================
+
+  CREATE TABLE groups
+  (
+    key           VARCHAR(30) PRIMARY KEY,
+    label         VARCHAR(50) NOT NULL UNIQUE,
+    priority      INT         NOT NULL DEFAULT 0,
+    is_staff      BOOLEAN     NOT NULL DEFAULT FALSE,
+    created_at_ms BIGINT      NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms BIGINT      NULL
+  );
+  CREATE INDEX idx_groups_is_staff ON groups (key) WHERE is_staff = TRUE;
+
+  CREATE TABLE ranks
+  (
+    key                VARCHAR(30) PRIMARY KEY,
+    group_key          VARCHAR(30) NULL REFERENCES groups (key) ON DELETE SET NULL,
+    label              VARCHAR(50) NOT NULL UNIQUE,
+    description        TEXT        NULL,
+
+    -- Meta
+    display_tag        TEXT        NULL,
+    username_color_hex VARCHAR(8)  NULL,
+
+    tier               INT         NOT NULL DEFAULT 0,
+
+    is_staff           BOOLEAN     NOT NULL DEFAULT FALSE,
+    is_active          BOOLEAN     NOT NULL DEFAULT TRUE,
+    created_at_ms      BIGINT      NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms      BIGINT      NULL
+  );
+  CREATE INDEX idx_ranks_group_key ON ranks (group_key) WHERE group_key IS NOT NULL;
+  CREATE INDEX idx_ranks_staff_active ON ranks (tier DESC) WHERE is_staff = TRUE AND is_active = TRUE;
+  CREATE INDEX idx_ranks_active ON ranks (tier DESC) WHERE is_active = TRUE;
+
+  CREATE TABLE chat_channels
+  (
+    key               VARCHAR(30) PRIMARY KEY,
+    description       TEXT        NULL,
+    required_rank_key VARCHAR(30) NULL REFERENCES ranks (key) ON DELETE SET NULL,
+    is_staff          BOOLEAN     NOT NULL DEFAULT FALSE,
+    is_hidden         BOOLEAN     NOT NULL DEFAULT FALSE,
+    is_active         BOOLEAN     NOT NULL DEFAULT TRUE,
+    created_at_ms     BIGINT      NOT NULL DEFAULT get_unix_ms()
+  );
+  CREATE INDEX idx_chat_channels_required_rank_key
+    ON chat_channels (required_rank_key) WHERE required_rank_key IS NOT NULL;
+  CREATE INDEX idx_chat_channels_active_visible
+    ON chat_channels (key) WHERE is_active = TRUE AND is_hidden = FALSE;
+
 --  Players
   CREATE TABLE players
   (
-    id              uuid PRIMARY KEY,
-    username        TEXT         NOT NULL UNIQUE,
-    flags           BIGINT       NOT NULL, -- application should set; no default
-    orbs            BIGINT       NOT NULL DEFAULT 500,
-    chat_channel    chat_channel NOT NULL DEFAULT 'global',
-    created_at_ms   BIGINT       NOT NULL DEFAULT get_unix_ms(),
-    last_seen_at_ms BIGINT       NULL,
-    last_server_id  UUID         NULL REFERENCES servers (id) ON DELETE SET NULL,
-    deleted_at_ms   BIGINT       NULL,
-    deleted_reason  TEXT         NULL
+    id                 uuid PRIMARY KEY,
+    username           TEXT        NOT NULL UNIQUE,
+
+    flags              BIGINT      NOT NULL, -- application should set; no default
+    orbs               BIGINT      NOT NULL DEFAULT 500,
+    active_channel_key VARCHAR(30) NOT NULL DEFAULT 'global' REFERENCES chat_channels (key) ON DELETE RESTRICT,
+
+    created_at_ms      BIGINT      NOT NULL DEFAULT get_unix_ms(),
+    last_seen_at_ms    BIGINT      NULL,
+    last_server_id     UUID        NULL REFERENCES servers (id) ON DELETE SET NULL,
+
+    deleted_at_ms      BIGINT      NULL,
+    deleted_reason     TEXT        NULL
   );
   CREATE INDEX idx_players_flags ON players (flags);
-  CREATE INDEX idx_players_chat_channel ON players (chat_channel);
+  CREATE INDEX idx_players_active_channel_key ON players (active_channel_key);
   CREATE INDEX idx_players_last_server ON players (last_server_id) WHERE last_server_id IS NOT NULL;
-
-  CREATE TABLE player_identities
-  (
-    player_id     uuid PRIMARY KEY REFERENCES players (id) ON DELETE CASCADE,
-    mojang_uuid   uuid   NOT NULL UNIQUE,
-    created_at_ms BIGINT NOT NULL DEFAULT get_unix_ms()
-  );
 
   CREATE TABLE actors
   (
@@ -224,8 +426,8 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     email         VARCHAR(100)         NOT NULL UNIQUE,
     password_hash TEXT                 NOT NULL,
 
-    role          argus_account_role   NOT NULL DEFAULT 'moderator',
-    minecraft_id  UUID                 NULL REFERENCES players (id) ON DELETE SET NULL,
+    role          argus_account_role   NOT NULL,
+    actor_id      UUID                 NULL REFERENCES actors (id) ON DELETE SET NULL,
     account_state argus_account_status NOT NULL DEFAULT 'active',
 
     created_at_ms BIGINT               NOT NULL DEFAULT get_unix_ms(),
@@ -258,56 +460,87 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     created_at_ms BIGINT      NOT NULL DEFAULT get_unix_ms()
   );
 
+  -- API Keys
+--   Note: Items such as last used will be implemented later
   CREATE TABLE api_keys
   (
-    id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    permissions           JSONB   NOT NULL DEFAULT '[]'::jsonb,
-    owner_actor_id        UUID    NOT NULL
-      REFERENCES actors (id) ON DELETE RESTRICT,
-    created_by_actor_id   UUID    NOT NULL
-      REFERENCES actors (id) ON DELETE RESTRICT,
-    can_bypass_rate_limit BOOLEAN NOT NULL DEFAULT FALSE,
-    is_super_key          BOOLEAN NOT NULL DEFAULT FALSE,
-    is_active             BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at_ms         BIGINT  NOT NULL DEFAULT get_unix_ms(),
-    updated_at_ms         BIGINT  NULL
+    id                    UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+
+    key                   UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+    key_hash              TEXT        NOT NULL,
+    principal_type        principal_type NOT NULL,
+    platform              platform       NOT NULL,
+
+    -- API Permissions are independent and scoped; not related to permission nodes
+    permissions           JSONB       NOT NULL DEFAULT '[]'::jsonb,
+
+    owner_actor_id        UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+
+    created_by_actor_id   UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    revoked_by_actor_id   UUID        NULL REFERENCES actors (id) ON DELETE RESTRICT,
+
+    can_bypass_rate_limit BOOLEAN     NOT NULL DEFAULT FALSE,
+    is_super_key          BOOLEAN     NOT NULL DEFAULT FALSE,
+
+    is_active             BOOLEAN     NOT NULL DEFAULT TRUE,
+
+    created_at_ms         BIGINT      NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms         BIGINT      NULL
   );
   CREATE INDEX idx_api_keys_owner_actor ON api_keys (owner_actor_id);
   CREATE INDEX idx_api_keys_created_by_actor ON api_keys (created_by_actor_id);
   CREATE INDEX idx_api_keys_active ON api_keys (created_at_ms DESC) WHERE is_active = TRUE;
 
-  -- ============================
---  RANKS & GROUPS
--- ============================
-
-  CREATE TABLE groups
+  CREATE TABLE privileged_subjects
   (
-    key           VARCHAR(30) PRIMARY KEY,
-    label         VARCHAR(50) NOT NULL UNIQUE,
-    priority      INT         NOT NULL DEFAULT 0,
-    is_staff      BOOLEAN     NOT NULL DEFAULT FALSE,
-    created_at_ms BIGINT      NOT NULL DEFAULT get_unix_ms(),
-    updated_at_ms BIGINT      NULL
+    id                   UUID PRIMARY KEY             DEFAULT gen_random_uuid(),
+    actor_id             UUID                NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    status               TEXT                NOT NULL CHECK ( status IN ('active', 'suspended', 'revoked', 'pending')),
+    role                 user_privilege_role NOT NULL,
+    title                TEXT                NULL,
+    enrolled_by_actor_id UUID                NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    revoked_by_actor_id  UUID                NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    created_at_ms        BIGINT              NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms        BIGINT              NULL
   );
-  CREATE INDEX idx_groups_is_staff ON groups (key) WHERE is_staff = TRUE;
 
-  CREATE TABLE ranks
+  CREATE TABLE audit_logs
   (
-    key           VARCHAR(30) PRIMARY KEY,
-    group_key     VARCHAR(30) NULL REFERENCES groups (key) ON DELETE SET NULL,
-    label         VARCHAR(50) NOT NULL UNIQUE,
-    tier          INT         NOT NULL DEFAULT 0,
-    is_staff      BOOLEAN     NOT NULL DEFAULT FALSE,
-    is_active     BOOLEAN     NOT NULL DEFAULT TRUE,
-    created_at_ms BIGINT      NOT NULL DEFAULT get_unix_ms(),
-    updated_at_ms BIGINT      NULL
+    id               UUID PRIMARY KEY        DEFAULT gen_random_uuid(),
+
+    request_id       UUID           NULL,
+
+    actor_id         UUID           NULL REFERENCES actors (id) ON DELETE RESTRICT,
+
+    subject_actor_id UUID           NULL REFERENCES actors (id) ON DELETE RESTRICT,
+
+    principal_type   principal_type NULL,
+    principal_id     UUID           NULL,
+
+    platform         platform       NULL,
+    source           TEXT           NULL,
+
+    action           TEXT           NOT NULL,
+
+    target_type      TEXT           NULL,
+    target_id        UUID           NULL,
+
+    result           TEXT           NOT NULL CHECK (
+      result IN ('allowed', 'denied', 'failed')
+      ),
+
+    reason           TEXT           NULL,
+
+    metadata         JSONB          NULL     DEFAULT '{}'::jsonb,
+
+    created_at_ms    BIGINT         NOT NULL DEFAULT get_unix_ms()
   );
-  CREATE INDEX idx_ranks_group_key ON ranks (group_key) WHERE group_key IS NOT NULL;
-  CREATE INDEX idx_ranks_staff_active ON ranks (tier DESC) WHERE is_staff = TRUE AND is_active = TRUE;
-  CREATE INDEX idx_ranks_active ON ranks (tier DESC) WHERE is_active = TRUE;
 
   -- ============================
---  PERMISSION SYSTEM SCHEMA
+--  Minecraft Permissions
+-- Permission nodes and policies are specific to the Minecraft platform and gate access by rank.
+-- Non-Minecraft identities, such as Argus users and API keys, do not use these permission nodes.
+-- Staff-facing systems usually also require the user to be listed in privileged_subjects with the appropriate role or permissions.
 -- ============================
 
 -- Permission Nodes (atomic abilities)
@@ -323,29 +556,26 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   );
 
 -- Permission Rules (bindings)
-  CREATE TABLE permission_rules
+  CREATE TABLE permission_policies
   (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    permission_id UUID NOT NULL
+    permission_id UUID              NOT NULL
       REFERENCES permission_nodes (id) ON DELETE CASCADE,
 
-    min_rank_key  VARCHAR(30) NULL
+    rank_key      VARCHAR(30)       NULL
       REFERENCES ranks (key) ON DELETE CASCADE,
 
     effect        permission_effect NOT NULL DEFAULT 'allow',
-    priority      INT NOT NULL DEFAULT 0,
 
-    created_at_ms BIGINT NOT NULL DEFAULT get_unix_ms(),
-    updated_at_ms BIGINT NULL,
+    created_at_ms BIGINT            NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms BIGINT            NULL,
 
     CONSTRAINT uq_permission_rules_permission_min_rank
-      UNIQUE (permission_id, min_rank_key)
+      UNIQUE (permission_id, rank_key)
   );
   CREATE INDEX idx_perm_rules_permission_id
-    ON permission_rules (permission_id);
+    ON permission_policies (permission_id);
   CREATE INDEX idx_perm_rules_min_rank_key
-    ON permission_rules (min_rank_key);
+    ON permission_policies (rank_key);
 
   CREATE TABLE server_access_policies
   (
@@ -381,8 +611,9 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     -- NULL for global, required for local
     server_id          UUID                  NULL REFERENCES servers (id) ON DELETE CASCADE,
 
-    -- Minimum rank to bypass the lockdown (tier-based in required rank's group)
-    required_rank_key  VARCHAR(30)           NOT NULL REFERENCES ranks (key) ON DELETE RESTRICT,
+    -- Minimum rank to bypass the lockdown (tier-based in required rank's group
+    required_rank_key  VARCHAR(30)           NOT NULL REFERENCES ranks (key) ON
+      DELETE RESTRICT,
 
     reason             TEXT                  NOT NULL DEFAULT 'Maintenance',
     issued_by_actor_id UUID                  NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
@@ -394,7 +625,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 
     created_at_ms      BIGINT                NOT NULL DEFAULT get_unix_ms(),
     updated_at_ms      BIGINT                NULL,
-
     CONSTRAINT chk_lockdowns_scope
       CHECK (
         (scope = 'global' AND server_id IS NULL)
@@ -494,6 +724,8 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     ON player_profiles (featured_badge_id) WHERE featured_badge_id IS NOT NULL;
   CREATE INDEX idx_player_profiles_locale ON player_profiles (locale);
 
+-- Player ranks: can have many ranks, but only one rank per group (tier-based)
+
   CREATE TABLE player_ranks
   (
     player_id            UUID        NOT NULL REFERENCES players (id) ON DELETE CASCADE,
@@ -520,6 +752,11 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   );
   CREATE INDEX idx_player_badges_badge_id ON player_badges (badge_id);
 
+  -- ---------------------------------------------------------
+--  Player Flag Definitions
+-- Represents a state or trait/attribute of a player in the shape of a toggle.
+-- Computed as a bitmask in players.flags INT (e.g., 0=NONE, 1=STAFF, 3=STAFF + VANISHED, etc.)
+-- ---------------------------------------------------------
   CREATE TABLE player_flag_definitions
   (
     flag_key      TEXT PRIMARY KEY,
@@ -566,16 +803,25 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 -- Punishments
   CREATE TABLE punishments
   (
-    id               UUID PRIMARY KEY    DEFAULT gen_random_uuid(),
-    subject_actor_id UUID       NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    issuer_actor_id  UUID       NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    server_origin_id UUID       NULL REFERENCES servers (id) ON DELETE SET NULL,
-    type             punishment NOT NULL,
-    ends_at_ms       BIGINT     NULL,
-    is_silent        BOOLEAN    NOT NULL DEFAULT FALSE,
-    reason           TEXT       NULL,
-    created_at_ms    BIGINT     NOT NULL DEFAULT get_unix_ms(),
-    updated_at_ms    BIGINT     NULL
+    id                  UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+
+    subject_actor_id    UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    issuer_actor_id     UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    server_origin_id    UUID        NULL REFERENCES servers (id) ON DELETE SET NULL,
+
+    type                punishment  NOT NULL,
+    reason              TEXT        NULL,
+
+    is_silent           BOOLEAN     NOT NULL DEFAULT FALSE,
+
+    ends_at_ms          BIGINT      NULL,
+
+    revoked_by_actor_id UUID        NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    revoked_at_ms       BIGINT      NULL,
+    revocation_reason   VARCHAR(50) NULL,
+
+    created_at_ms       BIGINT      NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms       BIGINT      NULL
   );
   CREATE INDEX idx_punishments_subject_created
     ON punishments (subject_actor_id, created_at_ms DESC);
@@ -593,21 +839,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     ON punishments (created_at_ms DESC)
     WHERE is_silent = TRUE;
 
-  CREATE TABLE chat_channels
-  (
-    key               VARCHAR(30) PRIMARY KEY,
-    description       TEXT        NULL,
-    required_rank_key VARCHAR(30) NULL REFERENCES ranks (key) ON DELETE SET NULL,
-    is_staff          BOOLEAN     NOT NULL DEFAULT FALSE,
-    is_hidden         BOOLEAN     NOT NULL DEFAULT FALSE,
-    is_active         BOOLEAN     NOT NULL DEFAULT TRUE,
-    created_at_ms     BIGINT      NOT NULL DEFAULT get_unix_ms()
-  );
-  CREATE INDEX idx_chat_channels_required_rank_key
-    ON chat_channels (required_rank_key) WHERE required_rank_key IS NOT NULL;
-  CREATE INDEX idx_chat_channels_active_visible
-    ON chat_channels (key) WHERE is_active = TRUE AND is_hidden = FALSE;
-
   CREATE TABLE chat_messages
   (
     id               UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
@@ -615,6 +846,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     message          TEXT        NOT NULL,
     channel_key      VARCHAR(30) NOT NULL REFERENCES chat_channels (key) ON DELETE RESTRICT,
     origin_server_id UUID        NULL REFERENCES servers (id) ON DELETE SET NULL,
+    is_flagged       BOOLEAN     NOT NULL DEFAULT FALSE,
     created_at_ms    BIGINT      NOT NULL DEFAULT get_unix_ms()
   );
   CREATE INDEX idx_chat_messages_channel_created
@@ -627,40 +859,82 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 
   CREATE TABLE reports
   (
-    id                 UUID PRIMARY KEY       DEFAULT gen_random_uuid(),
-    reporter_actor_id  UUID          NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    subject_actor_id   UUID          NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    selected_reason    VARCHAR(100)  NOT NULL,
-    reason_description TEXT          NULL,
-    status             report_status NOT NULL DEFAULT 'open',
-    priority           priority      NULL,
-    origin_server_id   UUID          NULL REFERENCES servers (id) ON DELETE SET NULL,
-    closed_by_actor_id UUID          NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    closed_at_ms       BIGINT        NULL,
-    created_at_ms      BIGINT        NOT NULL DEFAULT get_unix_ms(),
-    updated_at_ms      BIGINT        NULL,
+    id                   UUID PRIMARY KEY           DEFAULT gen_random_uuid(),
+
+    reporter_actor_id    UUID              NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    subject_actor_id     UUID              NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+
+    selected_reason      VARCHAR(100)      NOT NULL,
+    reason_description   TEXT              NULL,
+
+    status               report_status     NOT NULL DEFAULT 'open',
+    severity             severity          NULL,
+    resolution           report_resolution NULL,
+
+    origin_server_id     UUID              NULL REFERENCES servers (id) ON DELETE SET NULL,
+
+    assigned_to_actor_id UUID              NULL REFERENCES actors (id) ON DELETE SET NULL,
+
+    triaged_by_actor_id  UUID              NULL REFERENCES actors (id) ON DELETE SET NULL,
+    triaged_at_ms        BIGINT            NULL,
+
+    closed_by_actor_id   UUID              NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    closed_at_ms         BIGINT            NULL,
+
+    resolution_note      TEXT              NULL,
+
+    created_at_ms        BIGINT            NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms        BIGINT            NULL,
+
+    CONSTRAINT chk_reports_triage_consistent
+      CHECK (
+        (triaged_at_ms IS NULL AND triaged_by_actor_id IS NULL)
+          OR
+        (triaged_at_ms IS NOT NULL AND triaged_by_actor_id IS NOT NULL)
+        ),
 
     CONSTRAINT chk_reports_closed_consistent
       CHECK (
         (closed_at_ms IS NULL AND closed_by_actor_id IS NULL)
           OR
         (closed_at_ms IS NOT NULL AND closed_by_actor_id IS NOT NULL)
+        ),
+
+    CONSTRAINT chk_reports_resolution_consistent
+      CHECK (
+        (closed_at_ms IS NULL AND resolution IS NULL)
+          OR
+        (closed_at_ms IS NOT NULL)
         )
   );
-  CREATE INDEX idx_reports_status_priority_created
-    ON reports (status, priority, created_at_ms DESC);
+
+  CREATE INDEX idx_reports_status_severity_created
+    ON reports (status, severity, created_at_ms DESC);
+
   CREATE INDEX idx_reports_reporter_created
     ON reports (reporter_actor_id, created_at_ms DESC);
+
   CREATE INDEX idx_reports_subject_created
     ON reports (subject_actor_id, created_at_ms DESC);
+
   CREATE INDEX idx_reports_selected_reason_created
     ON reports (selected_reason, created_at_ms DESC);
+
   CREATE INDEX idx_reports_origin_server_created
     ON reports (origin_server_id, created_at_ms DESC)
     WHERE origin_server_id IS NOT NULL;
+
+  CREATE INDEX idx_reports_assigned_status_created
+    ON reports (assigned_to_actor_id, status, created_at_ms DESC)
+    WHERE assigned_to_actor_id IS NOT NULL;
+
   CREATE INDEX idx_reports_closed_by_actor
     ON reports (closed_by_actor_id, closed_at_ms DESC)
     WHERE closed_by_actor_id IS NOT NULL;
+
+  CREATE INDEX idx_reports_reason_description_fts
+    ON reports
+      USING GIN (to_tsvector('english', coalesce(reason_description, '')));
 
   CREATE TABLE report_comments
   (
@@ -668,8 +942,10 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     report_id         UUID    NOT NULL REFERENCES reports (id) ON DELETE CASCADE,
     author_actor_id   UUID    NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
     parent_comment_id UUID    NULL REFERENCES report_comments (id) ON DELETE SET NULL,
+
     comment_text      TEXT    NOT NULL,
     is_sticky         BOOLEAN NOT NULL DEFAULT FALSE,
+
     created_at_ms     BIGINT  NOT NULL DEFAULT get_unix_ms(),
     edited_at_ms      BIGINT  NULL,
 
@@ -719,66 +995,509 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     ON punishment_appeals (closed_by_actor_id, closed_at_ms DESC)
     WHERE closed_by_actor_id IS NOT NULL;
 
+  -- ============================================================
+-- Mod cases / investigations
+-- ============================================================
+
   CREATE TABLE mod_cases
   (
-    id                 UUID PRIMARY KEY         DEFAULT gen_random_uuid(),
-    title              TEXT            NOT NULL DEFAULT 'Unspecified title',
-    description        TEXT            NULL,
-    opened_by_actor_id UUID            NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    closed_by_actor_id UUID            NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    status             mod_case_status NOT NULL DEFAULT 'open',
-    priority           priority        NULL,
-    is_sticky          BOOLEAN         NOT NULL DEFAULT FALSE,
-    opened_at_ms       BIGINT          NOT NULL DEFAULT get_unix_ms(),
-    closed_at_ms       BIGINT          NULL,
+    id                   UUID PRIMARY KEY             DEFAULT gen_random_uuid(),
+
+    title                TEXT                NOT NULL DEFAULT 'Unspecified title',
+    description          TEXT                NULL,
+
+    opened_by_actor_id   UUID                NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    assigned_to_actor_id UUID                NULL REFERENCES actors (id) ON DELETE SET NULL,
+    closed_by_actor_id   UUID                NULL REFERENCES actors (id) ON DELETE RESTRICT,
+
+    origin_server_id     UUID                NULL REFERENCES servers (id) ON DELETE SET NULL,
+
+    status               mod_case_status     NOT NULL DEFAULT 'open',
+    severity             severity            NULL,
+    resolution           mod_case_resolution NULL,
+
+    is_sticky            BOOLEAN             NOT NULL DEFAULT FALSE,
+
+    opened_at_ms         BIGINT              NOT NULL DEFAULT get_unix_ms(),
+    closed_at_ms         BIGINT              NULL,
+    updated_at_ms        BIGINT              NULL,
 
     CONSTRAINT chk_mod_cases_closed_consistent
       CHECK (
         (closed_at_ms IS NULL AND closed_by_actor_id IS NULL)
           OR
         (closed_at_ms IS NOT NULL AND closed_by_actor_id IS NOT NULL)
+        ),
+
+    CONSTRAINT chk_mod_cases_resolution_consistent
+      CHECK (
+        (closed_at_ms IS NULL AND resolution IS NULL)
+          OR
+        (closed_at_ms IS NOT NULL)
         )
   );
-  CREATE INDEX idx_mod_cases_status_priority_opened
-    ON mod_cases (status, priority, opened_at_ms DESC);
+
+  CREATE INDEX idx_mod_cases_status_severity_opened
+    ON mod_cases (status, severity, opened_at_ms DESC);
+
   CREATE INDEX idx_mod_cases_opened_by_actor
     ON mod_cases (opened_by_actor_id, opened_at_ms DESC);
+
+  CREATE INDEX idx_mod_cases_assigned_status_opened
+    ON mod_cases (assigned_to_actor_id, status, opened_at_ms DESC)
+    WHERE assigned_to_actor_id IS NOT NULL;
+
+  CREATE INDEX idx_mod_cases_origin_server_opened
+    ON mod_cases (origin_server_id, opened_at_ms DESC)
+    WHERE origin_server_id IS NOT NULL;
+
   CREATE INDEX idx_mod_cases_closed_by_actor
     ON mod_cases (closed_by_actor_id, closed_at_ms DESC)
     WHERE closed_by_actor_id IS NOT NULL;
+
   CREATE INDEX idx_mod_cases_sticky_open
     ON mod_cases (opened_at_ms DESC)
     WHERE is_sticky = TRUE AND closed_at_ms IS NULL;
 
-  CREATE TABLE player_watchlist_entries
+  CREATE INDEX idx_mod_cases_title_description_fts
+    ON mod_cases
+      USING GIN (
+                 to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, ''))
+        );
+
+  -- ============================================================
+-- Actors attached to mod cases / investigation boards
+-- ============================================================
+
+  CREATE TABLE mod_case_actors
+  (
+    id                UUID PRIMARY KEY                    DEFAULT gen_random_uuid(),
+
+    case_id           UUID                       NOT NULL REFERENCES mod_cases (id) ON DELETE CASCADE,
+    actor_id          UUID                       NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+
+    role              moderation_case_actor_role NOT NULL,
+
+    added_by_actor_id UUID                       NULL REFERENCES actors (id) ON DELETE SET NULL,
+    added_at_ms       BIGINT                     NOT NULL DEFAULT get_unix_ms(),
+
+    note              TEXT                       NULL,
+
+    UNIQUE (case_id, actor_id, role)
+  );
+
+  CREATE INDEX idx_mod_case_actors_case
+    ON mod_case_actors (case_id, role);
+
+  CREATE INDEX idx_mod_case_actors_actor
+    ON mod_case_actors (actor_id, role);
+
+  -- ============================================================
+-- Actor watchlist / Player of Interest registry
+-- ============================================================
+
+  CREATE TABLE actor_watchlist_entries
   (
     id                  INT PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    subject_actor_id    UUID   NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    added_by_actor_id   UUID   NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    reason              TEXT   NULL,
-    cleared_by_actor_id UUID   NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    cleared_at_ms       BIGINT NULL,
-    added_at_ms         BIGINT NOT NULL DEFAULT get_unix_ms(),
-    updated_at_ms       BIGINT NULL,
 
-    CONSTRAINT chk_player_watchlist_entries_clear_consistent
+    subject_actor_id    UUID     NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    added_by_actor_id   UUID     NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+
+    reason              TEXT     NULL,
+    severity            severity NULL,
+
+    alert_on_join       BOOLEAN  NOT NULL DEFAULT TRUE,
+    alert_on_chat       BOOLEAN  NOT NULL DEFAULT FALSE,
+    alert_note          TEXT     NULL,
+
+    expires_at_ms       BIGINT   NULL,
+
+    cleared_by_actor_id UUID     NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    cleared_at_ms       BIGINT   NULL,
+
+    added_at_ms         BIGINT   NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms       BIGINT   NULL,
+
+    CONSTRAINT chk_actor_watchlist_entries_clear_consistent
       CHECK (
         (cleared_at_ms IS NULL AND cleared_by_actor_id IS NULL)
           OR
         (cleared_at_ms IS NOT NULL AND cleared_by_actor_id IS NOT NULL)
+        ),
+
+    CONSTRAINT chk_actor_watchlist_entries_expiry_after_add
+      CHECK (
+        expires_at_ms IS NULL OR expires_at_ms > added_at_ms
         )
   );
 
-  CREATE UNIQUE INDEX uq_player_watchlist_entries_one_active_per_subject
-    ON player_watchlist_entries (subject_actor_id)
+  CREATE UNIQUE INDEX uq_actor_watchlist_entries_one_active_per_subject
+    ON actor_watchlist_entries (subject_actor_id)
     WHERE cleared_at_ms IS NULL;
-  CREATE INDEX idx_player_watchlist_entries_subject_added
-    ON player_watchlist_entries (subject_actor_id, added_at_ms DESC);
-  CREATE INDEX idx_player_watchlist_entries_added_by_actor
-    ON player_watchlist_entries (added_by_actor_id, added_at_ms DESC);
-  CREATE INDEX idx_player_watchlist_entries_cleared_by_actor
-    ON player_watchlist_entries (cleared_by_actor_id, cleared_at_ms DESC)
+
+  CREATE INDEX idx_actor_watchlist_entries_subject_added
+    ON actor_watchlist_entries (subject_actor_id, added_at_ms DESC);
+
+  CREATE INDEX idx_actor_watchlist_entries_added_by_actor
+    ON actor_watchlist_entries (added_by_actor_id, added_at_ms DESC);
+
+  CREATE INDEX idx_actor_watchlist_entries_active_severity
+    ON actor_watchlist_entries (severity, added_at_ms DESC)
+    WHERE cleared_at_ms IS NULL;
+
+  CREATE INDEX idx_actor_watchlist_entries_expires
+    ON actor_watchlist_entries (expires_at_ms)
+    WHERE expires_at_ms IS NOT NULL AND cleared_at_ms IS NULL;
+
+  CREATE INDEX idx_actor_watchlist_entries_cleared_by_actor
+    ON actor_watchlist_entries (cleared_by_actor_id, cleared_at_ms DESC)
     WHERE cleared_by_actor_id IS NOT NULL;
+
+  CREATE TABLE bug_reports
+  (
+    id                   UUID PRIMARY KEY           DEFAULT gen_random_uuid(),
+
+    platform             VARCHAR(30)       NOT NULL DEFAULT 'minecraft',
+    title                VARCHAR(100)      NOT NULL,
+    description          TEXT              NOT NULL,
+
+    status               bug_report_status NOT NULL DEFAULT 'open',
+    severity             severity          NULL,
+
+    created_by_actor_id  UUID              NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    assigned_to_actor_id UUID              NULL REFERENCES actors (id) ON DELETE SET NULL,
+
+    closed_by_actor_id   UUID              NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    closed_at_ms         BIGINT            NULL,
+
+    created_at_ms        BIGINT            NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms        BIGINT            NULL,
+
+    CONSTRAINT chk_bug_reports_closed_consistent
+      CHECK (
+        (closed_at_ms IS NULL AND closed_by_actor_id IS NULL)
+          OR
+        (closed_at_ms IS NOT NULL AND closed_by_actor_id IS NOT NULL)
+        )
+  );
+
+  CREATE INDEX idx_bug_reports_status_severity_created
+    ON bug_reports (status, severity, created_at_ms DESC);
+
+  CREATE INDEX idx_bug_reports_created_by_actor
+    ON bug_reports (created_by_actor_id, created_at_ms DESC)
+    WHERE created_by_actor_id IS NOT NULL;
+
+  CREATE INDEX idx_bug_reports_assigned_status_created
+    ON bug_reports (assigned_to_actor_id, status, created_at_ms DESC)
+    WHERE assigned_to_actor_id IS NOT NULL;
+
+  CREATE INDEX idx_bug_reports_closed_by_actor
+    ON bug_reports (closed_by_actor_id, closed_at_ms DESC)
+    WHERE closed_by_actor_id IS NOT NULL;
+
+  CREATE INDEX idx_bug_reports_title_description_fts
+    ON bug_reports
+      USING GIN (
+                 to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, ''))
+        );
+
+  -- ============================================================
+-- Generic moderation resource links
+-- This is the bridge layer that lets reports, cases, appeals,
+-- punishments, bugs, actors, and evidence-like resources connect.
+-- ============================================================
+
+  CREATE TABLE moderation_resource_links
+  (
+    id                  UUID PRIMARY KEY                  DEFAULT gen_random_uuid(),
+
+    source_type         moderation_resource_type NOT NULL,
+    source_id           UUID                     NOT NULL,
+
+    target_type         moderation_resource_type NOT NULL,
+    target_id           UUID                     NOT NULL,
+
+    link_type           moderation_link_type     NOT NULL DEFAULT 'related_to',
+
+    created_by_actor_id UUID                     NULL REFERENCES actors (id) ON DELETE SET NULL,
+    created_at_ms       BIGINT                   NOT NULL DEFAULT get_unix_ms(),
+
+    note                TEXT                     NULL,
+
+    CONSTRAINT chk_moderation_resource_links_not_self
+      CHECK (
+        source_type <> target_type
+          OR source_id <> target_id
+        )
+  );
+
+  CREATE INDEX idx_moderation_resource_links_source
+    ON moderation_resource_links (source_type, source_id, link_type);
+
+  CREATE INDEX idx_moderation_resource_links_target
+    ON moderation_resource_links (target_type, target_id, link_type);
+
+  CREATE INDEX idx_moderation_resource_links_created
+    ON moderation_resource_links (created_at_ms DESC);
+
+  CREATE UNIQUE INDEX uq_moderation_resource_links_exact
+    ON moderation_resource_links (
+                                  source_type,
+                                  source_id,
+                                  target_type,
+                                  target_id,
+                                  link_type
+      );
+
+  -- ============================================================
+-- Moderation evidence
+-- Evidence is stronger than a generic link: it means this item
+-- is being used to support review, investigation, or action.
+-- ============================================================
+
+  CREATE TABLE moderation_evidence
+  (
+    id                    UUID PRIMARY KEY                  DEFAULT gen_random_uuid(),
+
+    object_type           moderation_resource_type NOT NULL,
+    object_id             UUID                     NOT NULL,
+
+    evidence_type         moderation_evidence_type NOT NULL,
+
+    chat_message_id       UUID                     NULL REFERENCES chat_messages (id) ON DELETE SET NULL,
+    bug_report_id         UUID                     NULL REFERENCES bug_reports (id) ON DELETE SET NULL,
+
+    title                 TEXT                     NULL,
+    description           TEXT                     NULL,
+    url                   TEXT                     NULL,
+
+    metadata              JSONB                    NOT NULL DEFAULT '{}'::jsonb,
+
+    submitted_by_actor_id UUID                     NULL REFERENCES actors (id) ON DELETE SET NULL,
+    created_at_ms         BIGINT                   NOT NULL DEFAULT get_unix_ms(),
+
+    is_removed            BOOLEAN                  NOT NULL DEFAULT FALSE,
+    removed_by_actor_id   UUID                     NULL REFERENCES actors (id) ON DELETE SET NULL,
+    removed_at_ms         BIGINT                   NULL,
+
+    CONSTRAINT chk_moderation_evidence_removed_consistent
+      CHECK (
+        (is_removed = FALSE AND removed_by_actor_id IS NULL AND removed_at_ms IS NULL)
+          OR
+        (is_removed = TRUE AND removed_by_actor_id IS NOT NULL AND removed_at_ms IS NOT NULL)
+        ),
+
+    CONSTRAINT chk_moderation_evidence_has_payload
+      CHECK (
+        chat_message_id IS NOT NULL
+          OR bug_report_id IS NOT NULL
+          OR url IS NOT NULL
+          OR description IS NOT NULL
+          OR metadata <> '{}'::jsonb
+        )
+  );
+
+  CREATE INDEX idx_moderation_evidence_object
+    ON moderation_evidence (object_type, object_id, created_at_ms DESC);
+
+  CREATE INDEX idx_moderation_evidence_type
+    ON moderation_evidence (evidence_type, created_at_ms DESC);
+
+  CREATE INDEX idx_moderation_evidence_chat_message
+    ON moderation_evidence (chat_message_id)
+    WHERE chat_message_id IS NOT NULL;
+
+  CREATE INDEX idx_moderation_evidence_bug_report
+    ON moderation_evidence (bug_report_id)
+    WHERE bug_report_id IS NOT NULL;
+
+  CREATE INDEX idx_moderation_evidence_submitted_by
+    ON moderation_evidence (submitted_by_actor_id, created_at_ms DESC)
+    WHERE submitted_by_actor_id IS NOT NULL;
+
+  -- ============================================================
+-- Moderation events / limited operational timeline
+-- This is the staff-facing moderation trail, not the full admin audit log.
+-- ============================================================
+
+  CREATE TABLE moderation_events
+  (
+    id             UUID PRIMARY KEY                  DEFAULT gen_random_uuid(),
+
+    object_type    moderation_resource_type NOT NULL,
+    object_id      UUID                     NOT NULL,
+
+    event_type     moderation_event_type    NOT NULL,
+
+    actor_id       UUID                     NULL REFERENCES actors (id) ON DELETE SET NULL,
+
+    previous_value JSONB                    NULL,
+    new_value      JSONB                    NULL,
+    metadata       JSONB                    NOT NULL DEFAULT '{}'::jsonb,
+
+    created_at_ms  BIGINT                   NOT NULL DEFAULT get_unix_ms()
+  );
+
+  CREATE INDEX idx_moderation_events_object_created
+    ON moderation_events (object_type, object_id, created_at_ms DESC);
+
+  CREATE INDEX idx_moderation_events_actor_created
+    ON moderation_events (actor_id, created_at_ms DESC)
+    WHERE actor_id IS NOT NULL;
+
+  CREATE INDEX idx_moderation_events_type_created
+    ON moderation_events (event_type, created_at_ms DESC);
+
+  CREATE INDEX idx_moderation_events_created
+    ON moderation_events (created_at_ms DESC);
+
+-- Entitlements
+
+  CREATE TABLE entitlement_items
+  (
+    id            UUID PRIMARY KEY      DEFAULT gen_random_uuid(),
+    sku           VARCHAR(64)  NOT NULL UNIQUE,
+    -- Example: gadget, cosmetic, pet
+    item_type     VARCHAR(50)  NOT NULL,
+    label         VARCHAR(100) NOT NULL,
+    description   TEXT,
+    is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
+    metadata      JSONB        NOT NULL DEFAULT '{}',
+    created_at_ms BIGINT       NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms BIGINT       NOT NULL DEFAULT get_unix_ms()
+  );
+
+  CREATE TABLE player_entitlements
+  (
+    id                  UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    actor_id            UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    entitlement_item_id UUID        NOT NULL REFERENCES entitlement_items (id) ON DELETE RESTRICT,
+    source              VARCHAR(50) NOT NULL,
+    source_ref_id       UUID        NULL,
+    quantity            BIGINT      NOT NULL DEFAULT 1,
+    status              VARCHAR(30) NOT NULL DEFAULT 'active',
+    granted_at_ms       BIGINT      NOT NULL DEFAULT get_unix_ms(),
+    revoked_at_ms       BIGINT      NULL,
+    expires_at_ms       BIGINT      NULL,
+    metadata            JSONB       NOT NULL DEFAULT '{}',
+    CHECK (quantity >= 0),
+    CHECK (status IN ('active', 'revoked', 'expired', 'consumed'))
+  );
+
+  CREATE TABLE shop_offerings
+  (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    entitlement_item_id UUID    NOT NULL REFERENCES entitlement_items (id) ON DELETE RESTRICT,
+    label               VARCHAR(100),
+    price               BIGINT  NOT NULL,
+    quantity            INT     NOT NULL DEFAULT 1,
+    is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+    starts_at_ms        BIGINT  NULL,
+    ends_at_ms          BIGINT  NULL,
+    metadata            JSONB   NOT NULL DEFAULT '{}',
+    created_at_ms       BIGINT  NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms       BIGINT  NOT NULL DEFAULT get_unix_ms(),
+    CHECK (price >= 0),
+    CHECK (quantity > 0)
+  );
+
+  CREATE TABLE purchase_orders
+  (
+    id              UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    actor_id        UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    total_amount    BIGINT      NOT NULL,
+    currency_type   VARCHAR(50) NOT NULL DEFAULT 'soft_currency',
+    status          VARCHAR(20) NOT NULL,
+    created_at_ms   BIGINT      NOT NULL DEFAULT get_unix_ms(),
+    completed_at_ms BIGINT      NULL,
+    cancelled_at_ms BIGINT      NULL,
+    CHECK (total_amount >= 0),
+    CHECK (status IN ('pending', 'completed', 'cancelled', 'failed'))
+  );
+
+  CREATE TABLE purchase_order_items
+  (
+    id                     UUID PRIMARY KEY      DEFAULT gen_random_uuid(),
+    purchase_order_id      UUID         NOT NULL REFERENCES purchase_orders (id) ON DELETE RESTRICT,
+    shop_listing_id        UUID         NULL REFERENCES shop_offerings (id) ON DELETE RESTRICT,
+    entitlement_item_id    UUID         NOT NULL REFERENCES entitlement_items (id) ON DELETE RESTRICT,
+    sku                    VARCHAR(64)  NOT NULL,
+    label                  VARCHAR(100) NOT NULL,
+    quantity               INT          NOT NULL DEFAULT 1,
+    unit_price             BIGINT       NOT NULL,
+    line_total             BIGINT       NOT NULL,
+    granted_entitlement_id UUID         NULL REFERENCES player_entitlements (id) ON DELETE SET NULL,
+    CHECK (quantity > 0),
+    CHECK (unit_price >= 0),
+    CHECK (line_total >= 0),
+    CHECK (line_total = quantity * unit_price)
+  );
+
+  CREATE TABLE virtual_transactions
+  (
+    id               UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    actor_id         UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    amount           BIGINT      NOT NULL,
+    transaction_type VARCHAR(50) NOT NULL,
+    source           VARCHAR(50) NOT NULL,
+    source_ref_id    UUID        NULL,
+    balance_after    BIGINT      NOT NULL,
+    created_at_ms    BIGINT      NOT NULL DEFAULT get_unix_ms()
+  );
+
+  CREATE TABLE redemption_campaigns
+  (
+    id                        UUID PRIMARY KEY      DEFAULT gen_random_uuid(),
+    code                      VARCHAR(32)  NOT NULL UNIQUE,
+    label                     VARCHAR(100) NOT NULL,
+    max_redemptions           BIGINT       NULL,
+    max_redemptions_per_actor INT          NOT NULL DEFAULT 1,
+    starts_at_ms              BIGINT       NULL,
+    expires_at_ms             BIGINT       NULL,
+    is_active                 BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at_ms             BIGINT       NOT NULL DEFAULT get_unix_ms()
+  );
+
+  CREATE TABLE redemption_campaign_rewards
+  (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    campaign_id  UUID        NOT NULL REFERENCES redemption_campaigns (id) ON DELETE RESTRICT,
+    reward_type  VARCHAR(20) NOT NULL,
+    amount       BIGINT      NULL,
+    shop_item_id UUID        NULL,
+    quantity     INT         NULL DEFAULT 1
+  );
+
+  CREATE TABLE redemptions
+  (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    campaign_id    UUID   NOT NULL REFERENCES redemption_campaigns (id) ON DELETE RESTRICT,
+    actor_id       UUID   NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    redeemed_at_ms BIGINT NOT NULL  DEFAULT get_unix_ms(),
+    UNIQUE (campaign_id, actor_id)
+  );
+
+  CREATE TABLE friend_requests
+  (
+    id              UUID PRIMARY KEY               DEFAULT gen_random_uuid(),
+    requester_id    UUID                  NOT NULL REFERENCES players (id) ON DELETE RESTRICT,
+    recipient_id    UUID                  NOT NULL REFERENCES players (id) ON DELETE RESTRICT,
+    status          friend_request_status NOT NULL,
+    created_at_ms   BIGINT                NOT NULL DEFAULT get_unix_ms(),
+    responded_at_ms BIGINT                NULL,
+    CHECK (requester_id <> recipient_id),
+    UNIQUE (requester_id, recipient_id)
+  );
+
+  CREATE TABLE friendships
+  (
+    player_low_id  UUID   NOT NULL REFERENCES players (id) ON DELETE CASCADE,
+    player_high_id UUID   NOT NULL REFERENCES players (id) ON DELETE CASCADE,
+    created_at_ms  BIGINT NOT NULL DEFAULT get_unix_ms(),
+    PRIMARY KEY (player_low_id, player_high_id),
+    CHECK (player_low_id < player_high_id)
+  );
 
   -- ---------------------------------------------------------
 --  TRIGGERS

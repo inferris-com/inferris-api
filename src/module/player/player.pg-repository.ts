@@ -1,4 +1,4 @@
-import { type Kysely, sql, type Transaction } from "kysely";
+import { type Kysely, sql } from "kysely";
 
 import type { DB } from "../../db/types.js";
 import type {
@@ -16,8 +16,7 @@ import type {
   UpdatePlayerBody,
   UpdateProfileBody,
 } from "./player.schemas.js";
-
-type DbExecutor = Kysely<DB> | Transaction<DB>;
+import type { DbExecutor } from "../../db/index.js";
 
 export class PlayerPgRepository implements PlayerRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -30,7 +29,7 @@ export class PlayerPgRepository implements PlayerRepository {
         "players.username",
         "players.flags",
         "players.orbs",
-        "players.chat_channel",
+        "players.active_channel_key",
       ])
       .$if(username !== undefined, (qb) => qb.where("players.username", "ilike", `%${username}%`))
       .where("players.deleted_at_ms", "is", null)
@@ -99,12 +98,12 @@ export class PlayerPgRepository implements PlayerRepository {
         username: string;
         flags: string;
         orbs?: string;
-        chat_channel: CreatePlayerBody["chatChannel"];
+        active_channel_key: CreatePlayerBody["chatChannel"];
       } = {
         id,
         username,
         flags,
-        chat_channel: chatChannel,
+        active_channel_key: chatChannel,
       };
 
       if (input.orbs !== undefined) {
@@ -184,7 +183,7 @@ export class PlayerPgRepository implements PlayerRepository {
         username?: string;
         flags?: string;
         orbs?: string;
-        chat_channel?: UpdatePlayerBody["chatChannel"];
+        active_channel_key?: UpdatePlayerBody["chatChannel"];
       } = {};
 
       if (input.username !== undefined) {
@@ -207,7 +206,7 @@ export class PlayerPgRepository implements PlayerRepository {
       }
 
       if (input.chatChannel !== undefined) {
-        playerUpdate.chat_channel = input.chatChannel;
+        playerUpdate.active_channel_key = input.chatChannel;
       }
 
       if (Object.keys(playerUpdate).length > 0) {
@@ -426,7 +425,7 @@ export class PlayerPgRepository implements PlayerRepository {
         "username",
         "flags",
         "orbs",
-        "chat_channel",
+        "active_channel_key",
         "created_at_ms",
         "last_seen_at_ms",
         "last_server_id",

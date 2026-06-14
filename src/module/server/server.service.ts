@@ -1,9 +1,13 @@
-import { ServerAlreadyExistsError, ServerLockdownAlreadyExistsError, ServerNotFoundError } from "./server.errors.js";
+import {
+  ServerAlreadyExistsError,
+  ServerLockdownAlreadyExistsError,
+  ServerNotFoundError,
+} from "./server.errors.js";
 import { toAccessResponse, toLockdownResponse, toServerResponse } from "./server.mapper.js";
 import type { AccessResponse, LockdownResponse, ServerResponse } from "./server.response.types.js";
 import type { ServerPgRepository } from "./server.pg-repository.js";
 import type {
-  CreateLockdownBody,
+  AuthenticatedCreateLockdownBody,
   CreateServerBody,
   ReplaceServerAccessBody,
   UpdateLockdownBody,
@@ -23,17 +27,23 @@ export class ServerService {
     return toServerResponse(result.data);
   }
 
-  async createAccessPolicy(serverId: string, input: ReplaceServerAccessBody): Promise<AccessResponse> {
+  async createAccessPolicy(
+    serverId: string,
+    input: ReplaceServerAccessBody,
+  ): Promise<AccessResponse> {
     const result = await this.repo.createAccessPolicy(serverId, input);
 
     return toAccessResponse(result);
   }
 
-  async createLockdown(serverId: string, input: CreateLockdownBody): Promise<LockdownResponse> {
+  async createLockdown(
+    serverId: string,
+    input: AuthenticatedCreateLockdownBody,
+  ): Promise<LockdownResponse> {
     const result = await this.repo.createLockdown(serverId, input);
 
-    if(result.status === "conflict") {
-      throw new ServerLockdownAlreadyExistsError(serverId)
+    if (result.status === "conflict") {
+      throw new ServerLockdownAlreadyExistsError(serverId);
     }
 
     return toLockdownResponse(result.data);
@@ -52,7 +62,7 @@ export class ServerService {
   async updateAccessPolicy(id: string, input: ReplaceServerAccessBody): Promise<AccessResponse> {
     const policy = await this.repo.updateAccessPolicyByServerId(id, input);
 
-    if(!policy){
+    if (!policy) {
       throw new ServerNotFoundError(id);
     }
     return toAccessResponse(policy);
@@ -108,7 +118,7 @@ export class ServerService {
   async deleteServer(id: string): Promise<boolean> {
     const server = await this.repo.deleteServerById(id);
 
-    if(!server){
+    if (!server) {
       throw new ServerNotFoundError(id);
     }
     return true;
@@ -117,7 +127,7 @@ export class ServerService {
   async deletePolicy(serverId: string): Promise<boolean> {
     const server = await this.repo.deletePolicyByServerId(serverId);
 
-    if(!server){
+    if (!server) {
       throw new ServerNotFoundError(serverId);
     }
     return true;
@@ -126,7 +136,7 @@ export class ServerService {
   async deleteLockdown(serverId: string): Promise<boolean> {
     const server = await this.repo.deleteLockdownByServerId(serverId);
 
-    if(!server){
+    if (!server) {
       throw new ServerNotFoundError(serverId);
     }
     return true;

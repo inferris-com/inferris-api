@@ -1,4 +1,4 @@
-export type ChatChannel = "global" | "staff" | "testing";
+export type ChatChannel = string;
 
 export type PlayerSummaryResponse = {
   id: string;

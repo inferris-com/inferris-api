@@ -34,7 +34,7 @@ export const createLockdownBodySchema = z
     scope: lockdownScopeTypeSchema,
     requiredRankKey: z.string().max(30),
     reason: z.string(),
-    issuedByActorId: z.guid(),
+    issuedByActorId: z.guid().optional(),
     isActive: z.boolean().optional().default(true),
     startsAtMs: BigIntStringSchema,
     endsAtMs: BigIntStringSchema.optional().nullable(),
@@ -81,7 +81,6 @@ export const updateLockdownBodySchema = z
     scope: lockdownScopeTypeSchema.optional(),
     requiredRankKey: z.string().max(30).optional(),
     reason: z.string().optional(),
-    issuedByActorId: z.guid().optional(),
     isActive: z.boolean().optional(),
     startsAtMs: BigIntStringSchema.optional(),
     endsAtMs: BigIntStringSchema.optional().nullable(),
@@ -99,7 +98,8 @@ export type ServerIdParamsSchema = z.infer<typeof serverIdParamsSchema>;
 
 export type CreateServerBody = z.infer<typeof createServerBodySchema>;
 export type CreateLockdownBody = z.infer<typeof createLockdownBodySchema>;
-export type CreateLockdownInput = ServerIdParamsSchema & CreateLockdownBody;
+export type AuthenticatedCreateLockdownBody = CreateLockdownBody & { issuedByActorId: string };
+export type CreateLockdownInput = ServerIdParamsSchema & AuthenticatedCreateLockdownBody;
 export type UpdateServerBody = z.infer<typeof updateServerBodySchema>;
 export type ReplaceServerAccessBody = z.infer<typeof replaceServerAccessBodySchema>;
 export type UpdateLockdownBody = z.infer<typeof updateLockdownBodySchema>;

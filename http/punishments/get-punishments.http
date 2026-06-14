@@ -1,0 +1,6 @@
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@SUBJECT_PLAYER_ID = 7d16b15d-bb22-4a6d-80db-6213b3d75007
+
+GET {{SITE_URL}}/punishments?subjectPlayerId={{SUBJECT_PLAYER_ID}}
+X-Api-Key: {{API_KEY}}

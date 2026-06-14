@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler, NextFunction, Request, Response } from "express";
+import {config} from "../config.js";
 
 export const appErrorKinds = {
   validation: 400,
@@ -97,7 +98,7 @@ export const errorHandler: ErrorRequestHandler = (
       ? err
       : new InternalError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Internal server error",
+          message: err instanceof Error && config.isDevelopment && config.logLevel === "debug" ? err.message : "Internal server error",
           cause: err,
         });
 

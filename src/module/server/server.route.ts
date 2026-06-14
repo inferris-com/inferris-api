@@ -18,8 +18,10 @@ import {
   updateServerBodySchema,
 } from "./server.schemas.js";
 import type { ServerService } from "./server.service.js";
+import { auditMutation, authorize } from "../auth/auth.middleware.js";
+import type { AuthRepository } from "../auth/auth.repository.js";
 
-export function createServerRouter(service: ServerService): Router {
+export function createServerRouter(service: ServerService, authRepository: AuthRepository): Router {
   const router = Router();
 
   const createServer: RequestHandler = async (req, res) => {
@@ -29,15 +31,11 @@ export function createServerRouter(service: ServerService): Router {
     res.json(body);
   };
 
-  const createAccessPolicy: RequestHandler<ServerIdParamsSchema> = async (req, res) => {
-    const server = await service.createAccessPolicy(req.params.serverId, req.body as ReplaceServerAccessBody);
-    const body: ApiSuccess<AccessResponse> = { data: server };
-
-    res.json(body);
-  };
-
   const createLockdown: RequestHandler<ServerIdParamsSchema> = async (req, res) => {
-    const server = await service.createLockdown(req.params.serverId, req.body as CreateLockdownBody);
+    const server = await service.createLockdown(req.params.serverId, {
+      ...(req.body as CreateLockdownBody),
+      issuedByActorId: req.auth?.actorId ?? "",
+    });
     const body: ApiSuccess<LockdownResponse> = { data: server };
 
     res.json(body);
@@ -50,26 +48,36 @@ export function createServerRouter(service: ServerService): Router {
     res.json(body);
   };
 
-  const patchServer: RequestHandler<ServerIdParamsSchema, unknown, UpdateServerBody> = async (req, res) => {
+  const patchServer: RequestHandler<ServerIdParamsSchema, unknown, UpdateServerBody> = async (
+    req,
+    res,
+  ) => {
     const server = await service.patchServer(req.params.serverId, req.body);
     const body: ApiSuccess<ServerResponse> = { data: server };
 
     res.json(body);
   };
 
-  const updateAccessPolicy: RequestHandler<ServerIdParamsSchema, unknown, ReplaceServerAccessBody> = async (req, res) => {
+  const updateAccessPolicy: RequestHandler<
+    ServerIdParamsSchema,
+    unknown,
+    ReplaceServerAccessBody
+  > = async (req, res) => {
     const policy = await service.updateAccessPolicy(req.params.serverId, req.body);
-    const body: ApiSuccess<AccessResponse> = {data: policy};
+    const body: ApiSuccess<AccessResponse> = { data: policy };
 
     res.json(body);
-  }
+  };
 
-  const patchLockdown: RequestHandler<ServerIdParamsSchema, unknown, UpdateLockdownBody> = async (req, res) => {
+  const patchLockdown: RequestHandler<ServerIdParamsSchema, unknown, UpdateLockdownBody> = async (
+    req,
+    res,
+  ) => {
     const server = await service.patchLockdown(req.params.serverId, req.body);
-    const body: ApiSuccess<LockdownResponse> = {data: server};
+    const body: ApiSuccess<LockdownResponse> = { data: server };
 
     res.json(body);
-  }
+  };
 
   const getAccessPolicy: RequestHandler<ServerIdParamsSchema> = async (req, res) => {
     const server = await service.getAccessPolicy(req.params.serverId);
@@ -89,30 +97,109 @@ export function createServerRouter(service: ServerService): Router {
     await service.deleteServer(req.params.serverId);
 
     res.status(204).send();
-  }
+  };
 
   const deletePolicy: RequestHandler<ServerIdParamsSchema> = async (req, res) => {
     await service.deletePolicy(req.params.serverId);
 
     res.status(204).send();
-  }
+  };
 
   const deleteLockdown: RequestHandler<ServerIdParamsSchema> = async (req, res) => {
     await service.deleteLockdown(req.params.serverId);
 
     res.status(204).send();
-  }
+  };
 
-  router.post("/", validateRequest({ body: createServerBodySchema }), createServer);
-  router.post("/:serverId/lockdown", validateRequest({ body: createLockdownBodySchema }), createLockdown);
-  router.put("/:serverId/access", validateRequest({ body: replaceServerAccessBodySchema }), updateAccessPolicy);
-  router.patch("/:serverId", validateRequest({ body: updateServerBodySchema }), patchServer);
-  router.patch("/:serverId/lockdown", validateRequest({ body: updateLockdownBodySchema }), patchLockdown);
-  router.get("/:serverId", validateRequest({ params: serverIdParamsSchema }), getServer);
-  router.get("/:serverId/access", validateRequest({ params: serverIdParamsSchema }), getAccessPolicy);
-  router.get("/:serverId/lockdown", validateRequest({ params: serverIdParamsSchema }), getLockdown);
-  router.delete("/:serverId", validateRequest({ params: serverIdParamsSchema }), deleteServer);
-  router.delete("/:serverId/lockdown", validateRequest({ params: serverIdParamsSchema }), deleteLockdown);
-  router.delete("/:serverId/access", validateRequest({ params: serverIdParamsSchema }), deletePolicy);
+  const readServers = authorize(authRepository, {
+    apiScopes: ["servers:read"],
+    privilegedRole: "moderator",
+    argusRole: "moderator",
+  });
+  const writeServers = authorize(authRepository, {
+    apiScopes: ["servers:write"],
+    argusRole: "admin",
+    privilegedRole: "administrator",
+  });
+  const manageLockdowns = authorize(authRepository, {
+    apiScopes: ["servers:write"],
+    argusRole: "moderator",
+    privilegedRole: "moderator",
+  });
+
+  router.post(
+    "/",
+    writeServers,
+    auditMutation(authRepository, "servers.create"),
+    validateRequest({ body: createServerBodySchema }),
+    createServer,
+  );
+  router.post(
+    "/:serverId/lockdown",
+    manageLockdowns,
+    auditMutation(authRepository, "servers.lockdowns.create"),
+    validateRequest({ params: serverIdParamsSchema, body: createLockdownBodySchema }),
+    createLockdown,
+  );
+  router.put(
+    "/:serverId/access",
+    writeServers,
+    auditMutation(authRepository, "servers.access.replace"),
+    validateRequest({ params: serverIdParamsSchema, body: replaceServerAccessBodySchema }),
+    updateAccessPolicy,
+  );
+  router.patch(
+    "/:serverId",
+    writeServers,
+    auditMutation(authRepository, "servers.update"),
+    validateRequest({ params: serverIdParamsSchema, body: updateServerBodySchema }),
+    patchServer,
+  );
+  router.patch(
+    "/:serverId/lockdown",
+    manageLockdowns,
+    auditMutation(authRepository, "servers.lockdowns.update"),
+    validateRequest({ params: serverIdParamsSchema, body: updateLockdownBodySchema }),
+    patchLockdown,
+  );
+  router.get(
+    "/:serverId",
+    readServers,
+    validateRequest({ params: serverIdParamsSchema }),
+    getServer,
+  );
+  router.get(
+    "/:serverId/access",
+    readServers,
+    validateRequest({ params: serverIdParamsSchema }),
+    getAccessPolicy,
+  );
+  router.get(
+    "/:serverId/lockdown",
+    readServers,
+    validateRequest({ params: serverIdParamsSchema }),
+    getLockdown,
+  );
+  router.delete(
+    "/:serverId",
+    writeServers,
+    auditMutation(authRepository, "servers.delete"),
+    validateRequest({ params: serverIdParamsSchema }),
+    deleteServer,
+  );
+  router.delete(
+    "/:serverId/lockdown",
+    manageLockdowns,
+    auditMutation(authRepository, "servers.lockdowns.delete"),
+    validateRequest({ params: serverIdParamsSchema }),
+    deleteLockdown,
+  );
+  router.delete(
+    "/:serverId/access",
+    writeServers,
+    auditMutation(authRepository, "servers.access.delete"),
+    validateRequest({ params: serverIdParamsSchema }),
+    deletePolicy,
+  );
   return router;
 }

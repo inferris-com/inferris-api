@@ -5,7 +5,7 @@ import type { CreatePlayerBody, ListPlayersQuery, UpdatePlayerBody } from "./pla
 
 export type PlayerSummaryRecord = Pick<
   Selectable<Players>,
-  "id" | "username" | "flags" | "orbs" | "chat_channel"
+  "id" | "username" | "flags" | "orbs" | "active_channel_key"
 >;
 
 export type PlayerRecord = Pick<
@@ -14,7 +14,7 @@ export type PlayerRecord = Pick<
   | "username"
   | "flags"
   | "orbs"
-  | "chat_channel"
+  | "active_channel_key"
   | "last_server_id"
   | "created_at_ms"
   | "last_seen_at_ms"

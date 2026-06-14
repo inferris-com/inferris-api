@@ -15,6 +15,18 @@ import { createActorRouter } from "./module/actor/actor.route.js";
 import { ActorService } from "./module/actor/actor.service.js";
 import { ActorPgRepository } from "./module/actor/actor.pg-repository.js";
 import { connectRedis, disconnectRedis } from "./redis/index.js";
+import { createPermissionRouter } from "./module/permission/permission.route.js";
+import { PermissionService } from "./module/permission/permission.service.js";
+import { PermissionPgRepository } from "./module/permission/permission.pg-repository.js";
+import { AuthRepository } from "./module/auth/auth.repository.js";
+import { AuthService } from "./module/auth/auth.service.js";
+import { redis } from "./redis/index.js";
+import { createAuthRouter } from "./module/auth/auth.route.js";
+import { authenticate } from "./module/auth/auth.middleware.js";
+import { createPunishmentRouter } from "./module/punishment/punishment.route.js";
+import { PunishmentService } from "./module/punishment/punishment.service.js";
+import { PunishmentPgRepository } from "./module/punishment/punishment.pg-repository.js";
+import { PunishmentPublisher } from "./module/punishment/punishment.publisher.js";
 
 type ServerProps = {
   host?: string;
@@ -40,9 +52,40 @@ export function createApp() {
   app.get("/health", (_req, res) => {
     res.json({ ok: true });
   });
-  app.use("/players", createPlayerRouter(new PlayerService(new PlayerPgRepository(db))));
-  app.use("/actors", createActorRouter(new ActorService(new ActorPgRepository(db))));
-  app.use("/servers", createServerRouter(new ServerService(new ServerPgRepository(db))));
+
+  const authRepository = new AuthRepository(db);
+  const authService = new AuthService(authRepository, redis);
+  const authenticateRequest = authenticate(authService);
+
+  app.use("/auth", createAuthRouter(authService));
+  app.use(
+    "/players",
+    authenticateRequest,
+    createPlayerRouter(new PlayerService(new PlayerPgRepository(db)), authRepository),
+  );
+  app.use(
+    "/actors",
+    authenticateRequest,
+    createActorRouter(new ActorService(new ActorPgRepository(db)), authRepository),
+  );
+  app.use(
+    "/servers",
+    authenticateRequest,
+    createServerRouter(new ServerService(new ServerPgRepository(db)), authRepository),
+  );
+  app.use(
+    "/permissions",
+    authenticateRequest,
+    createPermissionRouter(new PermissionService(new PermissionPgRepository(db)), authRepository),
+  );
+  app.use(
+    "/punishments",
+    authenticateRequest,
+    createPunishmentRouter(
+      new PunishmentService(new PunishmentPgRepository(db), new PunishmentPublisher(redis)),
+      authRepository,
+    ),
+  );
 
   // Middlewares
   app.use(errorHandler);

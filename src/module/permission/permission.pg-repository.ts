@@ -1,11 +1,15 @@
 import type { Kysely, Selectable } from "kysely";
-import type { DB, PermissionNodes } from "../../db/types.js";
+import type { DB, PermissionNodes, PermissionPolicies } from "../../db/types.js";
 import type { DbExecutor } from "../../db/index.js";
-import type { CreatePermissionNodeBody, CreatePermissionRuleBody } from "./permission.schemas.js";
+import type { CreatePermissionNodeBody, ReplacePermissionRuleBody } from "./permission.schemas.js";
 import type { CreateResult } from "../../shared/results.types.js";
-import {toPermissionRuleUpdate} from "./permission.mapper.js";
+import { toPermissionNodeCreate, toPermissionRuleUpdate } from "./permission.mapper.js";
 
 type CreatePermissionNodeResult = CreateResult<Selectable<PermissionNodes>>;
+type ReplacePermissionRuleResult =
+  | { status: "replaced"; rule: Selectable<PermissionPolicies> }
+  | { status: "permission_key_not_found" }
+  | { status: "min_rank_key_not_found" };
 
 export class PermissionPgRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -14,8 +18,11 @@ export class PermissionPgRepository {
     return await this.db.transaction().execute(async (trx) => {
       const permissionNode = await trx
         .insertInto("permission_nodes")
-        .values(input)
+        .values(toPermissionNodeCreate(input))
         .returningAll()
+        .onConflict((oc) => {
+          return oc.doNothing();
+        })
         .executeTakeFirst();
 
       if (!permissionNode) {
@@ -26,24 +33,98 @@ export class PermissionPgRepository {
     });
   }
 
-  // PUT
-  async createPermissionRule(input: CreatePermissionRuleBody) {
+  // PUT /permissions/:permissionKey/rules/:minRankKey
+  async replacePermissionRule(
+    permissionKey: string,
+    minRankKey: string,
+    input: ReplacePermissionRuleBody,
+  ): Promise<ReplacePermissionRuleResult> {
     return await this.db.transaction().execute(async (trx) => {
-      const mappedPermissionNode = toPermissionRuleUpdate(input);
+      const permissionRow = await trx
+        .selectFrom("permission_nodes")
+        .where("key", "=", permissionKey)
+        .select("id")
+        .executeTakeFirst();
+      const minRankRow = await trx
+        .selectFrom("ranks")
+        .where("key", "=", minRankKey)
+        .executeTakeFirst();
 
-      await trx.
-    })
+      if (!permissionRow) {
+        return { status: "permission_key_not_found" };
+      }
+
+      if (!minRankRow) {
+        return { status: "min_rank_key_not_found" };
+      }
+
+      // Map ReplacePermissionRuleBody to insertable/updatable row
+      const mappedPermissionRule = toPermissionRuleUpdate(permissionRow.id, minRankKey, input);
+
+      const ruleToUpsert = await trx
+        .insertInto("permission_policies")
+        .values({
+          rank_key: minRankKey,
+          permission_id: permissionRow.id,
+          effect: input.effect,
+        })
+        .onConflict((oc) =>
+          oc.columns(["permission_id", "rank_key"]).doUpdateSet(mappedPermissionRule),
+        )
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+      return { status: "replaced", rule: ruleToUpsert };
+    });
   }
 
   async findPermissionNodeByKey(key: string) {
-    await this.db.transaction().execute(async (trx) => {
+    return await this.db.transaction().execute(async (trx) => {
       const existsByKey = await this.permissionNodeExistsByKey(key, trx);
 
       if (!existsByKey) {
         return null;
       }
 
-      return await trx.selectFrom("permission_nodes").where("key", "=", key).executeTakeFirst();
+      return await trx
+        .selectFrom("permission_nodes")
+        .selectAll()
+        .where("key", "=", key)
+        .executeTakeFirst();
+    });
+  }
+
+  // Find a permission rule from a perm node key
+  async findPermissionRuleByMinRank(key: string) {
+    return await this.db.transaction().execute(async (trx) => {
+      const existsByKey = await this.permissionRuleExistsByMinRankKey(key, trx);
+
+      if (!existsByKey) {
+        return null;
+      }
+
+      return await trx
+        .selectFrom("permission_policies")
+        .selectAll()
+        .where("permission_id", "=", key)
+        .executeTakeFirst();
+    });
+  }
+
+  // List all rules with a perm key
+  async listPermissionRulesByPermissionKey(key: string) {
+    return await this.db.transaction().execute(async (trx) => {
+      const existsByKey = await this.permissionRuleExistsByMinRankKey(key, trx);
+
+      if (!existsByKey) {
+        return null;
+      }
+
+      return await trx
+        .selectFrom("permission_policies")
+        .selectAll()
+        .where("permission_id", "=", key)
+        .execute();
     });
   }
 
@@ -52,6 +133,16 @@ export class PermissionPgRepository {
       .selectFrom("permission_nodes")
       .select("key")
       .where("key", "=", key)
+      .executeTakeFirst();
+
+    return row !== undefined;
+  }
+
+  async permissionRuleExistsByMinRankKey(key: string, db: DbExecutor = this.db): Promise<boolean> {
+    const row = await db
+      .selectFrom("permission_policies")
+      .select("rank_key")
+      .where("rank_key", "=", key)
       .executeTakeFirst();
 
     return row !== undefined;

@@ -10,14 +10,14 @@ import type {
   ServerType,
 } from "../../db/types.js";
 import type {
-  CreateLockdownBody,
+  AuthenticatedCreateLockdownBody,
   CreateServerBody,
   ReplaceServerAccessBody,
   UpdateLockdownBody,
   UpdateServerBody,
 } from "./server.schemas.js";
 import type { CreateResult, DeleteResult } from "../../shared/results.types.js";
-import {toServerAccessPolicyUpdate} from "./server.mapper.js";
+import { toServerAccessPolicyUpdate } from "./server.mapper.js";
 
 export type CreateServerResult = CreateResult<Selectable<Servers>>;
 export type CreateLockdownResult = CreateResult<Selectable<Lockdowns>>;
@@ -61,7 +61,7 @@ export class ServerPgRepository {
       isActive,
       startsAtMs,
       endsAtMs,
-    }: CreateLockdownBody,
+    }: AuthenticatedCreateLockdownBody,
   ): Promise<CreateLockdownResult> {
     return await this.db.transaction().execute(async (trx) => {
       const lockdown = await trx
@@ -171,7 +171,10 @@ export class ServerPgRepository {
     });
   }
 
-  async updateAccessPolicyByServerId(serverId: string, input: ReplaceServerAccessBody): Promise<Selectable<ServerAccessPolicies> | null> {
+  async updateAccessPolicyByServerId(
+    serverId: string,
+    input: ReplaceServerAccessBody,
+  ): Promise<Selectable<ServerAccessPolicies> | null> {
     const mappedInput = toServerAccessPolicyUpdate(input);
 
     return await this.db.transaction().execute(async (trx) => {
@@ -185,12 +188,13 @@ export class ServerPgRepository {
         return null;
       }
 
-      return await trx.updateTable("server_access_policies")
+      return await trx
+        .updateTable("server_access_policies")
         .set(mappedInput)
         .where("server_id", "=", serverId)
         .returningAll()
         .executeTakeFirstOrThrow();
-    })
+    });
   }
 
   async updateLockdownByServerId(
@@ -237,9 +241,6 @@ export class ServerPgRepository {
       }
       if (input.reason !== undefined) {
         updateLockdown.reason = input.reason;
-      }
-      if (input.issuedByActorId !== undefined) {
-        updateLockdown.issued_by_actor_id = input.issuedByActorId;
       }
       if (input.isActive !== undefined) {
         updateLockdown.is_active = input.isActive;
@@ -354,13 +355,19 @@ export class ServerPgRepository {
 
   async deletePolicyByServerId(serverId: string) {
     return await this.db.transaction().execute(async (trx) => {
-      const serverExists = await trx.selectFrom("servers").where("id", "=", serverId).executeTakeFirst();
+      const serverExists = await trx
+        .selectFrom("servers")
+        .where("id", "=", serverId)
+        .executeTakeFirst();
 
       if (!serverExists) {
         return { status: "not_found" };
       }
 
-      await trx.deleteFrom("server_access_policies").where("server_id", "=", serverId).executeTakeFirst();
+      await trx
+        .deleteFrom("server_access_policies")
+        .where("server_id", "=", serverId)
+        .executeTakeFirst();
 
       return { status: "deleted" };
     });
@@ -368,7 +375,10 @@ export class ServerPgRepository {
 
   async deleteLockdownByServerId(serverId: string) {
     return await this.db.transaction().execute(async (trx) => {
-      const serverExists = await trx.selectFrom("servers").where("id", "=", serverId).executeTakeFirst();
+      const serverExists = await trx
+        .selectFrom("servers")
+        .where("id", "=", serverId)
+        .executeTakeFirst();
 
       if (!serverExists) {
         return { status: "not_found" };

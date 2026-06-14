@@ -10,8 +10,10 @@ import type { ApiSuccess } from "../../shared/http/api-response.types.js";
 import type { ActorResponse } from "./actor.response.types.js";
 import { validateRequest } from "../../middleware/validation.js";
 import { type PlayerIdParams, playerIdParamsSchema } from "../player/player.schemas.js";
+import { auditMutation, authorize } from "../auth/auth.middleware.js";
+import type { AuthRepository } from "../auth/auth.repository.js";
 
-export function createActorRouter(service: ActorService): Router {
+export function createActorRouter(service: ActorService, authRepository: AuthRepository): Router {
   const router = Router();
 
   const getActorById: RequestHandler<ActorIdParams> = async (req, res) => {
@@ -32,10 +34,32 @@ export function createActorRouter(service: ActorService): Router {
     res.json(body);
   };
 
-  router.get("/:actorId", validateRequest({ params: actorIdParamsSchema }), getActorById);
-  router.get("/by-player/:playerId", validateRequest({ params: playerIdParamsSchema }), getActorByPlayerId);
+  const readActors = authorize(authRepository, {
+    apiScopes: ["actors:read"],
+    argusRole: "moderator",
+  });
+  const writeActors = authorize(authRepository, {
+    apiScopes: ["actors:write"],
+    argusRole: "admin",
+    privilegedRole: "administrator",
+  });
+
+  router.get(
+    "/by-player/:playerId",
+    readActors,
+    validateRequest({ params: playerIdParamsSchema }),
+    getActorByPlayerId,
+  );
+  router.get(
+    "/:actorId",
+    readActors,
+    validateRequest({ params: actorIdParamsSchema }),
+    getActorById,
+  );
   router.patch(
     "/:actorId",
+    writeActors,
+    auditMutation(authRepository, "actors.update"),
     validateRequest({ params: actorIdParamsSchema, body: updateActorBodySchema }),
     patchActor,
   );

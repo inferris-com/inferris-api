@@ -2,18 +2,57 @@ import "dotenv/config";
 
 import z from "zod";
 
-const envSchema = z.object({
-  NAME: z.string().default("inferris-api"),
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  HOST: z.string().min(1).default("0.0.0.0"),
-  PORT: z.coerce.number().int().positive().default(3000),
-  LOG_LEVEL: z.string().min(1).default("debug"),
-  DATABASE_URL: z.url().default("postgres://dev:dev@localhost:5432/devdb"),
-  DB_POOL_SIZE: z.coerce.number().int().positive().default(10),
-  REDIS_URL: z.url().default("redis://localhost:6379"),
-  REDIS_CONNECT_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
-  REDIS_RECONNECT_MAX_DELAY_MS: z.coerce.number().int().nonnegative().default(3000),
-});
+const envSchema = z
+  .object({
+    NAME: z.string().default("inferris-api"),
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    HOST: z.string().min(1).default("0.0.0.0"),
+    PORT: z.coerce.number().int().positive().default(3000),
+    LOG_LEVEL: z.string().min(1).default("debug"),
+    DATABASE_URL: z.url().default("postgres://dev:dev@localhost:5432/devdb"),
+    DB_POOL_SIZE: z.coerce.number().int().positive().default(10),
+    REDIS_URL: z.url().default("redis://localhost:6379"),
+    REDIS_CONNECT_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
+    REDIS_RECONNECT_MAX_DELAY_MS: z.coerce.number().int().nonnegative().default(3000),
+    AUTH_JWT_SECRET: z
+      .string()
+      .min(32)
+      .default("development-auth-secret-change-me-at-least-32-chars"),
+    AUTH_ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+    AUTH_REFRESH_TOKEN_TTL_SECONDS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(60 * 60 * 24 * 14),
+    AUTH_API_KEY_PEPPER: z.string().default("development-api-key-pepper-change-me-32-chars"),
+  })
+  .superRefine((env, ctx) => {
+    if (env.NODE_ENV !== "production") {
+      return;
+    }
+
+    if (env.AUTH_JWT_SECRET.length < 32) {
+      ctx.addIssue({
+        code: "too_small",
+        minimum: 32,
+        inclusive: true,
+        origin: "string",
+        path: ["AUTH_JWT_SECRET"],
+        message: "Production AUTH_JWT_SECRET must be at least 32 characters.",
+      });
+    }
+
+    if (env.AUTH_API_KEY_PEPPER.length < 32) {
+      ctx.addIssue({
+        code: "too_small",
+        minimum: 32,
+        inclusive: true,
+        origin: "string",
+        path: ["AUTH_API_KEY_PEPPER"],
+        message: "Production AUTH_API_KEY_PEPPER must be at least 32 characters.",
+      });
+    }
+  });
 
 const env = envSchema.parse(process.env);
 
@@ -36,6 +75,12 @@ export const config = {
     url: env.REDIS_URL,
     connectTimeoutMs: env.REDIS_CONNECT_TIMEOUT_MS,
     reconnectMaxDelayMs: env.REDIS_RECONNECT_MAX_DELAY_MS,
+  },
+  auth: {
+    jwtSecret: env.AUTH_JWT_SECRET,
+    accessTokenTtlSeconds: env.AUTH_ACCESS_TOKEN_TTL_SECONDS,
+    refreshTokenTtlSeconds: env.AUTH_REFRESH_TOKEN_TTL_SECONDS,
+    apiKeyPepper: env.AUTH_API_KEY_PEPPER,
   },
 } as const;
 

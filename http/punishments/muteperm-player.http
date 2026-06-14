@@ -1,0 +1,20 @@
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+
+@SUBJECT_PLAYER_ID = 7d16b15d-bb22-4a6d-80db-6213b3d75007
+@SERVER_ORIGIN_ID = 00000000-0000-0000-0000-000000000001
+@TYPE = mute
+@REASON = Test mute
+@IS_SILENT = false
+
+POST {{SITE_URL}}/punishments
+X-Api-Key: {{API_KEY}}
+Content-Type: application/json
+
+{
+  "subjectPlayerId": "{{SUBJECT_PLAYER_ID}}",
+  "serverOriginId": "{{SERVER_ORIGIN_ID}}",
+  "type": "{{TYPE}}",
+  "reason": "{{REASON}}",
+  "isSilent": {{IS_SILENT}}
+}
