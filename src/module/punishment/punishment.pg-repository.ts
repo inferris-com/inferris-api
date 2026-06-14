@@ -1,6 +1,6 @@
 import { type Kysely, sql, type Selectable } from "kysely";
 
-import type { DB, Punishments } from "../../db/types.js";
+import type { DB, Punishment, Punishments } from "../../db/types.js";
 import type { PaginatedResult } from "../../shared/pagination.schemas.js";
 import type { CreatePunishmentBody, ListPunishmentsQuery } from "./punishment.schemas.js";
 
@@ -54,21 +54,8 @@ export class PunishmentPgRepository {
       )
       .$if(query.active !== undefined, (qb) =>
         query.active === true
-          ? qb
-              .where("punishments.revoked_at_ms", "is", null)
-              .where((eb) =>
-                eb.or([
-                  eb("punishments.type", "in", ["warn", "kick"]),
-                  eb("punishments.ends_at_ms", "is", null),
-                  eb("punishments.ends_at_ms", ">", sql<string>`get_unix_ms()`),
-                ]),
-              )
-          : qb.where((eb) =>
-              eb.or([
-                eb("punishments.revoked_at_ms", "is not", null),
-                eb("punishments.ends_at_ms", "<=", sql<string>`get_unix_ms()`),
-              ]),
-            ),
+          ? qb.where("punishments.is_active", "=", true)
+          : qb.where("punishments.is_active", "=", false),
       );
 
     const [rows, countRow] = await Promise.all([
@@ -122,6 +109,7 @@ export class PunishmentPgRepository {
         type: input.type,
         reason: input.reason ?? null,
         is_silent: input.isSilent,
+        is_active: true,
         ends_at_ms: input.endsAtMs ?? null,
       })
       .returningAll()
@@ -133,14 +121,47 @@ export class PunishmentPgRepository {
       (await this.db
         .updateTable("punishments")
         .set({
+          is_active: false,
           revoked_by_actor_id: input.revokedByActorId,
           revoked_at_ms: sql`get_unix_ms()`,
           revocation_reason: input.reason,
           updated_at_ms: sql`get_unix_ms()`,
         })
         .where("id", "=", input.punishmentId)
-        .where("revoked_at_ms", "is", null)
+        .where("is_active", "=", true)
         .returningAll()
+        .executeTakeFirst()) ?? null
+    );
+  }
+
+  async deactivateExpiredPunishments(subjectActorId?: string, type?: Punishment): Promise<void> {
+    await this.db
+      .updateTable("punishments")
+      .set({
+        is_active: false,
+        updated_at_ms: sql`get_unix_ms()`,
+      })
+      .$if(subjectActorId !== undefined, (qb) =>
+        qb.where("subject_actor_id", "=", subjectActorId ?? ""),
+      )
+      .$if(type !== undefined, (qb) => qb.where("type", "=", type ?? "ban"))
+      .where("is_active", "=", true)
+      .where("ends_at_ms", "is not", null)
+      .where("ends_at_ms", "<=", sql<string>`get_unix_ms()`)
+      .execute();
+  }
+
+  async findActivePunishment(
+    subjectActorId: string,
+    type: "ban" | "mute",
+  ): Promise<Selectable<Punishments> | null> {
+    return (
+      (await this.db
+        .selectFrom("punishments")
+        .selectAll()
+        .where("subject_actor_id", "=", subjectActorId)
+        .where("type", "=", type)
+        .where("is_active", "=", true)
         .executeTakeFirst()) ?? null
     );
   }

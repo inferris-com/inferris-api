@@ -28,3 +28,13 @@ export class InvalidPunishmentDurationError extends ValidationError {
     });
   }
 }
+
+export class ActivePunishmentConflictError extends ConflictError {
+  constructor(type: "ban" | "mute", subjectActorId: string) {
+    super({
+      code: "ACTIVE_PUNISHMENT_CONFLICT",
+      message: `Actor already has an active ${type}.`,
+      details: { type, subjectActorId },
+    });
+  }
+}

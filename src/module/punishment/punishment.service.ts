@@ -1,4 +1,5 @@
 import {
+  ActivePunishmentConflictError,
   InvalidPunishmentDurationError,
   PunishmentAlreadyRevokedError,
   PunishmentNotFoundError,
@@ -30,6 +31,10 @@ export class PunishmentService {
   ) {}
 
   async listPunishments(query: ListPunishmentsQuery): Promise<PunishmentListResponse> {
+    if (query.active !== false) {
+      await this.repo.deactivateExpiredPunishments();
+    }
+
     const result = await this.repo.listPunishments(query);
 
     return {
@@ -61,6 +66,14 @@ export class PunishmentService {
 
     const subjectActorId =
       input.subjectActorId ?? (await this.resolveSubjectActorId(input.subjectPlayerId));
+
+    await this.repo.deactivateExpiredPunishments(subjectActorId, input.type);
+    if (
+      (input.type === "ban" || input.type === "mute") &&
+      (await this.repo.findActivePunishment(subjectActorId, input.type))
+    ) {
+      throw new ActivePunishmentConflictError(input.type, subjectActorId);
+    }
 
     const punishment = await this.repo.createPunishment({
       ...input,

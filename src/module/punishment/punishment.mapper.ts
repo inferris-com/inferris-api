@@ -13,6 +13,7 @@ export function toPunishmentResponse(row: Selectable<Punishments>): PunishmentRe
     type: row.type,
     reason: row.reason,
     isSilent: row.is_silent,
+    isActive: row.is_active,
     endsAtMs: int8ToStringOrNull(row.ends_at_ms),
     revokedByActorId: row.revoked_by_actor_id,
     revokedAtMs: int8ToStringOrNull(row.revoked_at_ms),

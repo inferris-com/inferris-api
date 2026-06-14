@@ -595,6 +595,7 @@ export interface Punishments {
   created_at_ms: Generated<Int8>;
   ends_at_ms: Int8 | null;
   id: Generated<string>;
+  is_active: Generated<boolean>;
   is_silent: Generated<boolean>;
   issuer_actor_id: string;
   reason: string | null;

@@ -8,6 +8,7 @@ export type PunishmentResponse = {
   type: Punishment;
   reason: string | null;
   isSilent: boolean;
+  isActive: boolean;
   endsAtMs: string | null;
   revokedByActorId: string | null;
   revokedAtMs: string | null;

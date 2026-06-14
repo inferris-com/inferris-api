@@ -27,6 +27,14 @@ import { createPunishmentRouter } from "./module/punishment/punishment.route.js"
 import { PunishmentService } from "./module/punishment/punishment.service.js";
 import { PunishmentPgRepository } from "./module/punishment/punishment.pg-repository.js";
 import { PunishmentPublisher } from "./module/punishment/punishment.publisher.js";
+import { createReportRouter } from "./module/report/report.route.js";
+import { ReportService } from "./module/report/report.service.js";
+import { ReportPgRepository } from "./module/report/report.pg-repository.js";
+import { ReportPublisher } from "./module/report/report.publisher.js";
+import { createModCaseRouter } from "./module/mod-case/mod-case.route.js";
+import { ModCaseService } from "./module/mod-case/mod-case.service.js";
+import { ModCasePgRepository } from "./module/mod-case/mod-case.pg-repository.js";
+import { ModCasePublisher } from "./module/mod-case/mod-case.publisher.js";
 
 type ServerProps = {
   host?: string;
@@ -83,6 +91,22 @@ export function createApp() {
     authenticateRequest,
     createPunishmentRouter(
       new PunishmentService(new PunishmentPgRepository(db), new PunishmentPublisher(redis)),
+      authRepository,
+    ),
+  );
+  app.use(
+    "/reports",
+    authenticateRequest,
+    createReportRouter(
+      new ReportService(new ReportPgRepository(db), new ReportPublisher(redis)),
+      authRepository,
+    ),
+  );
+  app.use(
+    "/mod-cases",
+    authenticateRequest,
+    createModCaseRouter(
+      new ModCaseService(new ModCasePgRepository(db), new ModCasePublisher(redis)),
       authRepository,
     ),
   );

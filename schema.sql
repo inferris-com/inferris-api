@@ -777,6 +777,7 @@ CREATE TABLE punishments
     reason              TEXT        NULL,
 
     is_silent           BOOLEAN     NOT NULL DEFAULT FALSE,
+    is_active           BOOLEAN     NOT NULL DEFAULT TRUE,
 
     ends_at_ms          BIGINT      NULL,
 
@@ -785,7 +786,14 @@ CREATE TABLE punishments
     revocation_reason   VARCHAR(50) NULL,
 
     created_at_ms       BIGINT      NOT NULL DEFAULT get_unix_ms(),
-    updated_at_ms       BIGINT      NULL
+    updated_at_ms       BIGINT      NULL,
+
+    CONSTRAINT chk_punishments_active_consistent
+        CHECK (
+            (is_active = TRUE AND revoked_at_ms IS NULL AND revoked_by_actor_id IS NULL)
+                OR
+            (is_active = FALSE)
+            )
 );
 CREATE INDEX idx_punishments_subject_created
     ON punishments (subject_actor_id, created_at_ms DESC);
@@ -802,6 +810,9 @@ CREATE INDEX idx_punishments_server_origin
 CREATE INDEX idx_punishments_silent_created
     ON punishments (created_at_ms DESC)
     WHERE is_silent = TRUE;
+CREATE UNIQUE INDEX uq_punishments_one_active_ban_or_mute
+    ON punishments (subject_actor_id, type)
+    WHERE is_active = TRUE AND type IN ('ban', 'mute');
 
 CREATE TABLE chat_messages
 (
