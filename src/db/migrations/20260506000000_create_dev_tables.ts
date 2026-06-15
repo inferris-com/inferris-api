@@ -430,7 +430,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     id            UUID PRIMARY KEY              DEFAULT gen_random_uuid(),
     username      VARCHAR(100)         NOT NULL UNIQUE,
     email         VARCHAR(100)         NOT NULL UNIQUE,
-    password_hash TEXT                 NOT NULL,
+    password_hash TEXT                 NULL,
 
     role          argus_account_role   NOT NULL,
     actor_id      UUID                 NULL REFERENCES actors (id) ON DELETE SET NULL,
