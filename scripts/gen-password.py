@@ -1,16 +1,32 @@
 #!/usr/bin/env python3
 
 import argparse
-import base64
-import hashlib
-import hmac
 import os
 from pathlib import Path
+
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
 
 
 DEFAULT_PASSWORD_ENV_VAR = "AUTH_PASSWORD"
 DEFAULT_JWT_SECRET_ENV_VAR = "AUTH_JWT_SECRET"
-DEFAULT_ITERATIONS = 600_000
+
+# Argon2id parameters.
+# These are reasonable server-side defaults, but tune them for your deployment.
+ARGON2_TIME_COST = 3
+ARGON2_MEMORY_COST = 64 * 1024  # KiB = 64 MiB
+ARGON2_PARALLELISM = 4
+ARGON2_HASH_LEN = 32
+ARGON2_SALT_LEN = 16
+
+
+password_hasher = PasswordHasher(
+    time_cost=ARGON2_TIME_COST,
+    memory_cost=ARGON2_MEMORY_COST,
+    parallelism=ARGON2_PARALLELISM,
+    hash_len=ARGON2_HASH_LEN,
+    salt_len=ARGON2_SALT_LEN,
+)
 
 
 def read_value_or_file_reference(value: str) -> str:
@@ -49,65 +65,35 @@ def read_secret_file(path: Path) -> str:
     return value
 
 
-def hash_password(password: str, salt: bytes | None = None) -> str:
+def hash_password(password: str) -> str:
     """
-    Hash a password using PBKDF2-SHA256.
+    Hash a password using Argon2id.
 
-    Returns:
-      pbkdf2_sha256$iterations$salt$hash
+    Returns an encoded Argon2id hash, for example:
+      $argon2id$v=19$m=65536,t=3,p=4$...
     """
     if not password:
         raise ValueError("Password cannot be empty")
 
-    salt = salt or os.urandom(16)
-
-    derived_key = hashlib.pbkdf2_hmac(
-        "sha256",
-        password.encode("utf-8"),
-        salt,
-        DEFAULT_ITERATIONS,
-        dklen=32,
-    )
-
-    salt_b64 = base64.b64encode(salt).decode("utf-8")
-    hash_b64 = base64.b64encode(derived_key).decode("utf-8")
-
-    return f"pbkdf2_sha256${DEFAULT_ITERATIONS}${salt_b64}${hash_b64}"
+    return password_hasher.hash(password)
 
 
 def verify_password(password: str, stored_hash: str) -> bool:
     """
-    Verify a plaintext password against a stored PBKDF2 hash.
+    Verify a plaintext password against a stored Argon2id hash.
     """
-    try:
-        algorithm, iterations_raw, salt_b64, expected_hash_b64 = stored_hash.split("$")
-    except ValueError:
-        return False
-
-    if algorithm != "pbkdf2_sha256":
+    if not password or not stored_hash:
         return False
 
     try:
-        iterations = int(iterations_raw)
-        salt = base64.b64decode(salt_b64)
-        expected_hash = base64.b64decode(expected_hash_b64)
-    except Exception:
+        return password_hasher.verify(stored_hash, password)
+    except (VerifyMismatchError, VerificationError, InvalidHashError):
         return False
-
-    actual_hash = hashlib.pbkdf2_hmac(
-        "sha256",
-        password.encode("utf-8"),
-        salt,
-        iterations,
-        dklen=len(expected_hash),
-    )
-
-    return hmac.compare_digest(actual_hash, expected_hash)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Hash an actual password, while optionally resolving AUTH_JWT_SECRET separately."
+        description="Hash an actual password with Argon2id, while optionally resolving AUTH_JWT_SECRET separately."
     )
 
     parser.add_argument(
