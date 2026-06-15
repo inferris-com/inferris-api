@@ -24,7 +24,7 @@ export type ArgusAuthRecord = {
   id: string;
   username: string;
   email: string;
-  passwordHash: string;
+  passwordHash: string | null;
   role: ArgusAccountRole;
   actorId: string | null;
 };
