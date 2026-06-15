@@ -230,6 +230,9 @@ paths:
       tags:
         - "Auth"
       summary: "Log out"
+      security:
+        - bearerAuth:
+            []
       requestBody:
         required: true
         content:
@@ -274,6 +277,8 @@ paths:
         - "Actors"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Get an actor by player ID"
       parameters:
@@ -389,6 +394,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Get an actor"
       parameters:
         - schema:
@@ -501,6 +508,8 @@ paths:
         - "Actors"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Update an actor"
       parameters:
@@ -651,6 +660,8 @@ paths:
         - "Players"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "List players"
       parameters:
@@ -805,6 +816,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Create a player"
       requestBody:
         required: true
@@ -951,6 +964,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "List player flag definitions"
       parameters:
         - schema:
@@ -1089,6 +1104,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Encode player flags"
       parameters:
         - schema:
@@ -1216,6 +1233,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Decode player flags"
       parameters:
         - schema:
@@ -1342,6 +1361,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Get a player"
       parameters:
         - schema:
@@ -1454,6 +1475,8 @@ paths:
         - "Players"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Update a player"
       parameters:
@@ -1599,6 +1622,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Delete a player"
       parameters:
         - schema:
@@ -1712,6 +1737,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Get a player profile"
       parameters:
         - schema:
@@ -1824,6 +1851,8 @@ paths:
         - "Players"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Update a player profile"
       parameters:
@@ -1968,6 +1997,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "List player badge assignments"
       parameters:
         - schema:
@@ -2102,6 +2133,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Assign a player badge"
       parameters:
         - schema:
@@ -2233,6 +2266,8 @@ paths:
         - "Players"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Replace a player rank assignment"
       parameters:
@@ -2378,6 +2413,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Delete a player rank assignment"
       parameters:
         - schema:
@@ -2497,6 +2534,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Delete a player badge assignment"
       parameters:
         - schema:
@@ -2607,6 +2646,8 @@ paths:
         - "Servers"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Create a server"
       requestBody:
@@ -2759,6 +2800,8 @@ paths:
         - "Servers"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Create a server lockdown"
       parameters:
@@ -2914,6 +2957,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Update a server lockdown"
       parameters:
         - schema:
@@ -3060,6 +3105,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Get a server lockdown"
       parameters:
         - schema:
@@ -3173,6 +3220,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Delete a server lockdown"
       parameters:
         - schema:
@@ -3277,6 +3326,8 @@ paths:
         - "Servers"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Replace a server access policy"
       parameters:
@@ -3424,6 +3475,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Get a server access policy"
       parameters:
         - schema:
@@ -3537,6 +3590,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Delete a server access policy"
       parameters:
         - schema:
@@ -3641,6 +3696,8 @@ paths:
         - "Servers"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Update a server"
       parameters:
@@ -3820,6 +3877,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Get a server"
       parameters:
         - schema:
@@ -3933,6 +3992,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Delete a server"
       parameters:
         - schema:
@@ -4037,6 +4098,8 @@ paths:
         - "Permissions"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Get a permission node"
       parameters:
@@ -4151,6 +4214,8 @@ paths:
         - "Permissions"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Get a permission rule"
       parameters:
@@ -4269,6 +4334,8 @@ paths:
         - "Permissions"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Replace a permission rule"
       parameters:
@@ -4403,6 +4470,8 @@ paths:
         - "Permissions"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Create a permission node"
       requestBody:
@@ -4542,6 +4611,8 @@ paths:
         - "Punishments"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "List punishments"
       parameters:
@@ -4735,6 +4806,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Create a punishment"
       requestBody:
         required: true
@@ -4888,6 +4961,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Get a punishment"
       parameters:
         - schema:
@@ -5001,6 +5076,8 @@ paths:
         - "Punishments"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Revoke a punishment"
       parameters:
@@ -5128,6 +5205,8 @@ paths:
         - "Reports"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Create a report"
       requestBody:
@@ -5266,6 +5345,8 @@ paths:
         - "Reports"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "List reports"
       parameters:
@@ -5462,6 +5543,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Get a report"
       parameters:
         - schema:
@@ -5574,6 +5657,8 @@ paths:
         - "Reports"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Update a report"
       parameters:
@@ -5736,6 +5821,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "List report comments"
       parameters:
         - schema:
@@ -5869,6 +5956,8 @@ paths:
         - "Reports"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Create a report comment"
       parameters:
@@ -6004,6 +6093,8 @@ paths:
         - "Mod Cases"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "List moderation cases"
       parameters:
@@ -6188,6 +6279,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Create a moderation case"
       requestBody:
         required: true
@@ -6370,6 +6463,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Get a moderation case"
       parameters:
         - schema:
@@ -6482,6 +6577,8 @@ paths:
         - "Mod Cases"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Update a moderation case"
       parameters:
@@ -6653,6 +6750,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "List moderation case actors"
       parameters:
         - schema:
@@ -6786,6 +6885,8 @@ paths:
         - "Mod Cases"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Add a moderation case actor"
       parameters:
@@ -6929,6 +7030,8 @@ paths:
         - "Chat Messages"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "List chat messages"
       parameters:
@@ -7112,6 +7215,8 @@ paths:
       security:
         - bearerAuth:
             []
+        - apiKeyAuth:
+            []
       summary: "Create a chat message"
       requestBody:
         required: true
@@ -7253,6 +7358,8 @@ paths:
         - "Chat Messages"
       security:
         - bearerAuth:
+            []
+        - apiKeyAuth:
             []
       summary: "Create chat messages in a batch"
       requestBody:

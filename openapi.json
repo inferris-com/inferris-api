@@ -317,6 +317,11 @@
           "Auth"
         ],
         "summary": "Log out",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -381,6 +386,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Get an actor by player ID",
@@ -536,6 +544,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Get an actor",
@@ -689,6 +700,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Update an actor",
@@ -909,6 +923,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "List players",
@@ -1116,6 +1133,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Create a player",
@@ -1325,6 +1345,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "List player flag definitions",
@@ -1512,6 +1535,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Encode player flags",
@@ -1685,6 +1711,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Decode player flags",
@@ -1863,6 +1892,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Get a player",
@@ -2016,6 +2048,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Update a player",
@@ -2224,6 +2259,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Delete a player",
@@ -2380,6 +2418,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Get a player profile",
@@ -2533,6 +2574,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Update a player profile",
@@ -2731,6 +2775,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "List player badge assignments",
@@ -2912,6 +2959,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Assign a player badge",
@@ -3094,6 +3144,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Replace a player rank assignment",
@@ -3293,6 +3346,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Delete a player rank assignment",
@@ -3457,6 +3513,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Delete a player badge assignment",
@@ -3610,6 +3669,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Create a server",
@@ -3815,6 +3877,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Create a server lockdown",
@@ -4039,6 +4104,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Update a server lockdown",
@@ -4253,6 +4321,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Get a server lockdown",
@@ -4406,6 +4477,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Delete a server lockdown",
@@ -4550,6 +4624,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Replace a server access policy",
@@ -4750,6 +4827,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Get a server access policy",
@@ -4903,6 +4983,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Delete a server access policy",
@@ -5047,6 +5130,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Update a server",
@@ -5315,6 +5401,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Get a server",
@@ -5468,6 +5557,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Delete a server",
@@ -5612,6 +5704,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Get a permission node",
@@ -5767,6 +5862,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Get a permission rule",
@@ -5928,6 +6026,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Replace a permission rule",
@@ -6114,6 +6215,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Create a permission node",
@@ -6302,6 +6406,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "List punishments",
@@ -6569,6 +6676,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Create a punishment",
@@ -6786,6 +6896,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Get a punishment",
@@ -6941,6 +7054,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Revoke a punishment",
@@ -7116,6 +7232,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Create a report",
@@ -7305,6 +7424,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "List reports",
@@ -7575,6 +7697,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Get a report",
@@ -7728,6 +7853,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Update a report",
@@ -7947,6 +8075,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "List report comments",
@@ -8128,6 +8259,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Create a report comment",
@@ -8314,6 +8448,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "List moderation cases",
@@ -8565,6 +8702,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Create a moderation case",
@@ -8811,6 +8951,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Get a moderation case",
@@ -8964,6 +9107,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Update a moderation case",
@@ -9194,6 +9340,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "List moderation case actors",
@@ -9375,6 +9524,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Add a moderation case actor",
@@ -9570,6 +9722,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "List chat messages",
@@ -9826,6 +9981,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Create a chat message",
@@ -10018,6 +10176,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "summary": "Create chat messages in a batch",
