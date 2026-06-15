@@ -56,9 +56,9 @@ type CreateAppDependenciesOptions = {
 };
 
 export function createAppDependencies({
-  database = defaultDb,
-  redisClient = defaultRedis,
-}: CreateAppDependenciesOptions = {}): AppDependencies {
+                                        database = defaultDb,
+                                        redisClient = defaultRedis,
+                                      }: CreateAppDependenciesOptions = {}): AppDependencies {
   const actorRepository = new ActorPgRepository(database);
   const authRepository = new AuthRepository(database);
   const chatMessageRepository = new ChatMessagePgRepository(database);
