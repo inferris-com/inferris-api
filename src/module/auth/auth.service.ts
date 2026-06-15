@@ -94,11 +94,6 @@ export class AuthService {
       throw invalidCredentials();
     }
 
-    // Considering using a different error
-    if(!user.passwordHash){
-      throw invalidCredentials();
-    }
-
     const passwordValid = await verifyPassword(user.passwordHash, input.password);
 
     if (!passwordValid) {
