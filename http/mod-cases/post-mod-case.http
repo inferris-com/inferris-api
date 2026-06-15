@@ -1,0 +1,23 @@
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@SUBJECT_ACTOR_ID = 7d16b15d-bb22-4a6d-80db-6213b3d75007
+@SERVER_ID = 00000000-0000-0000-0000-000000000002
+
+### Create mod case
+POST {{SITE_URL}}/mod-cases
+X-Api-Key: {{API_KEY}}
+Content-Type: application/json
+
+{
+  "title": "Manual REST Client case",
+  "description": "Created from the http directory.",
+  "originServerId": "{{SERVER_ID}}",
+  "severity": "medium",
+  "isSticky": false,
+  "actors": [
+    {
+      "actorId": "{{SUBJECT_ACTOR_ID}}",
+      "role": "subject"
+    }
+  ]
+}

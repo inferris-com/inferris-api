@@ -1,0 +1,29 @@
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@SERVER_ID = 00000000-0000-0000-0000-000000000002
+@PLAYER_ID = 7d16b15d-bb22-4a6d-80db-6213b3d75007
+@ACTOR_ID = 00000000-0000-0000-0000-000000000004
+
+### Ingest chat message batch
+POST {{SITE_URL}}/chat-messages/batch
+X-Api-Key: {{API_KEY}}
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "producerMessageId": "manual-batch-1",
+      "playerId": "{{PLAYER_ID}}",
+      "originServerId": "{{SERVER_ID}}",
+      "channelKey": "global",
+      "message": "Batch message A"
+    },
+    {
+      "producerMessageId": "manual-batch-2",
+      "actorId": "{{ACTOR_ID}}",
+      "originServerId": "{{SERVER_ID}}",
+      "channelKey": "staff",
+      "message": "Batch message B"
+    }
+  ]
+}

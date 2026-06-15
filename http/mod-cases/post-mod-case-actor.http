@@ -1,0 +1,15 @@
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@CASE_ID = 00000000-0000-0000-0000-000000000001
+@ACTOR_ID = 00000000-0000-0000-0000-000000000004
+
+### Add mod case actor
+POST {{SITE_URL}}/mod-cases/{{CASE_ID}}/actors
+X-Api-Key: {{API_KEY}}
+Content-Type: application/json
+
+{
+  "actorId": "{{ACTOR_ID}}",
+  "role": "witness",
+  "note": "Manual REST Client witness"
+}

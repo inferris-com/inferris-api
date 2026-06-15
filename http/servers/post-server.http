@@ -1,11 +1,13 @@
-@baseUrl = http://localhost:3000
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
 
 ### Create server
-POST {{baseUrl}}/servers
+POST {{SITE_URL}}/servers
+X-Api-Key: {{API_KEY}}
 Content-Type: application/json
 
 {
-  "name": "Woooo",
+  "name": "Manual Test Server",
   "type": "paper",
   "environment": "development",
   "status": "offline",

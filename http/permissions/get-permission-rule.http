@@ -1,0 +1,8 @@
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@PERMISSION_KEY = server.access.*
+@RANK_KEY = admin
+
+### Get permission rule
+GET {{SITE_URL}}/permissions/{{PERMISSION_KEY}}/rules/{{RANK_KEY}}
+X-Api-Key: {{API_KEY}}

@@ -8,6 +8,22 @@ export type PlayerSummaryResponse = {
   chatChannel: ChatChannel;
 };
 
+export type PlayerFlagDefinitionResponse = {
+  key: string;
+  bitPosition: number;
+  bitValue: string;
+  label: string;
+  description: string | null;
+  isActive: boolean;
+};
+
+export type PlayerFlagBitmaskResponse = {
+  value: string;
+  binary: string;
+  flags: PlayerFlagDefinitionResponse[];
+  unknownBits: string[];
+};
+
 export type PlayerResponse = {
   id: string;
   username: string;

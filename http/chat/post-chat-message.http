@@ -1,0 +1,17 @@
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@SERVER_ID = 00000000-0000-0000-0000-000000000002
+@PLAYER_ID = 7d16b15d-bb22-4a6d-80db-6213b3d75007
+
+### Ingest one chat message
+POST {{SITE_URL}}/chat-messages
+X-Api-Key: {{API_KEY}}
+Content-Type: application/json
+
+{
+  "producerMessageId": "manual-message-1",
+  "playerId": "{{PLAYER_ID}}",
+  "originServerId": "{{SERVER_ID}}",
+  "channelKey": "global",
+  "message": "Hello from REST Client"
+}

@@ -5,6 +5,8 @@ import { validateRequest } from "../../middleware/validation.js";
 import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
 import type {
   PlayerBadgeAssignmentResponse,
+  PlayerFlagBitmaskResponse,
+  PlayerFlagDefinitionResponse,
   PlayerProfileResponse,
   PlayerRankAssignmentResponse,
   PlayerResponse,
@@ -14,12 +16,18 @@ import type { PlayerService } from "./player.service.js";
 import {
   type CreatePlayerBody,
   type CreatePlayerBadgeAssignmentBody,
+  type DecodePlayerFlagsQuery,
   type DeletePlayerQuery,
+  type EncodePlayerFlagsQuery,
   type ListPlayersQuery,
+  type ListPlayerFlagDefinitionsQuery,
   type PlayerBadgeAssignmentParams,
   type PlayerIdParams,
   type PlayerRankAssignmentParams,
   createPlayerBadgeAssignmentBodySchema,
+  decodePlayerFlagsQuerySchema,
+  encodePlayerFlagsQuerySchema,
+  listPlayerFlagDefinitionsQuerySchema,
   replacePlayerRankAssignmentBodySchema,
   type ReplaceRankAssignmentBody,
   type UpdatePlayerBody,
@@ -66,6 +74,32 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
       data: players,
       meta: { count: players.length },
     };
+
+    res.json(body);
+  };
+
+  const listFlagDefinitions: RequestHandler = async (req, res) => {
+    const flags = await service.listFlagDefinitions(
+      req.query as unknown as ListPlayerFlagDefinitionsQuery,
+    );
+    const body: ApiListSuccess<PlayerFlagDefinitionResponse> = {
+      data: flags,
+      meta: { count: flags.length },
+    };
+
+    res.json(body);
+  };
+
+  const encodeFlags: RequestHandler = async (req, res) => {
+    const result = await service.encodeFlags(req.query as unknown as EncodePlayerFlagsQuery);
+    const body: ApiSuccess<PlayerFlagBitmaskResponse> = { data: result };
+
+    res.json(body);
+  };
+
+  const decodeFlags: RequestHandler = async (req, res) => {
+    const result = await service.decodeFlags(req.query as unknown as DecodePlayerFlagsQuery);
+    const body: ApiSuccess<PlayerFlagBitmaskResponse> = { data: result };
 
     res.json(body);
   };
@@ -179,6 +213,24 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
     readPlayers,
     validateRequest({ query: listPlayersQuerySchema }) as unknown as RequestHandler,
     listPlayers,
+  );
+  router.get(
+    "/flags",
+    readPlayers,
+    validateRequest({ query: listPlayerFlagDefinitionsQuerySchema }) as unknown as RequestHandler,
+    listFlagDefinitions,
+  );
+  router.get(
+    "/flags/encode",
+    readPlayers,
+    validateRequest({ query: encodePlayerFlagsQuerySchema }) as unknown as RequestHandler,
+    encodeFlags,
+  );
+  router.get(
+    "/flags/decode",
+    readPlayers,
+    validateRequest({ query: decodePlayerFlagsQuerySchema }) as unknown as RequestHandler,
+    decodeFlags,
   );
   router.get(
     "/:playerId",

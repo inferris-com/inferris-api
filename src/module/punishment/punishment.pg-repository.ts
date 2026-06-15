@@ -11,7 +11,7 @@ export type CreatePunishmentInput = CreatePunishmentBody & {
 
 export type RevokePunishmentInput = {
   punishmentId: string;
-  revokedByActorId: string;
+  liftedByActorId: string;
   reason: string | null;
 };
 
@@ -49,13 +49,37 @@ export class PunishmentPgRepository {
       )
       .$if(query.revoked !== undefined, (qb) =>
         query.revoked === true
-          ? qb.where("punishments.revoked_at_ms", "is not", null)
-          : qb.where("punishments.revoked_at_ms", "is", null),
+          ? qb.where("punishments.lifted_cause", "=", "revoked")
+          : qb.where((eb) =>
+              eb.or([
+                eb("punishments.lifted_cause", "is", null),
+                eb("punishments.lifted_cause", "!=", "revoked"),
+              ]),
+            ),
       )
       .$if(query.active !== undefined, (qb) =>
         query.active === true
-          ? qb.where("punishments.is_active", "=", true)
-          : qb.where("punishments.is_active", "=", false),
+          ? qb
+              .where("punishments.is_active", "=", true)
+              .where("punishments.type", "in", ["ban", "mute"])
+              .where("punishments.lifted_cause", "is", null)
+              .where((eb) =>
+                eb.or([
+                  eb("punishments.ends_at_ms", "is", null),
+                  eb("punishments.ends_at_ms", ">", sql<string>`get_unix_ms()`),
+                ]),
+              )
+          : qb.where((eb) =>
+              eb.or([
+                eb("punishments.is_active", "=", false),
+                eb("punishments.type", "not in", ["ban", "mute"]),
+                eb("punishments.lifted_cause", "is not", null),
+                eb.and([
+                  eb("punishments.ends_at_ms", "is not", null),
+                  eb("punishments.ends_at_ms", "<=", sql<string>`get_unix_ms()`),
+                ]),
+              ]),
+            ),
       );
 
     const [rows, countRow] = await Promise.all([
@@ -108,8 +132,9 @@ export class PunishmentPgRepository {
         server_origin_id: input.serverOriginId ?? null,
         type: input.type,
         reason: input.reason ?? null,
+        note: input.note ?? null,
         is_silent: input.isSilent,
-        is_active: true,
+        is_active: isActivePunishmentType(input.type),
         ends_at_ms: input.endsAtMs ?? null,
       })
       .returningAll()
@@ -122,9 +147,10 @@ export class PunishmentPgRepository {
         .updateTable("punishments")
         .set({
           is_active: false,
-          revoked_by_actor_id: input.revokedByActorId,
-          revoked_at_ms: sql`get_unix_ms()`,
-          revocation_reason: input.reason,
+          lifted_cause: "revoked",
+          lifted_by_actor_id: input.liftedByActorId,
+          lifted_at_ms: sql`get_unix_ms()`,
+          lift_note: input.reason,
           updated_at_ms: sql`get_unix_ms()`,
         })
         .where("id", "=", input.punishmentId)
@@ -134,20 +160,29 @@ export class PunishmentPgRepository {
     );
   }
 
-  async deactivateExpiredPunishments(subjectActorId?: string, type?: Punishment): Promise<void> {
-    await this.db
+  async expirePunishments(
+    subjectActorId?: string,
+    type?: Punishment,
+    punishmentId?: string,
+  ): Promise<Selectable<Punishments>[]> {
+    return this.db
       .updateTable("punishments")
       .set({
         is_active: false,
+        lifted_cause: "expired",
+        lifted_at_ms: sql`get_unix_ms()`,
         updated_at_ms: sql`get_unix_ms()`,
       })
+      .$if(punishmentId !== undefined, (qb) => qb.where("id", "=", punishmentId ?? ""))
       .$if(subjectActorId !== undefined, (qb) =>
         qb.where("subject_actor_id", "=", subjectActorId ?? ""),
       )
       .$if(type !== undefined, (qb) => qb.where("type", "=", type ?? "ban"))
       .where("is_active", "=", true)
+      .where("type", "in", ["ban", "mute"])
       .where("ends_at_ms", "is not", null)
       .where("ends_at_ms", "<=", sql<string>`get_unix_ms()`)
+      .returningAll()
       .execute();
   }
 
@@ -162,6 +197,10 @@ export class PunishmentPgRepository {
         .where("subject_actor_id", "=", subjectActorId)
         .where("type", "=", type)
         .where("is_active", "=", true)
+        .where("lifted_cause", "is", null)
+        .where((eb) =>
+          eb.or([eb("ends_at_ms", "is", null), eb("ends_at_ms", ">", sql<string>`get_unix_ms()`)]),
+        )
         .executeTakeFirst()) ?? null
     );
   }
@@ -175,4 +214,8 @@ export class PunishmentPgRepository {
 
     return Boolean(row);
   }
+}
+
+function isActivePunishmentType(type: Punishment): boolean {
+  return type === "ban" || type === "mute";
 }

@@ -5,6 +5,9 @@ import { int8ToString, int8ToStringOrNull } from "../../shared/db/int8.js";
 import type { PunishmentResponse } from "./punishment.response-types.js";
 
 export function toPunishmentResponse(row: Selectable<Punishments>): PunishmentResponse {
+  const isEffectivelyActive = isPunishmentEffectivelyActive(row);
+  const isEffectivelyExpired = isPunishmentEffectivelyExpired(row);
+
   return {
     id: row.id,
     subjectActorId: row.subject_actor_id,
@@ -13,12 +16,33 @@ export function toPunishmentResponse(row: Selectable<Punishments>): PunishmentRe
     type: row.type,
     reason: row.reason,
     isSilent: row.is_silent,
-    isActive: row.is_active,
+    isActive: isEffectivelyActive,
     endsAtMs: int8ToStringOrNull(row.ends_at_ms),
-    revokedByActorId: row.revoked_by_actor_id,
-    revokedAtMs: int8ToStringOrNull(row.revoked_at_ms),
-    revocationReason: row.revocation_reason,
+    note: row.note,
+    liftedCause: row.lifted_cause ?? (isEffectivelyExpired ? "expired" : null),
+    liftedAtMs: int8ToStringOrNull(row.lifted_at_ms),
+    liftedByActorId: row.lifted_by_actor_id,
+    liftNote: row.lift_note,
     createdAtMs: int8ToString(row.created_at_ms),
     updatedAtMs: int8ToStringOrNull(row.updated_at_ms),
   };
+}
+
+function isPunishmentEffectivelyActive(row: Selectable<Punishments>): boolean {
+  return (
+    row.is_active &&
+    (row.type === "ban" || row.type === "mute") &&
+    row.lifted_cause === null &&
+    !isPunishmentEffectivelyExpired(row)
+  );
+}
+
+function isPunishmentEffectivelyExpired(row: Selectable<Punishments>): boolean {
+  return (
+    row.is_active &&
+    (row.type === "ban" || row.type === "mute") &&
+    row.lifted_cause === null &&
+    row.ends_at_ms !== null &&
+    BigInt(row.ends_at_ms) <= BigInt(Date.now())
+  );
 }

@@ -1,4 +1,7 @@
-@baseUrl = http://localhost:3000
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@SERVER_ID = 11111111-1111-1111-1111-111111111111
 
-### Create server
-DELETE {{baseUrl}}/servers/00000000-0000-0000-0000-000000000001
+### Delete server
+DELETE {{SITE_URL}}/servers/{{SERVER_ID}}
+X-Api-Key: {{API_KEY}}

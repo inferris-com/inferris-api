@@ -1,0 +1,7 @@
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@SERVER_ID = 00000000-0000-0000-0000-000000000002
+
+### Get access policy
+GET {{SITE_URL}}/servers/{{SERVER_ID}}/access
+X-Api-Key: {{API_KEY}}

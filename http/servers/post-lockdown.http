@@ -1,15 +1,16 @@
-@baseUrl = http://localhost:3000
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@SERVER_ID = 00000000-0000-0000-0000-000000000003
 
-### Create server
-POST {{baseUrl}}/servers/00000000-0000-0000-0000-000000000001/lockdown
+### Create lockdown
+POST {{SITE_URL}}/servers/{{SERVER_ID}}/lockdown
+X-Api-Key: {{API_KEY}}
 Content-Type: application/json
 
 {
   "scope": "local",
   "requiredRankKey": "admin",
   "reason": "Test 1123",
-  "issuedByActorId": "20000000-0000-0000-0000-000000000001",
   "isActive": true,
-  "startsAtMs": "1779428035827",
   "endsAtMs": null
 }

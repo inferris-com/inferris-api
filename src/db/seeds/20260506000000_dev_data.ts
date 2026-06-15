@@ -861,14 +861,16 @@ const seed = {
       .values([
         {
           id: dummyId,
-          actor_id: ids.players.dummy,
+          actor_id: ids.actors.dummy,
+          producer_message_id: "seed-chat-1",
           origin_server_id: ids.servers.lobby,
           channel_key: "global",
           message: "Hello World!",
         },
         {
           id: dummyId2,
-          actor_id: ids.players.staffDummy,
+          actor_id: ids.actors.staffDummy,
+          producer_message_id: "seed-chat-2",
           origin_server_id: ids.servers.lobby,
           channel_key: "staff",
           message: "Hello Staff!",

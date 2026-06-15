@@ -1,4 +1,4 @@
-import type { Punishment } from "../../db/types.js";
+import type { Punishment, PunishmentLiftedCause } from "../../db/types.js";
 
 export type PunishmentResponse = {
   id: string;
@@ -10,9 +10,11 @@ export type PunishmentResponse = {
   isSilent: boolean;
   isActive: boolean;
   endsAtMs: string | null;
-  revokedByActorId: string | null;
-  revokedAtMs: string | null;
-  revocationReason: string | null;
+  note: string | null;
+  liftedCause: PunishmentLiftedCause | null;
+  liftedAtMs: string | null;
+  liftedByActorId: string | null;
+  liftNote: string | null;
   createdAtMs: string;
   updatedAtMs: string | null;
 };

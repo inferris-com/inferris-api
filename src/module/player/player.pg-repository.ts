@@ -1,6 +1,7 @@
 import { type Kysely, sql } from "kysely";
 
 import type { DB } from "../../db/types.js";
+import type { PlayerFlagDefinition } from "./player-flags.js";
 import type {
   CreatePlayerResult,
   DeletePlayerOptions,
@@ -36,6 +37,15 @@ export class PlayerPgRepository implements PlayerRepository {
       .orderBy("players.username", "asc")
       .limit(limit)
       .offset(offset)
+      .execute();
+  }
+
+  async listFlagDefinitions(includeInactive: boolean): Promise<PlayerFlagDefinition[]> {
+    return this.db
+      .selectFrom("player_flag_definitions")
+      .selectAll()
+      .$if(!includeInactive, (qb) => qb.where("is_active", "=", true))
+      .orderBy("bit_position", "asc")
       .execute();
   }
 

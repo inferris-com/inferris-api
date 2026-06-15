@@ -15,6 +15,8 @@ export type ApiScope =
   | "servers:write"
   | "permissions:read"
   | "permissions:write"
+  | "chat:read"
+  | "chat:write"
   | "moderation:read"
   | "moderation:write"
   | "minecraft:permission-check";

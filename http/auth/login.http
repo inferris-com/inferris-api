@@ -1,0 +1,10 @@
+@SITE_URL = http://localhost:3000
+
+### Login Argus user
+POST {{SITE_URL}}/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "admin",
+  "password": "change-me"
+}

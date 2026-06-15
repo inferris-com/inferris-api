@@ -1,0 +1,14 @@
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+
+### Create permission node
+POST {{SITE_URL}}/permissions
+X-Api-Key: {{API_KEY}}
+Content-Type: application/json
+
+{
+  "key": "manual.example",
+  "description": "Manual REST Client permission",
+  "category": "development",
+  "isActive": true
+}

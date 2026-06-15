@@ -1,5 +1,5 @@
 import type { ErrorRequestHandler, NextFunction, Request, Response } from "express";
-import {config} from "../config.js";
+import { config } from "../config.js";
 
 export const appErrorKinds = {
   validation: 400,
@@ -8,6 +8,7 @@ export const appErrorKinds = {
   not_found: 404,
   conflict: 409,
   rate_limited: 429,
+  service_unavailable: 503,
   internal: 500,
 } as const;
 
@@ -81,6 +82,12 @@ export class RateLimitedError extends AppError {
   }
 }
 
+export class ServiceUnavailableError extends AppError {
+  constructor(options: AppErrorOptions) {
+    super("service_unavailable", options);
+  }
+}
+
 export class InternalError extends AppError {
   constructor(options: AppErrorOptions) {
     super("internal", options);
@@ -98,7 +105,10 @@ export const errorHandler: ErrorRequestHandler = (
       ? err
       : new InternalError({
           code: "INTERNAL_SERVER_ERROR",
-          message: err instanceof Error && config.isDevelopment && config.logLevel === "debug" ? err.message : "Internal server error",
+          message:
+            err instanceof Error && config.isDevelopment && config.logLevel === "debug"
+              ? err.message
+              : "Internal server error",
           cause: err,
         });
 

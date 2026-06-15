@@ -1,0 +1,10 @@
+@SITE_URL = http://localhost:3000
+@REFRESH_TOKEN = paste-refresh-token-here
+
+### Logout
+POST {{SITE_URL}}/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{REFRESH_TOKEN}}"
+}

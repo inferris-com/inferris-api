@@ -31,10 +31,6 @@ export class PunishmentService {
   ) {}
 
   async listPunishments(query: ListPunishmentsQuery): Promise<PunishmentListResponse> {
-    if (query.active !== false) {
-      await this.repo.deactivateExpiredPunishments();
-    }
-
     const result = await this.repo.listPunishments(query);
 
     return {
@@ -67,7 +63,7 @@ export class PunishmentService {
     const subjectActorId =
       input.subjectActorId ?? (await this.resolveSubjectActorId(input.subjectPlayerId));
 
-    await this.repo.deactivateExpiredPunishments(subjectActorId, input.type);
+    await this.expirePunishments(subjectActorId, input.type);
     if (
       (input.type === "ban" || input.type === "mute") &&
       (await this.repo.findActivePunishment(subjectActorId, input.type))
@@ -93,11 +89,11 @@ export class PunishmentService {
   async revokePunishment(
     id: string,
     input: RevokePunishmentBody,
-    revokedByActorId: string,
+    liftedByActorId: string,
   ): Promise<PunishmentResponse> {
     const punishment = await this.repo.revokePunishment({
       punishmentId: id,
-      revokedByActorId,
+      liftedByActorId,
       reason: input.reason ?? null,
     });
 
@@ -138,8 +134,34 @@ export class PunishmentService {
       throw new InvalidPunishmentDurationError("Warnings and kicks cannot have an end time.");
     }
 
-    if ((input.type === "mute" || input.type === "ban") && input.endsAtMs !== null) {
-      return;
+    if ((input.type === "mute" || input.type === "ban") && input.endsAtMs != null) {
+      if (BigInt(input.endsAtMs) <= BigInt(Date.now())) {
+        throw new InvalidPunishmentDurationError("Punishment end time must be in the future.");
+      }
     }
+  }
+
+  async expirePunishments(
+    subjectActorId?: string,
+    type?: CreatePunishmentBody["type"],
+    punishmentId?: string,
+  ): Promise<PunishmentResponse[]> {
+    const expiredPunishments = await this.repo.expirePunishments(
+      subjectActorId,
+      type,
+      punishmentId,
+    );
+    const responses = expiredPunishments.map(toPunishmentResponse);
+
+    await Promise.all(
+      responses.map((punishment) =>
+        this.publisher.publish({
+          event: "punishment.expired",
+          punishment,
+        }),
+      ),
+    );
+
+    return responses;
   }
 }

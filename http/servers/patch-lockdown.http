@@ -1,9 +1,12 @@
-@baseUrl = http://localhost:3000
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@SERVER_ID = 00000000-0000-0000-0000-000000000003
 
-### Create server
-PATCH {{baseUrl}}/servers/00000000-0000-0000-0000-000000000001/lockdown
+### Patch lockdown
+PATCH {{SITE_URL}}/servers/{{SERVER_ID}}/lockdown
+X-Api-Key: {{API_KEY}}
 Content-Type: application/json
 
 {
-  "reason": "sdf"
+  "reason": "Updated lockdown reason"
 }

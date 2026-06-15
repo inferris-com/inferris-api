@@ -14,11 +14,53 @@ export const playerBadgeAssignmentParamsSchema = playerIdParamsSchema.extend({
   badgeId: z.coerce.number().int().positive(),
 });
 
+const flagKeysQuerySchema = z.preprocess(
+  (value) => {
+    if (Array.isArray(value)) {
+      return value.flatMap((item) => String(item).split(","));
+    }
+
+    if (typeof value === "string") {
+      return value.split(",");
+    }
+
+    return value;
+  },
+  z.array(z.string().trim().min(1).max(64)).min(1),
+);
+
+const includeInactiveQuerySchema = z
+  .enum(["true", "false"])
+  .optional()
+  .transform((value) => value === "true");
+
 export const listPlayersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(25),
   offset: z.coerce.number().int().min(0).default(0),
   username: z.string().trim().min(1).max(32).optional(),
 });
+
+export const listPlayerFlagDefinitionsQuerySchema = z
+  .object({
+    includeInactive: includeInactiveQuerySchema,
+  })
+  .strict();
+
+export const encodePlayerFlagsQuerySchema = z
+  .object({
+    flags: flagKeysQuerySchema,
+    includeInactive: includeInactiveQuerySchema,
+  })
+  .strict();
+
+export const decodePlayerFlagsQuerySchema = z
+  .object({
+    value: BigIntStringSchema.refine((value) => BigInt(value) >= 0n, {
+      message: "Flag bitmask value must be non-negative.",
+    }),
+    includeInactive: includeInactiveQuerySchema,
+  })
+  .strict();
 
 export const createPlayerBodySchema = z
   .object({
@@ -95,6 +137,9 @@ export type PlayerRankAssignmentParams = z.infer<typeof playerRankAssignmentPara
 export type PlayerBadgeAssignmentParams = z.infer<typeof playerBadgeAssignmentParamsSchema>;
 
 export type ListPlayersQuery = z.infer<typeof listPlayersQuerySchema>;
+export type ListPlayerFlagDefinitionsQuery = z.infer<typeof listPlayerFlagDefinitionsQuerySchema>;
+export type EncodePlayerFlagsQuery = z.infer<typeof encodePlayerFlagsQuerySchema>;
+export type DecodePlayerFlagsQuery = z.infer<typeof decodePlayerFlagsQuerySchema>;
 export type DeletePlayerQuery = z.infer<typeof deletePlayerQuerySchema>;
 
 export type CreatePlayerBody = z.infer<typeof createPlayerBodySchema>;

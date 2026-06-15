@@ -4,6 +4,14 @@ import {
   PlayerNotFoundError,
 } from "./player.errors.js";
 import {
+  encodePlayerFlags,
+  toBitmaskResponse,
+  toPlayerFlagDefinitionResponse,
+  UnknownPlayerFlagError,
+  type PlayerFlagBitmaskResponse,
+  type PlayerFlagDefinitionResponse,
+} from "./player-flags.js";
+import {
   toPlayerBadgeAssignmentResponse,
   toPlayerProfileResponse,
   toPlayerRankAssignmentResponse,
@@ -21,12 +29,16 @@ import type {
 import type {
   CreatePlayerBody,
   CreatePlayerBadgeAssignmentBody,
+  DecodePlayerFlagsQuery,
+  EncodePlayerFlagsQuery,
   ListPlayersQuery,
+  ListPlayerFlagDefinitionsQuery,
   ReplaceRankAssignmentBody,
   UpdatePlayerBody,
   UpdateProfileBody,
 } from "./player.schemas.js";
 import type { PlayerPgRepository } from "./player.pg-repository.js";
+import { ValidationError } from "../../error/app-error.js";
 
 export class PlayerService {
   constructor(private readonly repository: PlayerPgRepository) {}
@@ -34,6 +46,41 @@ export class PlayerService {
   async listPlayers(query: ListPlayersQuery): Promise<PlayerSummaryResponse[]> {
     const players = await this.repository.listPlayers(query);
     return players.map(toPlayerSummaryResponse);
+  }
+
+  async listFlagDefinitions(
+    query: ListPlayerFlagDefinitionsQuery,
+  ): Promise<PlayerFlagDefinitionResponse[]> {
+    const definitions = await this.repository.listFlagDefinitions(query.includeInactive);
+
+    return definitions.map(toPlayerFlagDefinitionResponse);
+  }
+
+  async encodeFlags(query: EncodePlayerFlagsQuery): Promise<PlayerFlagBitmaskResponse> {
+    const definitions = await this.repository.listFlagDefinitions(query.includeInactive);
+
+    try {
+      return toBitmaskResponse(definitions, encodePlayerFlags(definitions, query.flags));
+    } catch (error) {
+      if (error instanceof UnknownPlayerFlagError) {
+        throw new ValidationError({
+          code: "UNKNOWN_PLAYER_FLAG",
+          message: error.message,
+          details: {
+            flagKey: error.flagKey,
+            knownFlags: error.knownFlags,
+          },
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  async decodeFlags(query: DecodePlayerFlagsQuery): Promise<PlayerFlagBitmaskResponse> {
+    const definitions = await this.repository.listFlagDefinitions(query.includeInactive);
+
+    return toBitmaskResponse(definitions, BigInt(query.value));
   }
 
   async getPlayer(id: string): Promise<PlayerResponse> {

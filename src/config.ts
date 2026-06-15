@@ -25,6 +25,15 @@ const envSchema = z
       .positive()
       .default(60 * 60 * 24 * 14),
     AUTH_API_KEY_PEPPER: z.string().default("development-api-key-pepper-change-me-32-chars"),
+    CHAT_FLUSH_BATCH_SIZE: z.coerce.number().int().positive().default(500),
+    CHAT_FLUSH_INTERVAL_MS: z.coerce.number().int().positive().default(1000),
+    CHAT_MAX_BATCH_SIZE: z.coerce.number().int().positive().default(500),
+    CHAT_DEDUPE_TTL_SECONDS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(60 * 60 * 24 * 7),
+    CHAT_ALLOWED_CLOCK_SKEW_MS: z.coerce.number().int().nonnegative().default(300000),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== "production") {
@@ -81,6 +90,13 @@ export const config = {
     accessTokenTtlSeconds: env.AUTH_ACCESS_TOKEN_TTL_SECONDS,
     refreshTokenTtlSeconds: env.AUTH_REFRESH_TOKEN_TTL_SECONDS,
     apiKeyPepper: env.AUTH_API_KEY_PEPPER,
+  },
+  chat: {
+    flushBatchSize: env.CHAT_FLUSH_BATCH_SIZE,
+    flushIntervalMs: env.CHAT_FLUSH_INTERVAL_MS,
+    maxBatchSize: env.CHAT_MAX_BATCH_SIZE,
+    dedupeTtlSeconds: env.CHAT_DEDUPE_TTL_SECONDS,
+    allowedClockSkewMs: env.CHAT_ALLOWED_CLOCK_SKEW_MS,
   },
 } as const;
 

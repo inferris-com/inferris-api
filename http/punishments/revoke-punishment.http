@@ -1,0 +1,12 @@
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@PUNISHMENT_ID = 00000000-0000-0000-0000-000000000001
+
+### Revoke punishment
+POST {{SITE_URL}}/punishments/{{PUNISHMENT_ID}}/revoke
+X-Api-Key: {{API_KEY}}
+Content-Type: application/json
+
+{
+  "reason": "Manual REST Client revoke"
+}

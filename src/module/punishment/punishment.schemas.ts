@@ -33,7 +33,8 @@ export const createPunishmentBodySchema = z
     subjectPlayerId: z.guid().optional(),
     serverOriginId: z.guid().optional().nullable(),
     type: punishmentTypeSchema,
-    reason: z.string().max(1000).optional().nullable(),
+    reason: z.string().max(100).optional().nullable(),
+    note: z.string().max(4000).optional().nullable(),
     isSilent: z.boolean().optional().default(false),
     endsAtMs: BigIntStringSchema.optional().nullable(),
   })

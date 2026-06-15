@@ -1,4 +1,7 @@
-@baseUrl = http://localhost:3000
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@PLAYER_ID = 11111111-1111-1111-1111-111111111111
 
-### Delete Refrizor
-DELETE {{baseUrl}}/players/7d16b15d-bb22-4a6d-80db-6213b3d75007?hard=true
+### Soft delete player
+DELETE {{SITE_URL}}/players/{{PLAYER_ID}}?hard=false
+X-Api-Key: {{API_KEY}}

@@ -1,11 +1,13 @@
-@baseUrl = http://localhost:3000
+@SITE_URL = http://localhost:3000
+@API_KEY = 00000000-0000-0000-0000-000000000001.dev
+@PLAYER_ID = 7d16b15d-bb22-4a6d-80db-6213b3d75007
 
-### Get Refrizor
-POST {{baseUrl}}/players/7d16b15d-bb22-4a6d-80db-6213b3d75007/badges
+### Add badge
+POST {{SITE_URL}}/players/{{PLAYER_ID}}/badges
+X-Api-Key: {{API_KEY}}
 Content-Type: application/json
 
 {
   "badgeId": 1,
   "source": "api"
 }
-

@@ -11,6 +11,10 @@ export type PunishmentEvent =
   | {
       event: "punishment.revoked";
       punishment: PunishmentResponse;
+    }
+  | {
+      event: "punishment.expired";
+      punishment: PunishmentResponse;
     };
 
 export class PunishmentPublisher {

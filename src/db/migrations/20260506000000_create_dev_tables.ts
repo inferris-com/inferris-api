@@ -18,6 +18,7 @@ const types = [
   "punishment_appeal_status",
   "mod_case_status",
   "report_status",
+  "punishment_lifted_cause",
   "punishment",
   "actor_type",
   "permission_effect",
@@ -62,7 +63,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     'administrator',
     'superadmin'
     );
-
 
 -- Where the request/action came from or belongs operationally
   CREATE TYPE platform AS ENUM (
@@ -283,6 +283,12 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     'kick'
     );
 
+  CREATE TYPE punishment_lifted_cause AS ENUM (
+    'expired',
+    'revoked',
+    'appeal_accepted'
+    );
+
 -- Moderation
   CREATE TYPE report_status AS ENUM (
     'open',
@@ -464,28 +470,28 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 --   Note: Items such as last used will be implemented later
   CREATE TABLE api_keys
   (
-    id                    UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    id                    UUID PRIMARY KEY        DEFAULT gen_random_uuid(),
 
-    key                   UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
-    key_hash              TEXT        NOT NULL,
+    key                   UUID UNIQUE    NOT NULL DEFAULT gen_random_uuid(),
+    key_hash              TEXT           NOT NULL,
     principal_type        principal_type NOT NULL,
     platform              platform       NOT NULL,
 
     -- API Permissions are independent and scoped; not related to permission nodes
-    permissions           JSONB       NOT NULL DEFAULT '[]'::jsonb,
+    permissions           JSONB          NOT NULL DEFAULT '[]'::jsonb,
 
-    owner_actor_id        UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    owner_actor_id        UUID           NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
 
-    created_by_actor_id   UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    revoked_by_actor_id   UUID        NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    created_by_actor_id   UUID           NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    revoked_by_actor_id   UUID           NULL REFERENCES actors (id) ON DELETE RESTRICT,
 
-    can_bypass_rate_limit BOOLEAN     NOT NULL DEFAULT FALSE,
-    is_super_key          BOOLEAN     NOT NULL DEFAULT FALSE,
+    can_bypass_rate_limit BOOLEAN        NOT NULL DEFAULT FALSE,
+    is_super_key          BOOLEAN        NOT NULL DEFAULT FALSE,
 
-    is_active             BOOLEAN     NOT NULL DEFAULT TRUE,
+    is_active             BOOLEAN        NOT NULL DEFAULT TRUE,
 
-    created_at_ms         BIGINT      NOT NULL DEFAULT get_unix_ms(),
-    updated_at_ms         BIGINT      NULL
+    created_at_ms         BIGINT         NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms         BIGINT         NULL
   );
   CREATE INDEX idx_api_keys_owner_actor ON api_keys (owner_actor_id);
   CREATE INDEX idx_api_keys_created_by_actor ON api_keys (created_by_actor_id);
@@ -803,34 +809,61 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 -- Punishments
   CREATE TABLE punishments
   (
-    id                  UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    id                 UUID PRIMARY KEY                 DEFAULT gen_random_uuid(),
 
-    subject_actor_id    UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    issuer_actor_id     UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    server_origin_id    UUID        NULL REFERENCES servers (id) ON DELETE SET NULL,
+    subject_actor_id   UUID                    NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    issuer_actor_id    UUID                    NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    server_origin_id   UUID                    NULL REFERENCES servers (id) ON DELETE SET NULL,
 
-    type                punishment  NOT NULL,
-    reason              TEXT        NULL,
+    type               punishment              NOT NULL,
+    reason             VARCHAR(100)            NULL,
+    note               TEXT                    NULL,
 
-    is_silent           BOOLEAN     NOT NULL DEFAULT FALSE,
-    is_active           BOOLEAN     NOT NULL DEFAULT TRUE,
+    is_silent          BOOLEAN                 NOT NULL DEFAULT FALSE,
+    is_active          BOOLEAN                 NOT NULL DEFAULT TRUE,
 
-    ends_at_ms          BIGINT      NULL,
+    ends_at_ms         BIGINT                  NULL,
 
-    revoked_by_actor_id UUID        NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    revoked_at_ms       BIGINT      NULL,
-    revocation_reason   VARCHAR(50) NULL,
+    lifted_cause       punishment_lifted_cause NULL,
+    lifted_at_ms       BIGINT                  NULL,
+    lifted_by_actor_id UUID                    NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    lift_note          TEXT                    NULL,
 
-    created_at_ms       BIGINT      NOT NULL DEFAULT get_unix_ms(),
-    updated_at_ms       BIGINT      NULL,
+    created_at_ms      BIGINT                  NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms      BIGINT                  NULL,
 
-    CONSTRAINT chk_punishments_active_consistent
+    CONSTRAINT chk_punishments_lift_consistent
       CHECK (
-        (is_active = TRUE AND revoked_at_ms IS NULL AND revoked_by_actor_id IS NULL)
+        (
+          is_active = TRUE
+            AND type IN ('ban', 'mute')
+            AND lifted_cause IS NULL
+            AND lifted_at_ms IS NULL
+            AND lifted_by_actor_id IS NULL
+            AND lift_note IS NULL
+          )
           OR
-        (is_active = FALSE)
+        (
+          is_active = FALSE
+            AND (
+              type NOT IN ('ban', 'mute')
+                OR
+              (
+                lifted_cause IS NOT NULL
+                  AND lifted_at_ms IS NOT NULL
+                )
+              )
+          )
+        ),
+
+    CONSTRAINT chk_punishments_lift_actor_consistent
+      CHECK (
+        lifted_cause IS NULL
+          OR lifted_cause = 'expired'
+          OR lifted_by_actor_id IS NOT NULL
         )
   );
+
   CREATE INDEX idx_punishments_subject_created
     ON punishments (subject_actor_id, created_at_ms DESC);
   CREATE INDEX idx_punishments_issuer_created
@@ -852,21 +885,26 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 
   CREATE TABLE chat_messages
   (
-    id               UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
-    actor_id         UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    message          TEXT        NOT NULL,
-    channel_key      VARCHAR(30) NOT NULL REFERENCES chat_channels (key) ON DELETE RESTRICT,
-    origin_server_id UUID        NULL REFERENCES servers (id) ON DELETE SET NULL,
-    is_flagged       BOOLEAN     NOT NULL DEFAULT FALSE,
-    created_at_ms    BIGINT      NOT NULL DEFAULT get_unix_ms()
+    id                  UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    actor_id            UUID        NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    producer_message_id TEXT        NOT NULL,
+    ingest_stream_id    TEXT        NULL,
+    message             TEXT        NOT NULL,
+    channel_key         VARCHAR(30) NOT NULL REFERENCES chat_channels (key) ON DELETE RESTRICT,
+    origin_server_id    UUID        NOT NULL REFERENCES servers (id) ON DELETE RESTRICT,
+    is_flagged          BOOLEAN     NOT NULL DEFAULT FALSE,
+    created_at_ms       BIGINT      NOT NULL DEFAULT get_unix_ms()
   );
+  CREATE UNIQUE INDEX uq_chat_messages_origin_producer
+    ON chat_messages (origin_server_id, producer_message_id);
   CREATE INDEX idx_chat_messages_channel_created
     ON chat_messages (channel_key, created_at_ms DESC);
   CREATE INDEX idx_chat_messages_actor_created
     ON chat_messages (actor_id, created_at_ms DESC);
   CREATE INDEX idx_chat_messages_origin_server_created
-    ON chat_messages (origin_server_id, created_at_ms DESC)
-    WHERE origin_server_id IS NOT NULL;
+    ON chat_messages (origin_server_id, created_at_ms DESC);
+  CREATE INDEX idx_chat_messages_created
+    ON chat_messages (created_at_ms DESC);
 
   CREATE TABLE reports
   (
@@ -1580,6 +1618,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     ON player_session_events
     FOR EACH ROW
   EXECUTE FUNCTION sync_player_sessions_current();
+
   `.execute(db);
 }
 
