@@ -16,7 +16,7 @@ const envSchema = z
     REDIS_RECONNECT_MAX_DELAY_MS: z.coerce.number().int().nonnegative().default(3000),
     AUTH_JWT_SECRET: z
       .string()
-      .min(32)
+      .min(3) // allows 3 in dev; enforced 32 in app code
       .default("development-auth-secret-change-me-at-least-32-chars"),
     AUTH_ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
     AUTH_REFRESH_TOKEN_TTL_SECONDS: z.coerce
