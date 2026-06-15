@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+"""
+This script connects to Postgres to list, encode, or decode player flag bitmasks from stored flag definitions.
+
+Note: This is now possible in the player endpoint itself.
+Consider using: `GET /players/flags`, `GET /players/flags/encode`, `GET /players/decode`
+"""
+
 from __future__ import annotations
 
 import argparse
