@@ -1,7 +1,18 @@
-import type { RouteConfig, ZodMediaTypeObject } from "@asteasolutions/zod-to-openapi";
+import type {RouteConfig, ZodMediaTypeObject} from "@asteasolutions/zod-to-openapi";
 import z from "zod";
 
-export const bearerSecurity: NonNullable<RouteConfig["security"]> = [{ bearerAuth: [] }];
+export const userSecurity: NonNullable<RouteConfig["security"]> = [
+  { bearerAuth: [] },
+];
+
+export const serviceSecurity: NonNullable<RouteConfig["security"]> = [
+  { apiKeyAuth: [] },
+];
+
+export const userOrServiceSecurity: NonNullable<RouteConfig["security"]> = [
+  ...userSecurity,
+  ...serviceSecurity,
+];
 
 const responseEnvelopeSchema = z
   .object({
