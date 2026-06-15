@@ -2,6 +2,9 @@ dist
 coverage
 node_modules
 package-lock.json
+
+openapi.*
+
 scripts/**
 dev/**
-openapi.*
+src/db/types.ts
