@@ -8,7 +8,6 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
 
 
-DEFAULT_PASSWORD_ENV_VAR = "AUTH_PASSWORD"
 DEFAULT_JWT_SECRET_ENV_VAR = "AUTH_JWT_SECRET"
 
 # Argon2id parameters.
@@ -102,12 +101,6 @@ def main() -> None:
     )
 
     parser.add_argument(
-        "--password-env",
-        default=DEFAULT_PASSWORD_ENV_VAR,
-        help=f"Environment variable containing the password. Defaults to {DEFAULT_PASSWORD_ENV_VAR}.",
-    )
-
-    parser.add_argument(
         "--jwt-secret-env",
         default=DEFAULT_JWT_SECRET_ENV_VAR,
         help=f"Environment variable containing the JWT secret. Defaults to {DEFAULT_JWT_SECRET_ENV_VAR}.",
@@ -115,12 +108,11 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    raw_password = args.password or os.environ.get(args.password_env)
+    raw_password = args.password
 
     if not raw_password:
         raise SystemExit(
-            f"No password provided. Set {args.password_env}=<password> "
-            f"or pass --password <password>."
+            f"No password provided. Pass --password <password>."
         )
 
     password = read_value_or_file_reference(raw_password)
