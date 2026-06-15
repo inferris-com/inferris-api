@@ -14,7 +14,7 @@ import type { AppDependencies } from "./app.dependencies.js";
 export function registerAppRoutes(app: Express, dependencies: AppDependencies): void {
   const { authRepository, authenticateRequest, services } = dependencies;
 
-  app.use("/auth", createAuthRouter(services.auth));
+  app.use("/auth", createAuthRouter(services.auth, authenticateRequest));
   app.use("/players", authenticateRequest, createPlayerRouter(services.player, authRepository));
   app.use("/actors", authenticateRequest, createActorRouter(services.actor, authRepository));
   app.use("/servers", authenticateRequest, createServerRouter(services.server, authRepository));

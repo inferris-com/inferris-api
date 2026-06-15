@@ -1,6 +1,7 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
+  bearerSecurity,
   jsonBody,
   standardErrorResponses,
   successResponse,
@@ -8,6 +9,18 @@ import {
 import { loginBodySchema, logoutBodySchema, refreshBodySchema } from "./auth.schemas.js";
 
 export function registerAuthOpenApi(registry: OpenAPIRegistry) {
+  registry.registerPath({
+    method: "get",
+    path: "/auth/me",
+    tags: ["Auth"],
+    summary: "Get the current Argus user",
+    security: bearerSecurity,
+    responses: {
+      "200": successResponse("Current Argus user"),
+      "401": standardErrorResponses["401"],
+    },
+  });
+
   registry.registerPath({
     method: "post",
     path: "/auth/login",

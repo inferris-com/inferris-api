@@ -12,7 +12,7 @@ import {
   verifyPassword,
 } from "./auth.crypto.js";
 import type { AuthRepository } from "./auth.repository.js";
-import type { AuthTokenResponse } from "./auth.response-types.js";
+import type { AuthTokenResponse, AuthUserResponse } from "./auth.response-types.js";
 import type { LoginBody } from "./auth.schemas.js";
 import type { AuthContext } from "./auth.types.js";
 
@@ -126,6 +126,23 @@ export class AuthService {
     await this.redis.del(refreshKey(hashRefreshToken(refreshToken)));
   }
 
+  async getCurrentUser(auth: AuthContext): Promise<AuthUserResponse> {
+    if (!auth.argus) {
+      throw new UnauthorizedError({
+        code: "ARGUS_AUTH_REQUIRED",
+        message: "Argus user authentication required",
+      });
+    }
+
+    const user = await this.repo.findActiveArgusUserById(auth.argus.userId);
+
+    if (!user) {
+      throw invalidCredentials();
+    }
+
+    return this.toAuthUserResponse(user);
+  }
+
   private async issueTokenResponse(user: {
     id: string;
     username: string;
@@ -138,7 +155,6 @@ export class AuthService {
       role: user.role,
     });
     const refreshToken = createRefreshToken();
-    const privileged = await this.repo.findActivePrivilegedSubject(user.actorId);
 
     const session: RefreshSession = {
       argusUserId: user.id,
@@ -149,18 +165,31 @@ export class AuthService {
       EX: config.auth.refreshTokenTtlSeconds,
     });
 
+    const authUser = await this.toAuthUserResponse(user);
+
     return {
       accessToken,
       refreshToken: refreshToken.token,
       tokenType: "Bearer",
       expiresInSeconds: config.auth.accessTokenTtlSeconds,
-      user: {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        actorId: user.actorId,
-        privilegedRole: privileged?.role ?? null,
-      },
+      user: authUser,
+    };
+  }
+
+  private async toAuthUserResponse(user: {
+    id: string;
+    username: string;
+    role: "moderator" | "admin";
+    actorId: string | null;
+  }): Promise<AuthUserResponse> {
+    const privileged = await this.repo.findActivePrivilegedSubject(user.actorId);
+
+    return {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      actorId: user.actorId,
+      privilegedRole: privileged?.role ?? null,
     };
   }
 }
