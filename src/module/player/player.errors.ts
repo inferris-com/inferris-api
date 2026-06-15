@@ -16,11 +16,11 @@ export class PlayerNotFoundError extends NotFoundError {
 export class GroupNotFoundError extends NotFoundError {
   readonly groupId: string;
 
-  constructor(groupId: string){
+  constructor(groupId: string) {
     super({
       code: "GROUP_NOT_FOUND",
       message: "Group not found.",
-    })
+    });
     this.groupId = groupId;
   }
 }
@@ -28,15 +28,14 @@ export class GroupNotFoundError extends NotFoundError {
 export class RankNotFoundError extends NotFoundError {
   readonly rankId: string;
 
-  constructor(rankId: string){
+  constructor(rankId: string) {
     super({
       code: "RANK_NOT_FOUND",
       message: "Rank not found.",
-    })
+    });
     this.rankId = rankId;
   }
 }
-
 
 export class BadgeNotFoundError extends NotFoundError {
   readonly badgeId: number;
@@ -67,11 +66,11 @@ export class PlayerAlreadyExistsError extends ConflictError {
 export class GroupAlreadyExistsError extends ConflictError {
   readonly groupId: string;
 
-  constructor(groupId: string){
+  constructor(groupId: string) {
     super({
       code: "GROUP_ALREADY_EXISTS",
       message: "Group already exists.",
-    })
+    });
     this.groupId = groupId;
   }
 }
@@ -79,11 +78,11 @@ export class GroupAlreadyExistsError extends ConflictError {
 export class RankAlreadyExistsError extends ConflictError {
   readonly rankId: string;
 
-  constructor(rankId: string){
+  constructor(rankId: string) {
     super({
       code: "RANK_ALREADY_EXISTS",
       message: "Rank already exists.",
-    })
+    });
     this.rankId = rankId;
   }
 }

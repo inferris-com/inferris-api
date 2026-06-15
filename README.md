@@ -49,10 +49,7 @@ Use `validateRequest` with Zod schemas to validate request inputs before a handl
 import { Router } from "express";
 import z from "zod";
 
-import {
-  type ValidatedRequest,
-  validateRequest,
-} from "./middleware/validation.js";
+import { type ValidatedRequest, validateRequest } from "./middleware/validation.js";
 
 const router = Router();
 

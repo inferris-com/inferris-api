@@ -33,7 +33,7 @@ export class PermissionKeyAlreadyExistsError extends ConflictError {
     super({
       code: "PERMISSION_KEY_ALREADY_EXISTS",
       message: "Permission key already exists.",
-    })
+    });
 
     this.permissionKey = permissionKey;
   }
@@ -45,7 +45,7 @@ export class PermissionRuleAlreadyExistsError extends ConflictError {
     super({
       code: "PERMISSION_RULE_ALREADY_EXISTS",
       message: "Permission rule already exists.",
-    })
+    });
 
     this.permissionRule = permissionRule;
   }

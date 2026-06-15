@@ -1,4 +1,4 @@
-function int8ToString(value: string | number | bigint ): string {
+function int8ToString(value: string | number | bigint): string {
   return value.toString();
 }
 

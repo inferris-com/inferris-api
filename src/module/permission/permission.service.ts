@@ -2,10 +2,11 @@ import type { PermissionPgRepository } from "./permission.pg-repository.js";
 import type { CreatePermissionNodeBody, ReplacePermissionRuleBody } from "./permission.schemas.js";
 import {
   PermissionKeyAlreadyExistsError,
-  PermissionKeyNotFoundError, PermissionRuleNotFoundError,
+  PermissionKeyNotFoundError,
+  PermissionRuleNotFoundError,
 } from "./permission.errors.js";
 import { RankNotFoundError } from "../player/player.errors.js";
-import { toPermissionNodeResponse, toPermissionRuleResponse} from "./permission.mapper.js";
+import { toPermissionNodeResponse, toPermissionRuleResponse } from "./permission.mapper.js";
 
 export class PermissionService {
   constructor(private readonly repo: PermissionPgRepository) {}
@@ -40,17 +41,17 @@ export class PermissionService {
   async findPermissionByKey(key: string) {
     const permissionNode = await this.repo.findPermissionNodeByKey(key);
 
-    if(!permissionNode){
+    if (!permissionNode) {
       throw new PermissionKeyNotFoundError(key);
     }
 
     return toPermissionNodeResponse(permissionNode);
   }
 
-  async findPermissionRuleByMinRank(permissionKey: string){
+  async findPermissionRuleByMinRank(permissionKey: string) {
     const permissionRule = await this.repo.findPermissionRuleByMinRank(permissionKey);
 
-    if(!permissionRule){
+    if (!permissionRule) {
       throw new PermissionRuleNotFoundError(permissionKey);
     }
 
