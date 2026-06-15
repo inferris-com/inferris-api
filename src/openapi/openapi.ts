@@ -12,6 +12,17 @@ import { registerServerOpenApi } from "../module/server/server.openapi.js";
 
 const registry = new OpenAPIRegistry();
 
+registry.registerComponent("securitySchemes", "apiKeyAuth", {
+  type: "apiKey",
+  in: "header",
+  name: "x-api-key",
+});
+
+registry.registerComponent("securitySchemes", "basicAuth", {
+  type: "http",
+  scheme: "basic",
+});
+
 registry.registerComponent("securitySchemes", "bearerAuth", {
   type: "http",
   scheme: "bearer",
