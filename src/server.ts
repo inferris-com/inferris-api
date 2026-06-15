@@ -1,11 +1,13 @@
 import express from "express";
 import type { Server as HttpServer } from "node:http";
+import * as swaggerUi from "swagger-ui-express";
 
 import { createCronJobs } from "./cron/jobs.js";
 import { CronScheduler } from "./cron/cron.scheduler.js";
 import { db } from "./db/index.js";
 import { errorHandler } from "./error/app-error.js";
 import { logger } from "./logger.js";
+import { openApiDocument } from "./openapi/openapi.js";
 import { PlayerPgRepository } from "./module/player/player.pg-repository.js";
 import { createPlayerRouter } from "./module/player/player.route.js";
 import { PlayerService } from "./module/player/player.service.js";
@@ -67,6 +69,16 @@ export function createApp() {
   app.get("/health", (_req, res) => {
     res.json({ ok: true });
   });
+  app.get("/openapi.json", (_req, res) => {
+    res.json(openApiDocument);
+  });
+  app.use(
+    "/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(openApiDocument, {
+      customSiteTitle: "Inferris API Docs",
+    }),
+  );
 
   const authRepository = new AuthRepository(db);
   const authService = new AuthService(authRepository, redis);
