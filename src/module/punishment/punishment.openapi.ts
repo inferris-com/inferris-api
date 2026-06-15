@@ -1,7 +1,7 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
-  bearerSecurity,
+  userOrServiceSecurity,
   jsonBody,
   listResponse,
   standardErrorResponses,
@@ -19,7 +19,7 @@ export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/punishments",
     tags: ["Punishments"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "List punishments",
     request: { query: listPunishmentsQuerySchema },
     responses: { "200": listResponse(), ...standardErrorResponses },
@@ -29,7 +29,7 @@ export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/punishments/{punishmentId}",
     tags: ["Punishments"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Get a punishment",
     request: { params: punishmentIdParamsSchema },
     responses: { "200": successResponse(), ...standardErrorResponses },
@@ -39,7 +39,7 @@ export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
     method: "post",
     path: "/punishments",
     tags: ["Punishments"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Create a punishment",
     request: {
       body: {
@@ -54,7 +54,7 @@ export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
     method: "post",
     path: "/punishments/{punishmentId}/revoke",
     tags: ["Punishments"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Revoke a punishment",
     request: {
       params: punishmentIdParamsSchema,

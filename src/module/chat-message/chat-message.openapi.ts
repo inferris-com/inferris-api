@@ -1,7 +1,7 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
-  bearerSecurity,
+  userOrServiceSecurity,
   jsonBody,
   listResponse,
   standardErrorResponses,
@@ -18,7 +18,7 @@ export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/chat-messages",
     tags: ["Chat Messages"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "List chat messages",
     request: { query: listChatMessagesQuerySchema },
     responses: { "200": listResponse(), ...standardErrorResponses },
@@ -28,7 +28,7 @@ export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
     method: "post",
     path: "/chat-messages",
     tags: ["Chat Messages"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Create a chat message",
     request: {
       body: {
@@ -43,7 +43,7 @@ export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
     method: "post",
     path: "/chat-messages/batch",
     tags: ["Chat Messages"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Create chat messages in a batch",
     request: {
       body: {

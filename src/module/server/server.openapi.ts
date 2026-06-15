@@ -1,7 +1,7 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
-  bearerSecurity,
+  userOrServiceSecurity,
   jsonBody,
   noContentResponse,
   standardErrorResponses,
@@ -21,7 +21,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     method: "post",
     path: "/servers",
     tags: ["Servers"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Create a server",
     request: {
       body: { required: true, content: { "application/json": jsonBody(createServerBodySchema) } },
@@ -33,7 +33,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     method: "post",
     path: "/servers/{serverId}/lockdown",
     tags: ["Servers"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Create a server lockdown",
     request: {
       params: serverIdParamsSchema,
@@ -46,7 +46,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     method: "put",
     path: "/servers/{serverId}/access",
     tags: ["Servers"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Replace a server access policy",
     request: {
       params: serverIdParamsSchema,
@@ -62,7 +62,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     method: "patch",
     path: "/servers/{serverId}",
     tags: ["Servers"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Update a server",
     request: {
       params: serverIdParamsSchema,
@@ -75,7 +75,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     method: "patch",
     path: "/servers/{serverId}/lockdown",
     tags: ["Servers"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Update a server lockdown",
     request: {
       params: serverIdParamsSchema,
@@ -96,7 +96,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
       method: "get",
       path,
       tags: ["Servers"],
-      security: bearerSecurity,
+      security: userOrServiceSecurity,
       summary,
       request: { params: serverIdParamsSchema },
       responses: { "200": successResponse(), ...standardErrorResponses },
@@ -112,7 +112,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
       method: "delete",
       path,
       tags: ["Servers"],
-      security: bearerSecurity,
+      security: userOrServiceSecurity,
       summary,
       request: { params: serverIdParamsSchema },
       responses: { "204": noContentResponse, ...standardErrorResponses },

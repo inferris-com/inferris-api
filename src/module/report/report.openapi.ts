@@ -1,7 +1,7 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
-  bearerSecurity,
+  userOrServiceSecurity,
   jsonBody,
   listResponse,
   standardErrorResponses,
@@ -20,7 +20,7 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     method: "post",
     path: "/reports",
     tags: ["Reports"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Create a report",
     request: {
       body: { required: true, content: { "application/json": jsonBody(createReportBodySchema) } },
@@ -32,7 +32,7 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/reports",
     tags: ["Reports"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "List reports",
     request: { query: listReportsQuerySchema },
     responses: { "200": listResponse(), ...standardErrorResponses },
@@ -42,7 +42,7 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/reports/{reportId}",
     tags: ["Reports"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Get a report",
     request: { params: reportIdParamsSchema },
     responses: { "200": successResponse(), ...standardErrorResponses },
@@ -52,7 +52,7 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     method: "patch",
     path: "/reports/{reportId}",
     tags: ["Reports"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Update a report",
     request: {
       params: reportIdParamsSchema,
@@ -65,7 +65,7 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/reports/{reportId}/comments",
     tags: ["Reports"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "List report comments",
     request: { params: reportIdParamsSchema },
     responses: { "200": listResponse(), ...standardErrorResponses },
@@ -75,7 +75,7 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     method: "post",
     path: "/reports/{reportId}/comments",
     tags: ["Reports"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Create a report comment",
     request: {
       params: reportIdParamsSchema,

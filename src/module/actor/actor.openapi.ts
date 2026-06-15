@@ -1,7 +1,7 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
-  bearerSecurity,
+  userOrServiceSecurity,
   jsonBody,
   standardErrorResponses,
   successResponse,
@@ -14,7 +14,7 @@ export function registerActorOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/actors/by-player/{playerId}",
     tags: ["Actors"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Get an actor by player ID",
     request: { params: playerIdParamsSchema },
     responses: { "200": successResponse(), ...standardErrorResponses },
@@ -24,7 +24,7 @@ export function registerActorOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/actors/{actorId}",
     tags: ["Actors"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Get an actor",
     request: { params: actorIdParamsSchema },
     responses: { "200": successResponse(), ...standardErrorResponses },
@@ -34,7 +34,7 @@ export function registerActorOpenApi(registry: OpenAPIRegistry) {
     method: "patch",
     path: "/actors/{actorId}",
     tags: ["Actors"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Update an actor",
     request: {
       params: actorIdParamsSchema,

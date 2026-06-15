@@ -1,7 +1,7 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
-  bearerSecurity,
+  userSecurity,
   jsonBody,
   standardErrorResponses,
   successResponse,
@@ -14,7 +14,7 @@ export function registerAuthOpenApi(registry: OpenAPIRegistry) {
     path: "/auth/me",
     tags: ["Auth"],
     summary: "Get the current Argus user",
-    security: bearerSecurity,
+    security: userSecurity,
     responses: {
       "200": successResponse("Current Argus user"),
       "401": standardErrorResponses["401"],
@@ -62,6 +62,7 @@ export function registerAuthOpenApi(registry: OpenAPIRegistry) {
     path: "/auth/logout",
     tags: ["Auth"],
     summary: "Log out",
+    security: userSecurity,
     request: {
       body: {
         required: true,

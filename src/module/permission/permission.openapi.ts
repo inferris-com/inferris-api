@@ -1,7 +1,7 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
-  bearerSecurity,
+  userOrServiceSecurity,
   jsonBody,
   standardErrorResponses,
   successResponse,
@@ -18,7 +18,7 @@ export function registerPermissionOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/permissions/{permissionKey}",
     tags: ["Permissions"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Get a permission node",
     request: { params: permissionKeyParamsSchema },
     responses: { "200": successResponse(), ...standardErrorResponses },
@@ -28,7 +28,7 @@ export function registerPermissionOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/permissions/{permissionKey}/rules/{minRankKey}",
     tags: ["Permissions"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Get a permission rule",
     request: { params: permissionRuleParamsSchema },
     responses: { "200": successResponse(), ...standardErrorResponses },
@@ -38,7 +38,7 @@ export function registerPermissionOpenApi(registry: OpenAPIRegistry) {
     method: "post",
     path: "/permissions",
     tags: ["Permissions"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Create a permission node",
     request: {
       body: {
@@ -53,7 +53,7 @@ export function registerPermissionOpenApi(registry: OpenAPIRegistry) {
     method: "put",
     path: "/permissions/{permissionKey}/rules/{minRankKey}",
     tags: ["Permissions"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Replace a permission rule",
     request: {
       params: permissionRuleParamsSchema,

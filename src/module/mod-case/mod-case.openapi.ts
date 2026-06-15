@@ -1,7 +1,7 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
-  bearerSecurity,
+  userOrServiceSecurity,
   jsonBody,
   listResponse,
   standardErrorResponses,
@@ -20,7 +20,7 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/mod-cases",
     tags: ["Mod Cases"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "List moderation cases",
     request: { query: listModCasesQuerySchema },
     responses: { "200": listResponse(), ...standardErrorResponses },
@@ -30,7 +30,7 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
     method: "post",
     path: "/mod-cases",
     tags: ["Mod Cases"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Create a moderation case",
     request: {
       body: { required: true, content: { "application/json": jsonBody(createModCaseBodySchema) } },
@@ -42,7 +42,7 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/mod-cases/{caseId}",
     tags: ["Mod Cases"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Get a moderation case",
     request: { params: modCaseIdParamsSchema },
     responses: { "200": successResponse(), ...standardErrorResponses },
@@ -52,7 +52,7 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
     method: "patch",
     path: "/mod-cases/{caseId}",
     tags: ["Mod Cases"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Update a moderation case",
     request: {
       params: modCaseIdParamsSchema,
@@ -65,7 +65,7 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
     method: "get",
     path: "/mod-cases/{caseId}/actors",
     tags: ["Mod Cases"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "List moderation case actors",
     request: { params: modCaseIdParamsSchema },
     responses: { "200": listResponse(), ...standardErrorResponses },
@@ -75,7 +75,7 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
     method: "post",
     path: "/mod-cases/{caseId}/actors",
     tags: ["Mod Cases"],
-    security: bearerSecurity,
+    security: userOrServiceSecurity,
     summary: "Add a moderation case actor",
     request: {
       params: modCaseIdParamsSchema,
