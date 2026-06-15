@@ -9,29 +9,15 @@ export type ActorType = "application" | "system" | "unspecified" | "user";
 
 export type ArgusAccountRole = "admin" | "moderator";
 
-export type ArgusAccountStatus =
-  | "active"
-  | "disabled"
-  | "reset_password"
-  | "suspended"
-  | "verify_email";
+export type ArgusAccountStatus = "active" | "disabled" | "reset_password" | "suspended" | "verify_email";
 
-export type BugReportStatus =
-  | "closed"
-  | "confirmed"
-  | "duplicate"
-  | "in_progress"
-  | "invalid"
-  | "open"
-  | "resolved"
-  | "reviewing";
+export type BugReportStatus = "closed" | "confirmed" | "duplicate" | "in_progress" | "invalid" | "open" | "resolved" | "reviewing";
 
 export type FriendRequestStatus = "accepted" | "cancelled" | "denied" | "expired" | "pending";
 
-export type Generated<T> =
-  T extends ColumnType<infer S, infer I, infer U>
-    ? ColumnType<S, I | undefined, U>
-    : ColumnType<T, T | undefined, T>;
+export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S, I | undefined, U>
+  : ColumnType<T, T | undefined, T>;
 
 export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
@@ -47,142 +33,35 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
-export type ModCaseResolution =
-  | "action_taken"
-  | "duplicate"
-  | "insufficient_evidence"
-  | "invalid"
-  | "monitoring"
-  | "no_action"
-  | "referred"
-  | "resolved_elsewhere";
+export type ModCaseResolution = "action_taken" | "duplicate" | "insufficient_evidence" | "invalid" | "monitoring" | "no_action" | "referred" | "resolved_elsewhere";
 
-export type ModCaseStatus =
-  | "closed"
-  | "dismissed"
-  | "investigating"
-  | "open"
-  | "pending_action"
-  | "resolved";
+export type ModCaseStatus = "closed" | "dismissed" | "investigating" | "open" | "pending_action" | "resolved";
 
-export type ModerationCaseActorRole =
-  | "assigned_mod"
-  | "related_actor"
-  | "reporter"
-  | "reviewer"
-  | "subject"
-  | "suspected_alt"
-  | "victim"
-  | "witness";
+export type ModerationCaseActorRole = "assigned_mod" | "related_actor" | "reporter" | "reviewer" | "subject" | "suspected_alt" | "victim" | "witness";
 
-export type ModerationEventType =
-  | "appeal_closed"
-  | "appeal_opened"
-  | "assigned"
-  | "closed"
-  | "comment_added"
-  | "comment_edited"
-  | "created"
-  | "escalated_to_case"
-  | "evidence_added"
-  | "evidence_removed"
-  | "infraction_issued"
-  | "linked_resource"
-  | "priority_changed"
-  | "reopened"
-  | "severity_changed"
-  | "status_changed"
-  | "triaged"
-  | "unlinked_resource"
-  | "updated"
-  | "watchlist_added"
-  | "watchlist_cleared";
+export type ModerationEventType = "appeal_closed" | "appeal_opened" | "assigned" | "closed" | "comment_added" | "comment_edited" | "created" | "escalated_to_case" | "evidence_added" | "evidence_removed" | "infraction_issued" | "linked_resource" | "priority_changed" | "reopened" | "severity_changed" | "status_changed" | "triaged" | "unlinked_resource" | "updated" | "watchlist_added" | "watchlist_cleared";
 
-export type ModerationEvidenceType =
-  | "bug_report"
-  | "chat_context"
-  | "chat_message"
-  | "command_log"
-  | "external_url"
-  | "file"
-  | "other"
-  | "screenshot"
-  | "server_log"
-  | "staff_observation"
-  | "video";
+export type ModerationEvidenceType = "bug_report" | "chat_context" | "chat_message" | "command_log" | "external_url" | "file" | "other" | "screenshot" | "server_log" | "staff_observation" | "video";
 
-export type ModerationLinkType =
-  | "appeals"
-  | "appellant_of"
-  | "attached_to"
-  | "blocked_by"
-  | "created_from"
-  | "duplicate_of"
-  | "escalated_to"
-  | "evidence_for"
-  | "involves"
-  | "mentions"
-  | "related_to"
-  | "reporter_of"
-  | "resolved_by"
-  | "resulted_in"
-  | "subject_of";
+export type ModerationLinkType = "appeals" | "appellant_of" | "attached_to" | "blocked_by" | "created_from" | "duplicate_of" | "escalated_to" | "evidence_for" | "involves" | "mentions" | "related_to" | "reporter_of" | "resolved_by" | "resulted_in" | "subject_of";
 
-export type ModerationResourceType =
-  | "actor"
-  | "appeal"
-  | "bug_report"
-  | "chat_message"
-  | "external_url"
-  | "file"
-  | "infraction"
-  | "mod_case"
-  | "punishment"
-  | "report"
-  | "report_comment"
-  | "server"
-  | "watchlist_entry";
+export type ModerationResourceType = "actor" | "appeal" | "bug_report" | "chat_message" | "external_url" | "file" | "infraction" | "mod_case" | "punishment" | "report" | "report_comment" | "server" | "watchlist_entry";
 
-export type PermissionCategory =
-  | "administration"
-  | "command"
-  | "development"
-  | "feature"
-  | "general"
-  | "moderation";
+export type PermissionCategory = "administration" | "command" | "development" | "feature" | "general" | "moderation";
 
 export type PermissionEffect = "allow" | "deny";
 
 export type Platform = "argus" | "bot" | "discord" | "minecraft" | "other";
 
-export type PrincipalType =
-  | "argus_user"
-  | "discord_bot"
-  | "internal_worker"
-  | "server_api_key"
-  | "system"
-  | "unknown"
-  | "user_api_key";
+export type PrincipalType = "argus_user" | "discord_bot" | "internal_worker" | "server_api_key" | "system" | "unknown" | "user_api_key";
 
 export type Punishment = "ban" | "kick" | "mute" | "warn";
 
-export type PunishmentAppealStatus =
-  | "accepted"
-  | "open"
-  | "rejected"
-  | "under_review"
-  | "withdrawn";
+export type PunishmentAppealStatus = "accepted" | "open" | "rejected" | "under_review" | "withdrawn";
 
 export type PunishmentLiftedCause = "appeal_accepted" | "expired" | "revoked";
 
-export type ReportResolution =
-  | "action_taken"
-  | "duplicate"
-  | "escalated_to_case"
-  | "false_report"
-  | "insufficient_evidence"
-  | "no_action"
-  | "resolved_elsewhere";
+export type ReportResolution = "action_taken" | "duplicate" | "escalated_to_case" | "false_report" | "insufficient_evidence" | "no_action" | "resolved_elsewhere";
 
 export type ReportStatus = "actioned" | "dismissed" | "duplicate" | "open" | "under_review";
 
@@ -198,12 +77,7 @@ export type ServerType = "paper" | "unspecified" | "vanilla" | "velocity";
 
 export type Severity = "critical" | "high" | "low" | "medium";
 
-export type UserPrivilegeRole =
-  | "administrator"
-  | "collaborator"
-  | "moderator"
-  | "none"
-  | "superadmin";
+export type UserPrivilegeRole = "administrator" | "collaborator" | "moderator" | "none" | "superadmin";
 
 export interface Actors {
   created_at_ms: Generated<Int8>;
