@@ -59,7 +59,7 @@ export function createApiKeyToken(keyId = randomUUID()): {
   };
 }
 
-export async function verifyPassword(passwordHash: string | null, password: string): Promise<boolean> {
+export async function verifyPassword(passwordHash: string, password: string): Promise<boolean> {
   if(passwordHash == null){
     return false;
   }
