@@ -30,6 +30,7 @@ export class AuthService {
   async authenticateApiKey(token: string): Promise<AuthContext | null> {
     const parsed = parseApiKeyToken(token);
 
+    // Middleware rejects if null
     if (!parsed) {
       return null;
     }

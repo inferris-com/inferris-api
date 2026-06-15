@@ -94,6 +94,7 @@ export function requireMinecraftPermission(
       return;
     }
 
+    // Only trusted server-plugin API keys may perform permission checks.
     if (!hasApiScope(req, "minecraft:permission-check")) {
       await auditDenied(repo, req, { apiScopes: ["minecraft:permission-check"] });
       next(
@@ -105,6 +106,7 @@ export function requireMinecraftPermission(
       return;
     }
 
+    // Require both an authenticated actor and the requested Minecraft permission.
     if (
       !req.auth.actorId ||
       !(await repo.actorHasMinecraftPermission(req.auth.actorId, permissionKey))

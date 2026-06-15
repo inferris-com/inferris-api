@@ -156,10 +156,12 @@ export class AuthRepository {
       .where("ranks.is_active", "=", true)
       .execute();
 
+    // Keep only policy entries that apply to the requested permission key.
     const matchingEffects = rules
       .filter((rule) => permissionMatches(rule.key, permissionKey))
       .map((rule) => rule.effect);
 
+    // Deny rules take precedence over allows.
     if (matchingEffects.includes("deny")) {
       return false;
     }
