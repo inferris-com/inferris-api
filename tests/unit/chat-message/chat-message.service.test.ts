@@ -1,8 +1,7 @@
-import assert from "node:assert/strict";
-import test from "node:test";
+import { expect, test } from "@jest/globals";
 
-import { mergeChatMessages } from "./chat-message.service.js";
-import type { ChatMessageRecord } from "./chat-message.types.js";
+import { mergeChatMessages } from "../../../src/module/chat-message/chat-message.service.js";
+import type { ChatMessageRecord } from "../../../src/module/chat-message/chat-message.types.js";
 
 function message(
   input: Partial<ChatMessageRecord> & Pick<ChatMessageRecord, "id">,
@@ -22,7 +21,7 @@ function message(
   };
 }
 
-void test("mergeChatMessages sorts by occurrence time descending and stream tie-breaker", () => {
+test("mergeChatMessages sorts by occurrence time descending and stream tie-breaker", () => {
   const merged = mergeChatMessages(
     [
       message({ id: "a", occurredAtMs: "1000", ingestStreamId: "1-0" }),
@@ -39,13 +38,10 @@ void test("mergeChatMessages sorts by occurrence time descending and stream tie-
     10,
   );
 
-  assert.deepEqual(
-    merged.map((row) => row.id),
-    ["c", "b", "a"],
-  );
+  expect(merged.map((row) => row.id)).toEqual(["c", "b", "a"]);
 });
 
-void test("mergeChatMessages deduplicates by message id and respects limit", () => {
+test("mergeChatMessages deduplicates by message id and respects limit", () => {
   const merged = mergeChatMessages(
     [message({ id: "a", occurredAtMs: "1000" })],
     [
@@ -55,8 +51,5 @@ void test("mergeChatMessages deduplicates by message id and respects limit", () 
     1,
   );
 
-  assert.deepEqual(
-    merged.map((row) => row.id),
-    ["a"],
-  );
+  expect(merged.map((row) => row.id)).toEqual(["a"]);
 });

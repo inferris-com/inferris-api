@@ -28,7 +28,7 @@ export default defineConfig(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ["kysely.config.ts"],
+          allowDefaultProject: ["jest.config.ts", "kysely.config.ts", "tsconfig.test.json"],
         },
         tsconfigRootDir: import.meta.dirname,
       },
