@@ -145,7 +145,7 @@ export interface ArgusUsers {
   created_at_ms: Generated<Int8>;
   email: string;
   id: Generated<string>;
-  password_hash: string;
+  password_hash: string | null;
   role: ArgusAccountRole;
   updated_at_ms: Int8 | null;
   username: string;
