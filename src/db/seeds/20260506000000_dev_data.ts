@@ -9,10 +9,18 @@ const dummyId2 = "00000000-0000-0000-0000-000000000002";
 const dummyId3 = "00000000-0000-0000-0000-000000000003";
 const dummyId4 = "00000000-0000-0000-0000-000000000004";
 const dummyId5 = "00000000-0000-0000-0000-000000000005";
+const dummyId6 = "00000000-0000-0000-0000-000000000006";
+const dummyId7 = "00000000-0000-0000-0000-000000000007";
 
 const ids = {
   api_keys: {
-    dev: dummyId,
+    dev_super: dummyId, // superadmin
+    dev: dummyId2, // *, but no superadmin
+    read_only: dummyId3,
+    write_only: dummyId4,
+    read_write: dummyId5,
+    moderator: dummyId6,
+    admin: dummyId7
   },
 
   badges: {
@@ -47,15 +55,26 @@ const ids = {
     system: dummyId,
     seed: "20000000-0000-0000-0000-000000000002",
     dummy: "00000000-0000-0000-0000-000000000003",
-    staffDummy: "00000000-0000-0000-0000-000000000004",
+    moderatorDummy: "00000000-0000-0000-0000-000000000004",
+    adminDummy: "00000000-0000-0000-0000-000000000005",
     refrizor: "7d16b15d-bb22-4a6d-80db-6213b3d75007",
   },
 
   players: {
     dummy: "00000000-0000-0000-0000-000000000003",
-    staffDummy: "00000000-0000-0000-0000-000000000004",
+    moderatorDummy: "00000000-0000-0000-0000-000000000004",
+    adminDummy: "00000000-0000-0000-0000-000000000005",
     refrizor: "7d16b15d-bb22-4a6d-80db-6213b3d75007",
   },
+} as const;
+
+const keyScopes = {
+  dev_super: ["*"],
+  read_only: ["actors:read", "players:read", "servers:read", "permissions:read", "chat:read", "moderation:read", "minecraft:permission-check"],
+  write_only: ["actors:write", "players:write", "servers:write", "permissions:write", "chat:write", "moderation:write", "minecraft:permission-check"],
+  read_write: ["actors:read", "players:read", "servers:read", "permissions:read", "chat:read", "moderation:read", "minecraft:permission-check",
+    "actors:write", "players:write", "servers:write", "permissions:write", "chat:write", "moderation:write", "minecraft:permission-check"],
+  moderator: ["actors:read", "players: read", "servers:read", "chat:read", "moderation:read", "moderation:write", "minecraft:permission-check"]
 } as const;
 
 const seed = {
@@ -191,8 +210,13 @@ const seed = {
           type: "user",
         },
         {
-          id: ids.actors.staffDummy,
-          name: "Staff Dummy",
+          id: ids.actors.moderatorDummy,
+          name: "Moderator Dummy",
+          type: "user",
+        },
+        {
+          id: ids.actors.adminDummy,
+          name: "Admin Dummy",
           type: "user",
         },
         {
@@ -207,6 +231,19 @@ const seed = {
       .insertInto("api_keys")
       .values([
         {
+          id: ids.api_keys.dev_super,
+          key: ids.api_keys.dev_super,
+          key_hash: hashApiKeySecret("dev"),
+          principal_type: "server_api_key",
+          platform: "minecraft",
+          permissions: sql`CAST(${JSON.stringify(["*"])} AS jsonb)`,
+          owner_actor_id: ids.actors.seed,
+          created_by_actor_id: ids.actors.seed,
+          can_bypass_rate_limit: true,
+          is_active: true,
+          is_super_key: true,
+        },
+        {
           id: ids.api_keys.dev,
           key: ids.api_keys.dev,
           key_hash: hashApiKeySecret("dev"),
@@ -217,7 +254,59 @@ const seed = {
           created_by_actor_id: ids.actors.seed,
           can_bypass_rate_limit: true,
           is_active: true,
-          is_super_key: true,
+          is_super_key: false,
+        },
+        {
+          id: ids.api_keys.read_only,
+          key: ids.api_keys.read_only,
+          key_hash: hashApiKeySecret("dev"),
+          principal_type: "server_api_key",
+          platform: "minecraft",
+          permissions: sql`CAST(${JSON.stringify([keyScopes.read_only])} AS jsonb)`,
+          owner_actor_id: ids.actors.seed,
+          created_by_actor_id: ids.actors.seed,
+          can_bypass_rate_limit: true,
+          is_active: true,
+          is_super_key: false,
+        },
+        {
+          id: ids.api_keys.write_only,
+          key: ids.api_keys.write_only,
+          key_hash: hashApiKeySecret("dev"),
+          principal_type: "server_api_key",
+          platform: "minecraft",
+          permissions: sql`CAST(${JSON.stringify(keyScopes.write_only)} AS jsonb)`,
+          owner_actor_id: ids.actors.seed,
+          created_by_actor_id: ids.actors.seed,
+          can_bypass_rate_limit: true,
+          is_active: true,
+          is_super_key: false,
+        },
+        {
+          id: ids.api_keys.read_write,
+          key: ids.api_keys.read_write,
+          key_hash: hashApiKeySecret("dev"),
+          principal_type: "server_api_key",
+          platform: "minecraft",
+          permissions: sql`CAST(${JSON.stringify(keyScopes.read_write)} AS jsonb)`,
+          owner_actor_id: ids.actors.seed,
+          created_by_actor_id: ids.actors.seed,
+          can_bypass_rate_limit: true,
+          is_active: true,
+          is_super_key: false,
+        },
+        {
+          id: ids.api_keys.moderator,
+          key: ids.api_keys.moderator,
+          key_hash: hashApiKeySecret("dev"),
+          principal_type: "server_api_key",
+          platform: "minecraft",
+          permissions: sql`CAST(${JSON.stringify(keyScopes.moderator)} AS jsonb)`,
+          owner_actor_id: ids.actors.seed,
+          created_by_actor_id: ids.actors.seed,
+          can_bypass_rate_limit: true,
+          is_active: true,
+          is_super_key: false,
         },
       ])
       .execute();
@@ -468,8 +557,13 @@ const seed = {
           active_channel_key: "testing",
         },
         {
-          id: ids.players.staffDummy,
-          username: "StaffDummy",
+          id: ids.players.moderatorDummy,
+          username: "ModDummy",
+          flags: "1048583", // STAFF, VANISHED, NICKED, ARGUS_ACCESS
+        },
+        {
+          id: ids.players.adminDummy,
+          username: "AdminDummy",
           flags: "1048583", // STAFF, VANISHED, NICKED, ARGUS_ACCESS
         },
         {
@@ -811,8 +905,8 @@ const seed = {
         playerId: ids.players.refrizor,
       },
       {
-        actorId: ids.actors.staffDummy,
-        playerId: ids.players.staffDummy,
+        actorId: ids.actors.moderatorDummy,
+        playerId: ids.players.moderatorDummy,
       },
     ];
 
@@ -828,8 +922,8 @@ const seed = {
       .insertInto("player_nicknames")
       .values([
         {
-          player_id: ids.players.staffDummy,
-          nickname: "NickedStaff",
+          player_id: ids.players.moderatorDummy,
+          nickname: "NickedMod",
           meta: [],
           is_active: true,
         },
@@ -847,7 +941,7 @@ const seed = {
           enrolled_by_actor_id: ids.actors.seed,
         },
         {
-          actor_id: ids.actors.staffDummy,
+          actor_id: ids.actors.moderatorDummy,
           status: "active",
           role: "moderator",
           title: "Moderator",
@@ -855,6 +949,32 @@ const seed = {
         },
       ])
       .execute();
+
+    await db
+      .insertInto("argus_users")
+      .values([
+        {
+          actor_id: ids.actors.refrizor,
+          username: "Refrizor",
+          email: "azzy@inferris.com",
+          role: "admin",
+          account_state: "active",
+        },
+        {
+          actor_id: ids.actors.moderatorDummy,
+          username: "Mod Dummy",
+          email: "moddummy@inferris.com",
+          role: "moderator",
+          account_state: "active",
+        },
+        {
+          actor_id: ids.actors.moderatorDummy,
+          username: "Admin Dummy",
+          email: "admindummy@inferris.com",
+          role: "admin",
+          account_state: "active",
+        }
+      ]).execute();
 
     await db
       .insertInto("chat_messages")
@@ -869,7 +989,7 @@ const seed = {
         },
         {
           id: dummyId2,
-          actor_id: ids.actors.staffDummy,
+          actor_id: ids.actors.moderatorDummy,
           producer_message_id: "seed-chat-2",
           origin_server_id: ids.servers.lobby,
           channel_key: "staff",
