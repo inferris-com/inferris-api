@@ -24,8 +24,8 @@ export function createChatMessageRouter(
 
   const readChat = authorize(authRepository, {
     apiScopes: ["chat:read"],
-    argusRole: "moderator",
     privilegedRole: "moderator",
+    argusRole: "moderator",
   });
   const writeChat = authorize(authRepository, {
     apiScopes: ["chat:write"],

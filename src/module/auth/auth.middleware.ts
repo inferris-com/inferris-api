@@ -9,8 +9,8 @@ import type { ArgusAccountRole, UserPrivilegeRole } from "../../db/types.js";
 
 type RoutePolicy = {
   apiScopes?: ApiScope[];
-  argusRole?: ArgusAccountRole;
   privilegedRole?: UserPrivilegeRole;
+  argusRole?: ArgusAccountRole;
 };
 
 export function authenticate(service: AuthService): RequestHandler {
