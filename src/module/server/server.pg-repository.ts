@@ -29,6 +29,35 @@ export type DeleteLockdownResult = DeleteResult;
 export class ServerPgRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
+  async registerServer(input: CreateServerBody): Promise<Selectable<Servers>> {
+    return await this.db.transaction().execute(async (trx) => {
+      return await trx
+        .insertInto("servers")
+        .values({
+          name: input.name,
+          type: input.type,
+          environment: input.environment,
+          status: input.status,
+          port: input.port,
+          version: input.version,
+          last_started_at_ms: Date.now().toString(),
+        })
+        .onConflict((oc) =>
+          oc.column("name").doUpdateSet({
+            type: input.type,
+            environment: input.environment,
+            status: input.status,
+            port: input.port,
+            version: input.version,
+            last_started_at_ms: Date.now().toString(),
+            last_updated_at_ms: Date.now().toString(),
+          }),
+        )
+        .returningAll()
+        .executeTakeFirstOrThrow();
+    });
+  }
+
   async createServer(input: CreateServerBody): Promise<CreateServerResult> {
     return await this.db.transaction().execute(async (trx) => {
       const server = await trx
@@ -291,6 +320,34 @@ export class ServerPgRepository {
     });
   }
 
+  async findServerByName(name: string) {
+    return this.db.transaction().execute(async (trx) => {
+      const server = await trx
+        .selectFrom("servers")
+        .select([
+          "id",
+          "name",
+          "type",
+          "environment",
+          "status",
+          "port",
+          "version",
+          "last_started_at_ms",
+          "last_heartbeat_at_ms",
+          "created_at_ms",
+          "last_updated_at_ms",
+        ])
+        .where("name", "=", name)
+        .executeTakeFirst();
+
+      if (!server) {
+        return null;
+      }
+
+      return server;
+    });
+  }
+
   async findAccessPolicyByServerId(id: string) {
     return this.db.transaction().execute(async (trx) => {
       const server = await trx
@@ -313,6 +370,33 @@ export class ServerPgRepository {
         .selectFrom("lockdowns")
         .selectAll()
         .where("server_id", "=", id)
+        .where("scope", "=", "local")
+        .where("is_active", "=", true)
+        .where((eb) =>
+          eb.or([eb("ends_at_ms", "is", null), eb("ends_at_ms", ">=", Date.now().toString())]),
+        )
+        .orderBy("starts_at_ms", "desc")
+        .executeTakeFirst();
+
+      if (!server) {
+        return null;
+      }
+
+      return server;
+    });
+  }
+
+  async findActiveGlobalLockdown() {
+    return this.db.transaction().execute(async (trx) => {
+      const server = await trx
+        .selectFrom("lockdowns")
+        .selectAll()
+        .where("scope", "=", "global")
+        .where("is_active", "=", true)
+        .where((eb) =>
+          eb.or([eb("ends_at_ms", "is", null), eb("ends_at_ms", ">=", Date.now().toString())]),
+        )
+        .orderBy("starts_at_ms", "desc")
         .executeTakeFirst();
 
       if (!server) {

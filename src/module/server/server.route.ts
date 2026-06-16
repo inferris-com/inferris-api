@@ -12,6 +12,8 @@ import {
   replaceServerAccessBodySchema,
   type ServerIdParamsSchema,
   serverIdParamsSchema,
+  type ServerNameParamsSchema,
+  serverNameParamsSchema,
   type UpdateLockdownBody,
   updateLockdownBodySchema,
   type UpdateServerBody,
@@ -36,6 +38,13 @@ export function createServerRouter(service: ServerService, authRepository: AuthR
     res.json(body);
   };
 
+  const registerServer: RequestHandler = async (req, res) => {
+    const server = await service.registerServer(req.body as CreateServerBody);
+    const body: ApiSuccess<ServerResponse> = { data: server };
+
+    res.json(body);
+  };
+
   const createLockdown: RequestHandler<ServerIdParamsSchema> = async (req, res) => {
     const server = await service.createLockdown(req.params.serverId, {
       ...(req.body as CreateLockdownBody),
@@ -48,6 +57,13 @@ export function createServerRouter(service: ServerService, authRepository: AuthR
 
   const getServer: RequestHandler<ServerIdParamsSchema> = async (req, res) => {
     const server = await service.getServer(req.params.serverId);
+    const body: ApiSuccess<ServerResponse> = { data: server };
+
+    res.json(body);
+  };
+
+  const getServerByName: RequestHandler<ServerNameParamsSchema> = async (req, res) => {
+    const server = await service.getServerByName(req.params.serverName);
     const body: ApiSuccess<ServerResponse> = { data: server };
 
     res.json(body);
@@ -98,6 +114,13 @@ export function createServerRouter(service: ServerService, authRepository: AuthR
     res.json(body);
   };
 
+  const getActiveGlobalLockdown: RequestHandler = async (_req, res) => {
+    const server = await service.getActiveGlobalLockdown();
+    const body: ApiSuccess<LockdownResponse> = { data: server };
+
+    res.json(body);
+  };
+
   const deleteServer: RequestHandler<ServerIdParamsSchema> = async (req, res) => {
     await service.deleteServer(req.params.serverId);
 
@@ -140,6 +163,13 @@ export function createServerRouter(service: ServerService, authRepository: AuthR
     createServer,
   );
   router.post(
+    "/register",
+    writeServers,
+    auditMutation(authRepository, "servers.register"),
+    validateRequest({ body: createServerBodySchema }),
+    registerServer,
+  );
+  router.post(
     "/:serverId/lockdown",
     manageLockdowns,
     requireActingActor(authRepository),
@@ -167,6 +197,17 @@ export function createServerRouter(service: ServerService, authRepository: AuthR
     auditMutation(authRepository, "servers.lockdowns.update"),
     validateRequest({ params: serverIdParamsSchema, body: updateLockdownBodySchema }),
     patchLockdown,
+  );
+  router.get(
+    "/lockdowns/global/active",
+    readServers,
+    getActiveGlobalLockdown,
+  );
+  router.get(
+    "/by-name/:serverName",
+    readServers,
+    validateRequest({ params: serverNameParamsSchema }),
+    getServerByName,
   );
   router.get(
     "/:serverId",

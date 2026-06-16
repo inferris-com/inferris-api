@@ -13,6 +13,7 @@ import {
   createServerBodySchema,
   replaceServerAccessBodySchema,
   serverIdParamsSchema,
+  serverNameParamsSchema,
   updateLockdownBodySchema,
   updateServerBodySchema,
 } from "./server.schemas.js";
@@ -24,6 +25,18 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     tags: ["Servers"],
     security: userOrServiceSecurity,
     summary: "Create a server",
+    request: {
+      body: { required: true, content: { "application/json": jsonBody(createServerBodySchema) } },
+    },
+    responses: { "200": successResponse(), ...standardErrorResponses },
+  });
+
+  registry.registerPath({
+    method: "post",
+    path: "/servers/register",
+    tags: ["Servers"],
+    security: userOrServiceSecurity,
+    summary: "Register or update a server by stable name",
     request: {
       body: { required: true, content: { "application/json": jsonBody(createServerBodySchema) } },
     },
@@ -90,6 +103,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
   });
 
   for (const [path, summary] of [
+    ["/servers/lockdowns/global/active", "Get the active global server lockdown"],
     ["/servers/{serverId}", "Get a server"],
     ["/servers/{serverId}/access", "Get a server access policy"],
     ["/servers/{serverId}/lockdown", "Get a server lockdown"],
@@ -104,6 +118,16 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
       responses: { "200": successResponse(), ...standardErrorResponses },
     });
   }
+
+  registry.registerPath({
+    method: "get",
+    path: "/servers/by-name/{serverName}",
+    tags: ["Servers"],
+    security: userOrServiceSecurity,
+    summary: "Get a server by stable name",
+    request: { params: serverNameParamsSchema },
+    responses: { "200": successResponse(), ...standardErrorResponses },
+  });
 
   for (const [path, summary] of [
     ["/servers/{serverId}", "Delete a server"],

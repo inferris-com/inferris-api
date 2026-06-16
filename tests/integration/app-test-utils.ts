@@ -81,14 +81,17 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       createComment: AsyncMock;
     };
     server: {
+      registerServer: AsyncMock;
       createServer: AsyncMock;
       createLockdown: AsyncMock;
       getServer: AsyncMock;
+      getServerByName: AsyncMock;
       patchServer: AsyncMock;
       updateAccessPolicy: AsyncMock;
       patchLockdown: AsyncMock;
       getAccessPolicy: AsyncMock;
       getLockdownByServer: AsyncMock;
+      getActiveGlobalLockdown: AsyncMock;
       deleteServer: AsyncMock;
       deletePolicy: AsyncMock;
       deleteLockdown: AsyncMock;
@@ -256,14 +259,17 @@ export function createTestDependencies(): TestDependencies {
         createComment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
       server: {
+        registerServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getServerByName: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         patchServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         updateAccessPolicy: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         patchLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getAccessPolicy: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getLockdownByServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getActiveGlobalLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deleteServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deletePolicy: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deleteLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),

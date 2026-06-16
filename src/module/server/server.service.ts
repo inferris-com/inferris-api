@@ -17,6 +17,12 @@ import type {
 export class ServerService {
   constructor(private readonly repo: ServerPgRepository) {}
 
+  async registerServer(input: CreateServerBody): Promise<ServerResponse> {
+    const server = await this.repo.registerServer(input);
+
+    return toServerResponse(server);
+  }
+
   async createServer(input: CreateServerBody): Promise<ServerResponse> {
     const result = await this.repo.createServer(input);
 
@@ -88,6 +94,16 @@ export class ServerService {
     return toServerResponse(server);
   }
 
+  async getServerByName(name: string): Promise<ServerResponse> {
+    const server = await this.repo.findServerByName(name);
+
+    if (!server) {
+      throw new ServerNotFoundError(name);
+    }
+
+    return toServerResponse(server);
+  }
+
   async getAccessPolicy(id: string): Promise<AccessResponse> {
     const server = await this.repo.findAccessPolicyByServerId(id);
 
@@ -102,6 +118,15 @@ export class ServerService {
 
     if (!server) {
       throw new ServerNotFoundError(id);
+    }
+    return toLockdownResponse(server);
+  }
+
+  async getActiveGlobalLockdown(): Promise<LockdownResponse> {
+    const server = await this.repo.findActiveGlobalLockdown();
+
+    if (!server) {
+      throw new ServerNotFoundError("global");
     }
     return toLockdownResponse(server);
   }

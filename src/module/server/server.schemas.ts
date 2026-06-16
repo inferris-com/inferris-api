@@ -13,6 +13,10 @@ export const serverIdParamsSchema = z.object({
   serverId: z.guid({ message: "Invalid server UUID format." }),
 });
 
+export const serverNameParamsSchema = z.object({
+  serverName: z.string().max(100).nonempty(),
+});
+
 // POST
 export const createServerBodySchema = z
   .object({
@@ -94,6 +98,7 @@ export type ServerAccessType = z.infer<typeof serverAccessTypeSchema>;
 export type LockdownScopeType = z.infer<typeof lockdownScopeTypeSchema>;
 
 export type ServerIdParamsSchema = z.infer<typeof serverIdParamsSchema>;
+export type ServerNameParamsSchema = z.infer<typeof serverNameParamsSchema>;
 
 export type CreateServerBody = z.infer<typeof createServerBodySchema>;
 export type CreateLockdownBody = z.infer<typeof createLockdownBodySchema>;

@@ -1,8 +1,50 @@
 import { describe, expect, test } from "@jest/globals";
 
+import { ServerNotFoundError } from "../../src/module/server/server.errors.js";
 import { createTestApp, ids } from "./app-test-utils.js";
 
 describe("server and lockdown routes", () => {
+  test("POST /servers/register registers by stable server name", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.server.registerServer.mockResolvedValue({
+      id: ids.server,
+      name: "lobby",
+      type: "paper",
+      environment: "development",
+      status: "online",
+      port: 25565,
+      version: "1.21.8",
+    });
+
+    const response = await request
+      .post("/servers/register")
+      .set("Authorization", "ApiKey server-token")
+      .send({
+        name: "lobby",
+        type: "paper",
+        environment: "development",
+        status: "online",
+        port: 25565,
+        version: "1.21.8",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      data: {
+        id: ids.server,
+        name: "lobby",
+      },
+    });
+    expect(dependencies.services.server.registerServer).toHaveBeenCalledWith({
+      name: "lobby",
+      type: "paper",
+      environment: "development",
+      status: "online",
+      port: 25565,
+      version: "1.21.8",
+    });
+  });
+
   test("POST /servers requires admin staff authority", async () => {
     const { dependencies, request } = createTestApp();
 
@@ -134,6 +176,48 @@ describe("server and lockdown routes", () => {
         serverId: ids.server,
         scope: "local",
         isActive: true,
+      },
+    });
+  });
+
+  test("GET /servers/lockdowns/global/active returns active global lockdown envelope", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.server.getActiveGlobalLockdown.mockResolvedValue({
+      id: "lockdown-1",
+      serverId: null,
+      scope: "global",
+      isActive: true,
+    });
+
+    const response = await request
+      .get("/servers/lockdowns/global/active")
+      .set("Authorization", "Bearer moderator-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        id: "lockdown-1",
+        serverId: null,
+        scope: "global",
+        isActive: true,
+      },
+    });
+  });
+
+  test("GET /servers/lockdowns/global/active returns 404 when no global lockdown is active", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.server.getActiveGlobalLockdown.mockRejectedValue(
+      new ServerNotFoundError("global"),
+    );
+
+    const response = await request
+      .get("/servers/lockdowns/global/active")
+      .set("Authorization", "Bearer moderator-token");
+
+    expect(response.status).toBe(404);
+    expect(response.body).toMatchObject({
+      error: {
+        code: "SERVER_NOT_FOUND",
       },
     });
   });
