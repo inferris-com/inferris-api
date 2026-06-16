@@ -74,10 +74,16 @@ export function requireActingActor(repo: AuthRepository): RequestHandler {
     }
 
     if (!headerValue) {
+      if (req.auth.actorId) {
+        req.auth.actingActorId = req.auth.actorId;
+        next();
+        return;
+      }
+
       next(
         new ValidationError({
           code: "ACTING_ACTOR_REQUIRED",
-          message: "X-Inferris-Actor-Id is required for API key requests to this endpoint",
+          message: "X-Inferris-Actor-Id is required for API key requests without an owner actor",
         }),
       );
       return;
@@ -217,10 +223,11 @@ function isPolicyAllowed(req: Request, policy: RoutePolicy): boolean {
   }
 
   if (policy.argusRole && req.auth?.argus) {
-    return (
-      argusRoleRank[req.auth.argus.role] >= argusRoleRank[policy.argusRole] &&
-      isPrivilegedAllowed(req, policy)
-    );
+    return argusRoleRank[req.auth.argus.role] >= argusRoleRank[policy.argusRole];
+  }
+
+  if (policy.privilegedRole) {
+    return isPrivilegedAllowed(req, policy);
   }
 
   return false;
