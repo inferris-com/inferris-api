@@ -31,7 +31,8 @@ export class ServerPgRepository {
 
   async registerServer(input: CreateServerBody): Promise<Selectable<Servers>> {
     return await this.db.transaction().execute(async (trx) => {
-      return await trx
+      const now = Date.now().toString();
+      const server = await trx
         .insertInto("servers")
         .values({
           name: input.name,
@@ -40,7 +41,7 @@ export class ServerPgRepository {
           status: input.status,
           port: input.port,
           version: input.version,
-          last_started_at_ms: Date.now().toString(),
+          last_started_at_ms: now,
         })
         .onConflict((oc) =>
           oc.column("name").doUpdateSet({
@@ -49,12 +50,26 @@ export class ServerPgRepository {
             status: input.status,
             port: input.port,
             version: input.version,
-            last_started_at_ms: Date.now().toString(),
-            last_updated_at_ms: Date.now().toString(),
+            last_started_at_ms: now,
+            last_updated_at_ms: now,
           }),
         )
         .returningAll()
         .executeTakeFirstOrThrow();
+
+      await trx
+        .insertInto("server_access_policies")
+        .values({
+          server_id: server.id,
+          mode: "open",
+          required_permission_id: null,
+          required_rank_key: null,
+          note: "Default open access policy created during server registration.",
+        })
+        .onConflict((oc) => oc.column("server_id").doNothing())
+        .execute();
+
+      return server;
     });
   }
 
