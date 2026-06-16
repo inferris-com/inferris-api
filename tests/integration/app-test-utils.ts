@@ -96,6 +96,12 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       deletePolicy: AsyncMock;
       deleteLockdown: AsyncMock;
     };
+    watchlist: {
+      listEntries: AsyncMock;
+      getActiveEntry: AsyncMock;
+      addEntry: AsyncMock;
+      clearEntry: AsyncMock;
+    };
   };
 };
 
@@ -273,6 +279,12 @@ export function createTestDependencies(): TestDependencies {
         deleteServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deletePolicy: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deleteLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
+      watchlist: {
+        listEntries: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getActiveEntry: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        addEntry: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        clearEntry: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
     },
     workers: {
