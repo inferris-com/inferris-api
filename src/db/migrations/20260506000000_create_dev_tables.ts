@@ -892,6 +892,9 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     message             TEXT        NOT NULL,
     channel_key         VARCHAR(30) NOT NULL REFERENCES chat_channels (key) ON DELETE RESTRICT,
     origin_server_id    UUID        NOT NULL REFERENCES servers (id) ON DELETE RESTRICT,
+    verdict             message_verdict NOT NULL DEFAULT 'allow',
+    moderation_reason   TEXT        NULL,
+    moderation_metadata JSONB       NOT NULL DEFAULT '{}'::jsonb,
     is_flagged          BOOLEAN     NOT NULL DEFAULT FALSE,
     created_at_ms       BIGINT      NOT NULL DEFAULT get_unix_ms()
   );
@@ -903,6 +906,8 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     ON chat_messages (actor_id, created_at_ms DESC);
   CREATE INDEX idx_chat_messages_origin_server_created
     ON chat_messages (origin_server_id, created_at_ms DESC);
+  CREATE INDEX idx_chat_messages_verdict_created
+    ON chat_messages (verdict, created_at_ms DESC);
   CREATE INDEX idx_chat_messages_created
     ON chat_messages (created_at_ms DESC);
 
