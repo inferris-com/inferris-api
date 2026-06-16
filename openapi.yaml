@@ -271,6 +271,441 @@ paths:
                       {}
                 additionalProperties:
                   {}
+  "/groups":
+    get:
+      tags:
+        - "Catalog"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "List groups"
+      parameters:
+        - schema:
+            type: "string"
+            enum:
+              - "true"
+              - "false"
+          required: false
+          name: "staffOnly"
+          in: "query"
+      responses:
+        "200":
+          description: "Successful list response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      {}
+                  meta:
+                    type: "object"
+                    properties:
+                      count:
+                        type: "integer"
+                        minimum: 0
+                      total:
+                        type: "integer"
+                        minimum: 0
+                      limit:
+                        type: "integer"
+                        exclusiveMinimum: 0
+                      offset:
+                        type: "integer"
+                        minimum: 0
+                    additionalProperties:
+                      {}
+                required:
+                  - "data"
+                additionalProperties:
+                  {}
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+  "/ranks":
+    get:
+      tags:
+        - "Catalog"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "List ranks"
+      parameters:
+        - schema:
+            type: "string"
+            minLength: 1
+            maxLength: 30
+          required: false
+          name: "groupKey"
+          in: "query"
+        - schema:
+            type: "string"
+            enum:
+              - "true"
+              - "false"
+          required: false
+          name: "staffOnly"
+          in: "query"
+        - schema:
+            type: "string"
+            enum:
+              - "true"
+              - "false"
+          required: false
+          name: "includeInactive"
+          in: "query"
+      responses:
+        "200":
+          description: "Successful list response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      {}
+                  meta:
+                    type: "object"
+                    properties:
+                      count:
+                        type: "integer"
+                        minimum: 0
+                      total:
+                        type: "integer"
+                        minimum: 0
+                      limit:
+                        type: "integer"
+                        exclusiveMinimum: 0
+                      offset:
+                        type: "integer"
+                        minimum: 0
+                    additionalProperties:
+                      {}
+                required:
+                  - "data"
+                additionalProperties:
+                  {}
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+  "/badges":
+    get:
+      tags:
+        - "Catalog"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "List badges"
+      parameters:
+        - schema:
+            type: "string"
+            enum:
+              - "true"
+              - "false"
+          required: false
+          name: "includeInactive"
+          in: "query"
+      responses:
+        "200":
+          description: "Successful list response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      {}
+                  meta:
+                    type: "object"
+                    properties:
+                      count:
+                        type: "integer"
+                        minimum: 0
+                      total:
+                        type: "integer"
+                        minimum: 0
+                      limit:
+                        type: "integer"
+                        exclusiveMinimum: 0
+                      offset:
+                        type: "integer"
+                        minimum: 0
+                    additionalProperties:
+                      {}
+                required:
+                  - "data"
+                additionalProperties:
+                  {}
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
   "/actors/by-player/{playerId}":
     get:
       tags:
@@ -2797,6 +3232,160 @@ paths:
                       {}
                 additionalProperties:
                   {}
+  "/servers/register":
+    post:
+      tags:
+        - "Servers"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Register or update a server by stable name"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                name:
+                  type: "string"
+                  minLength: 1
+                  maxLength: 100
+                type:
+                  type: "string"
+                  enum:
+                    - "paper"
+                    - "velocity"
+                    - "unspecified"
+                environment:
+                  type: "string"
+                  enum:
+                    - "production"
+                    - "beta"
+                    - "alpha"
+                    - "development"
+                status:
+                  type: "string"
+                  enum:
+                    - "online"
+                    - "offline"
+                port:
+                  type:
+                    - "integer"
+                    - "null"
+                  minimum: 1
+                  maximum: 65535
+                version:
+                  type: "string"
+              required:
+                - "name"
+                - "type"
+                - "environment"
+                - "port"
+                - "version"
+              additionalProperties: false
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    {}
+                additionalProperties:
+                  {}
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
   "/servers/{serverId}/lockdown":
     post:
       tags:
@@ -4100,6 +4689,532 @@ paths:
                       {}
                 additionalProperties:
                   {}
+  "/servers/lockdowns/global/active":
+    get:
+      tags:
+        - "Servers"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Get the active global server lockdown"
+      parameters:
+        - schema:
+            type: "string"
+          required: true
+          name: "serverId"
+          in: "path"
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    {}
+                additionalProperties:
+                  {}
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+  "/servers/by-name/{serverName}":
+    get:
+      tags:
+        - "Servers"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Get a server by stable name"
+      parameters:
+        - schema:
+            type: "string"
+            minLength: 1
+            maxLength: 100
+          required: true
+          name: "serverName"
+          in: "path"
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    {}
+                additionalProperties:
+                  {}
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+  "/permissions":
+    get:
+      tags:
+        - "Permissions"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "List permission nodes"
+      parameters:
+        - schema:
+            type: "string"
+            enum:
+              - "true"
+              - "false"
+          required: false
+          name: "includeInactive"
+          in: "query"
+        - schema:
+            type: "string"
+            enum:
+              - "general"
+              - "feature"
+              - "command"
+              - "moderation"
+              - "administration"
+              - "development"
+          required: false
+          name: "category"
+          in: "query"
+      responses:
+        "200":
+          description: "Successful list response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      {}
+                  meta:
+                    type: "object"
+                    properties:
+                      count:
+                        type: "integer"
+                        minimum: 0
+                      total:
+                        type: "integer"
+                        minimum: 0
+                      limit:
+                        type: "integer"
+                        exclusiveMinimum: 0
+                      offset:
+                        type: "integer"
+                        minimum: 0
+                    additionalProperties:
+                      {}
+                required:
+                  - "data"
+                additionalProperties:
+                  {}
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+    post:
+      tags:
+        - "Permissions"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Create a permission node"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                key:
+                  type: "string"
+                  minLength: 1
+                description:
+                  type:
+                    - "string"
+                    - "null"
+                category:
+                  type: "string"
+                  enum:
+                    - "general"
+                    - "feature"
+                    - "command"
+                    - "moderation"
+                    - "administration"
+                    - "development"
+                isActive:
+                  type: "boolean"
+              required:
+                - "key"
+                - "description"
+                - "category"
+                - "isActive"
+              additionalProperties: false
+      responses:
+        "201":
+          description: "Permission node created"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    {}
+                additionalProperties:
+                  {}
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
   "/permissions/{permissionKey}":
     get:
       tags:
@@ -4126,6 +5241,143 @@ paths:
                 properties:
                   data:
                     {}
+                additionalProperties:
+                  {}
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "object"
+                    properties:
+                      message:
+                        type: "string"
+                      code:
+                        type: "string"
+                      details:
+                        {}
+                    required:
+                      - "message"
+                    additionalProperties:
+                      {}
+                additionalProperties:
+                  {}
+  "/permissions/{permissionKey}/rules":
+    get:
+      tags:
+        - "Permissions"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "List permission rules"
+      parameters:
+        - schema:
+            type: "string"
+          required: true
+          name: "permissionKey"
+          in: "path"
+      responses:
+        "200":
+          description: "Successful list response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      {}
+                  meta:
+                    type: "object"
+                    properties:
+                      count:
+                        type: "integer"
+                        minimum: 0
+                      total:
+                        type: "integer"
+                        minimum: 0
+                      limit:
+                        type: "integer"
+                        exclusiveMinimum: 0
+                      offset:
+                        type: "integer"
+                        minimum: 0
+                    additionalProperties:
+                      {}
+                required:
+                  - "data"
                 additionalProperties:
                   {}
         "400":
@@ -4375,147 +5627,6 @@ paths:
       responses:
         "201":
           description: "Permission rule replaced"
-          content:
-            "application/json":
-              schema:
-                type: "object"
-                properties:
-                  data:
-                    {}
-                additionalProperties:
-                  {}
-        "400":
-          description: "Bad request"
-          content:
-            "application/json":
-              schema:
-                type: "object"
-                properties:
-                  error:
-                    type: "object"
-                    properties:
-                      message:
-                        type: "string"
-                      code:
-                        type: "string"
-                      details:
-                        {}
-                    required:
-                      - "message"
-                    additionalProperties:
-                      {}
-                additionalProperties:
-                  {}
-        "401":
-          description: "Unauthorized"
-          content:
-            "application/json":
-              schema:
-                type: "object"
-                properties:
-                  error:
-                    type: "object"
-                    properties:
-                      message:
-                        type: "string"
-                      code:
-                        type: "string"
-                      details:
-                        {}
-                    required:
-                      - "message"
-                    additionalProperties:
-                      {}
-                additionalProperties:
-                  {}
-        "403":
-          description: "Forbidden"
-          content:
-            "application/json":
-              schema:
-                type: "object"
-                properties:
-                  error:
-                    type: "object"
-                    properties:
-                      message:
-                        type: "string"
-                      code:
-                        type: "string"
-                      details:
-                        {}
-                    required:
-                      - "message"
-                    additionalProperties:
-                      {}
-                additionalProperties:
-                  {}
-        "404":
-          description: "Not found"
-          content:
-            "application/json":
-              schema:
-                type: "object"
-                properties:
-                  error:
-                    type: "object"
-                    properties:
-                      message:
-                        type: "string"
-                      code:
-                        type: "string"
-                      details:
-                        {}
-                    required:
-                      - "message"
-                    additionalProperties:
-                      {}
-                additionalProperties:
-                  {}
-  "/permissions":
-    post:
-      tags:
-        - "Permissions"
-      security:
-        - bearerAuth:
-            []
-        - apiKeyAuth:
-            []
-      summary: "Create a permission node"
-      requestBody:
-        required: true
-        content:
-          "application/json":
-            schema:
-              type: "object"
-              properties:
-                key:
-                  type: "string"
-                  minLength: 1
-                description:
-                  type:
-                    - "string"
-                    - "null"
-                category:
-                  type: "string"
-                  enum:
-                    - "general"
-                    - "feature"
-                    - "command"
-                    - "moderation"
-                    - "administration"
-                    - "development"
-                isActive:
-                  type: "boolean"
-              required:
-                - "key"
-                - "description"
-                - "category"
-                - "isActive"
-              additionalProperties: false
-      responses:
-        "201":
-          description: "Permission node created"
           content:
             "application/json":
               schema:

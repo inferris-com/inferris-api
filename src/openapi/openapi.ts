@@ -2,6 +2,7 @@ import { OpenApiGeneratorV31, OpenAPIRegistry } from "@asteasolutions/zod-to-ope
 
 import { registerActorOpenApi } from "../module/actor/actor.openapi.js";
 import { registerAuthOpenApi } from "../module/auth/auth.openapi.js";
+import { registerCatalogOpenApi } from "../module/catalog/catalog.openapi.js";
 import { registerChatMessageOpenApi } from "../module/chat-message/chat-message.openapi.js";
 import { registerModCaseOpenApi } from "../module/mod-case/mod-case.openapi.js";
 import { registerPermissionOpenApi } from "../module/permission/permission.openapi.js";
@@ -42,6 +43,7 @@ registry.registerPath({
 });
 
 registerAuthOpenApi(registry);
+registerCatalogOpenApi(registry);
 registerActorOpenApi(registry);
 registerPlayerOpenApi(registry);
 registerServerOpenApi(registry);
