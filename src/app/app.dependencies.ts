@@ -6,6 +6,8 @@ import { ActorService } from "../module/actor/actor.service.js";
 import { authenticate } from "../module/auth/auth.middleware.js";
 import { AuthRepository } from "../module/auth/auth.repository.js";
 import { AuthService } from "../module/auth/auth.service.js";
+import { CatalogPgRepository } from "../module/catalog/catalog.pg-repository.js";
+import { CatalogService } from "../module/catalog/catalog.service.js";
 import { ChatMessageFlushWorker } from "../module/chat-message/chat-message.flush-worker.js";
 import { ChatMessagePgRepository } from "../module/chat-message/chat-message.pg-repository.js";
 import { ChatMessageRedisBuffer } from "../module/chat-message/chat-message.redis-buffer.js";
@@ -25,6 +27,8 @@ import { ReportPublisher } from "../module/report/report.publisher.js";
 import { ReportService } from "../module/report/report.service.js";
 import { ServerPgRepository } from "../module/server/server.pg-repository.js";
 import { ServerService } from "../module/server/server.service.js";
+import { WatchlistPgRepository } from "../module/watchlist/watchlist.pg-repository.js";
+import { WatchlistService } from "../module/watchlist/watchlist.service.js";
 import { redis as defaultRedis, type RedisClient } from "../redis/index.js";
 
 /*
@@ -37,6 +41,7 @@ export type AppDependencies = {
   services: {
     actor: ActorService;
     auth: AuthService;
+    catalog: CatalogService;
     chatMessage: ChatMessageService;
     modCase: ModCaseService;
     permission: PermissionService;
@@ -44,6 +49,7 @@ export type AppDependencies = {
     punishment: PunishmentService;
     report: ReportService;
     server: ServerService;
+    watchlist: WatchlistService;
   };
   workers: {
     chatMessageFlush: ChatMessageFlushWorker;
@@ -61,6 +67,7 @@ export function createAppDependencies({
 }: CreateAppDependenciesOptions = {}): AppDependencies {
   const actorRepository = new ActorPgRepository(database);
   const authRepository = new AuthRepository(database);
+  const catalogRepository = new CatalogPgRepository(database);
   const chatMessageRepository = new ChatMessagePgRepository(database);
   const chatMessageBuffer = new ChatMessageRedisBuffer(redisClient);
   const modCaseRepository = new ModCasePgRepository(database);
@@ -69,6 +76,7 @@ export function createAppDependencies({
   const punishmentRepository = new PunishmentPgRepository(database);
   const reportRepository = new ReportPgRepository(database);
   const serverRepository = new ServerPgRepository(database);
+  const watchlistRepository = new WatchlistPgRepository(database);
 
   const authService = new AuthService(authRepository, redisClient);
 
@@ -78,6 +86,7 @@ export function createAppDependencies({
     services: {
       actor: new ActorService(actorRepository),
       auth: authService,
+      catalog: new CatalogService(catalogRepository),
       chatMessage: new ChatMessageService(chatMessageRepository, chatMessageBuffer),
       modCase: new ModCaseService(modCaseRepository, new ModCasePublisher(redisClient)),
       permission: new PermissionService(permissionRepository),
@@ -85,6 +94,7 @@ export function createAppDependencies({
       punishment: new PunishmentService(punishmentRepository, new PunishmentPublisher(redisClient)),
       report: new ReportService(reportRepository, new ReportPublisher(redisClient)),
       server: new ServerService(serverRepository),
+      watchlist: new WatchlistService(watchlistRepository),
     },
     workers: {
       chatMessageFlush: new ChatMessageFlushWorker(
