@@ -1,6 +1,7 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
+  actingActorHeaderSchema,
   userOrServiceSecurity,
   jsonBody,
   noContentResponse,
@@ -36,6 +37,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     security: userOrServiceSecurity,
     summary: "Create a server lockdown",
     request: {
+      headers: actingActorHeaderSchema,
       params: serverIdParamsSchema,
       body: { required: true, content: { "application/json": jsonBody(createLockdownBodySchema) } },
     },

@@ -112,7 +112,6 @@ export const updatePlayerProfileBodySchema = z
 export const replacePlayerRankAssignmentBodySchema = z
   .object({
     source: z.string().max(64).nullable().optional(),
-    assignedByActorId: z.guid().nullable().optional(),
   })
   .strict();
 
@@ -145,5 +144,8 @@ export type DeletePlayerQuery = z.infer<typeof deletePlayerQuerySchema>;
 export type CreatePlayerBody = z.infer<typeof createPlayerBodySchema>;
 export type CreatePlayerBadgeAssignmentBody = z.infer<typeof createPlayerBadgeAssignmentBodySchema>;
 export type ReplaceRankAssignmentBody = z.infer<typeof replacePlayerRankAssignmentBodySchema>;
+export type ReplaceRankAssignmentInput = ReplaceRankAssignmentBody & {
+  assignedByActorId: string | null;
+};
 export type UpdatePlayerBody = z.infer<typeof updatePlayerBodySchema>;
 export type UpdateProfileBody = z.infer<typeof updatePlayerProfileBodySchema>;

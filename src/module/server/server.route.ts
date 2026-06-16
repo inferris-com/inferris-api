@@ -18,7 +18,12 @@ import {
   updateServerBodySchema,
 } from "./server.schemas.js";
 import type { ServerService } from "./server.service.js";
-import { auditMutation, authorize } from "../auth/auth.middleware.js";
+import {
+  auditMutation,
+  authorize,
+  getActingActorId,
+  requireActingActor,
+} from "../auth/auth.middleware.js";
 import type { AuthRepository } from "../auth/auth.repository.js";
 
 export function createServerRouter(service: ServerService, authRepository: AuthRepository): Router {
@@ -34,7 +39,7 @@ export function createServerRouter(service: ServerService, authRepository: AuthR
   const createLockdown: RequestHandler<ServerIdParamsSchema> = async (req, res) => {
     const server = await service.createLockdown(req.params.serverId, {
       ...(req.body as CreateLockdownBody),
-      issuedByActorId: req.auth?.actorId ?? "",
+      issuedByActorId: getActingActorId(req) ?? "",
     });
     const body: ApiSuccess<LockdownResponse> = { data: server };
 
@@ -137,6 +142,7 @@ export function createServerRouter(service: ServerService, authRepository: AuthR
   router.post(
     "/:serverId/lockdown",
     manageLockdowns,
+    requireActingActor(authRepository),
     auditMutation(authRepository, "servers.lockdowns.create"),
     validateRequest({ params: serverIdParamsSchema, body: createLockdownBodySchema }),
     createLockdown,

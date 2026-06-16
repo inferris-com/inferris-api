@@ -25,6 +25,7 @@ export type AuthContext = {
   principalType: PrincipalType;
   principalId: string;
   actorId: string | null;
+  actingActorId?: string;
   platform: Platform;
   apiKey?: {
     id: string;

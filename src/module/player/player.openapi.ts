@@ -1,6 +1,7 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
+  actingActorHeaderSchema,
   userOrServiceSecurity,
   jsonBody,
   listResponse,
@@ -130,6 +131,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     security: userOrServiceSecurity,
     summary: "Replace a player rank assignment",
     request: {
+      headers: actingActorHeaderSchema,
       params: playerRankAssignmentParamsSchema,
       body: {
         required: true,

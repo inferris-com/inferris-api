@@ -72,4 +72,48 @@ describe("player routes", () => {
       },
     );
   });
+
+  test("PUT /players/:playerId/ranks/:groupKey/:rankKey uses API-key acting actor", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.player.updateRankAssignment.mockResolvedValue({
+      playerId: ids.player,
+      groupKey: "staff",
+      rankKey: "moderator",
+      assignedByActorId: ids.actingActor,
+    });
+
+    const response = await request
+      .put(`/players/${ids.player}/ranks/staff/moderator`)
+      .set("Authorization", "ApiKey server-token")
+      .set("X-Inferris-Actor-Id", ids.actingActor)
+      .send({ source: "minecraft" });
+
+    expect(response.status).toBe(200);
+    expect(dependencies.services.player.updateRankAssignment).toHaveBeenCalledWith(
+      ids.player,
+      "staff",
+      "moderator",
+      {
+        source: "minecraft",
+        assignedByActorId: ids.actingActor,
+      },
+    );
+  });
+
+  test("PUT /players/:playerId/ranks/:groupKey/:rankKey rejects body-supplied assigning actor", async () => {
+    const { dependencies, request } = createTestApp();
+
+    const response = await request
+      .put(`/players/${ids.player}/ranks/staff/moderator`)
+      .set("Authorization", "Bearer moderator-token")
+      .send({ source: "argus", assignedByActorId: ids.actingActor });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({
+      error: {
+        code: "VALIDATION_ERROR",
+      },
+    });
+    expect(dependencies.services.player.updateRankAssignment).not.toHaveBeenCalled();
+  });
 });

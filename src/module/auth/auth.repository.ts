@@ -143,6 +143,16 @@ export class AuthRepository {
     return row ? { id: row.id, role: row.role } : null;
   }
 
+  async actorExists(actorId: string): Promise<boolean> {
+    const row = await this.db
+      .selectFrom("actors")
+      .select("id")
+      .where("id", "=", actorId)
+      .executeTakeFirst();
+
+    return Boolean(row);
+  }
+
   async actorHasMinecraftPermission(actorId: string, permissionKey: string): Promise<boolean> {
     const rules = await this.db
       .selectFrom("actors")

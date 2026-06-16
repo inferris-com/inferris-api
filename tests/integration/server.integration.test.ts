@@ -61,6 +61,59 @@ describe("server and lockdown routes", () => {
     });
   });
 
+  test("POST /servers/:serverId/lockdown uses API-key acting actor", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.server.createLockdown.mockResolvedValue({
+      id: "lockdown-1",
+      serverId: ids.server,
+      issuedByActorId: ids.actingActor,
+    });
+
+    const response = await request
+      .post(`/servers/${ids.server}/lockdown`)
+      .set("Authorization", "ApiKey server-token")
+      .set("X-Inferris-Actor-Id", ids.actingActor)
+      .send({
+        scope: "local",
+        requiredRankKey: "moderator",
+        reason: "Maintenance",
+        startsAtMs: "1000",
+      });
+
+    expect(response.status).toBe(200);
+    expect(dependencies.services.server.createLockdown).toHaveBeenCalledWith(ids.server, {
+      scope: "local",
+      requiredRankKey: "moderator",
+      reason: "Maintenance",
+      startsAtMs: "1000",
+      isActive: true,
+      issuedByActorId: ids.actingActor,
+    });
+  });
+
+  test("POST /servers/:serverId/lockdown rejects body-supplied issuing actor", async () => {
+    const { dependencies, request } = createTestApp();
+
+    const response = await request
+      .post(`/servers/${ids.server}/lockdown`)
+      .set("Authorization", "Bearer moderator-token")
+      .send({
+        scope: "local",
+        requiredRankKey: "moderator",
+        reason: "Maintenance",
+        startsAtMs: "1000",
+        issuedByActorId: ids.actingActor,
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({
+      error: {
+        code: "VALIDATION_ERROR",
+      },
+    });
+    expect(dependencies.services.server.createLockdown).not.toHaveBeenCalled();
+  });
+
   test("GET /servers/:serverId/lockdown returns lockdown envelope", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.server.getLockdownByServer.mockResolvedValue({

@@ -13,7 +13,7 @@ import type {
   CreatePlayerBody,
   CreatePlayerBadgeAssignmentBody,
   ListPlayersQuery,
-  ReplaceRankAssignmentBody,
+  ReplaceRankAssignmentInput,
   UpdatePlayerBody,
   UpdateProfileBody,
 } from "./player.schemas.js";
@@ -268,7 +268,7 @@ export class PlayerPgRepository implements PlayerRepository {
     playerId: string,
     groupKey: string,
     rankKey: string,
-    input: ReplaceRankAssignmentBody,
+    input: ReplaceRankAssignmentInput,
   ) {
     return this.db.transaction().execute(async (trx) => {
       const playerExists = await trx

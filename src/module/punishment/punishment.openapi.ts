@@ -1,6 +1,7 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
+  actingActorHeaderSchema,
   userOrServiceSecurity,
   jsonBody,
   listResponse,
@@ -42,6 +43,7 @@ export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
     security: userOrServiceSecurity,
     summary: "Create a punishment",
     request: {
+      headers: actingActorHeaderSchema,
       body: {
         required: true,
         content: { "application/json": jsonBody(createPunishmentBodySchema) },
@@ -57,6 +59,7 @@ export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
     security: userOrServiceSecurity,
     summary: "Revoke a punishment",
     request: {
+      headers: actingActorHeaderSchema,
       params: punishmentIdParamsSchema,
       body: {
         required: true,

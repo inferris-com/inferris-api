@@ -43,7 +43,12 @@ import {
   playerRankAssignmentParamsSchema,
   updatePlayerBodySchema,
 } from "./player.schemas.js";
-import { auditMutation, authorize } from "../auth/auth.middleware.js";
+import {
+  auditMutation,
+  authorize,
+  getActingActorId,
+  requireActingActor,
+} from "../auth/auth.middleware.js";
 import type { AuthRepository } from "../auth/auth.repository.js";
 
 export function createPlayerRouter(service: PlayerService, authRepository: AuthRepository): Router {
@@ -167,7 +172,7 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
       req.params.rankKey,
       {
         ...req.body,
-        assignedByActorId: req.auth?.actorId ?? null,
+        assignedByActorId: getActingActorId(req),
       },
     );
     const body: ApiSuccess<PlayerRankAssignmentResponse> = { data: assignment };
@@ -270,6 +275,7 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
   router.put(
     "/:playerId/ranks/:groupKey/:rankKey",
     managePlayerStaffState,
+    requireActingActor(authRepository),
     auditMutation(authRepository, "players.ranks.replace"),
     validateRequest({
       params: playerRankAssignmentParamsSchema,

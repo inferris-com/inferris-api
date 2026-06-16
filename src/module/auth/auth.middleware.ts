@@ -1,7 +1,12 @@
 import type { Request, RequestHandler } from "express";
 
 import { config } from "../../config.js";
-import { ForbiddenError, UnauthorizedError } from "../../error/app-error.js";
+import {
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+  ValidationError,
+} from "../../error/app-error.js";
 import type { AuthRepository } from "./auth.repository.js";
 import type { AuthService } from "./auth.service.js";
 import { argusRoleRank, privilegedRoleRank, type ApiScope } from "./auth.types.js";
@@ -12,6 +17,9 @@ type RoutePolicy = {
   privilegedRole?: UserPrivilegeRole;
   argusRole?: ArgusAccountRole;
 };
+
+const actingActorHeader = "x-inferris-actor-id";
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function authenticate(service: AuthService): RequestHandler {
   return async (req, _res, next) => {
@@ -33,6 +41,69 @@ export function authenticate(service: AuthService): RequestHandler {
     }
 
     req.auth = auth;
+    next();
+  };
+}
+
+export function requireActingActor(repo: AuthRepository): RequestHandler {
+  return async (req, _res, next) => {
+    if (!req.auth) {
+      next(unauthorized("Authentication required"));
+      return;
+    }
+
+    const headerValue = req.header(actingActorHeader);
+
+    if (!req.auth.apiKey) {
+      if (headerValue !== undefined) {
+        next(
+          new ValidationError({
+            code: "ACTING_ACTOR_HEADER_NOT_ALLOWED",
+            message: "X-Inferris-Actor-Id is only accepted for API key requests",
+          }),
+        );
+        return;
+      }
+
+      if (req.auth.actorId) {
+        req.auth.actingActorId = req.auth.actorId;
+      }
+
+      next();
+      return;
+    }
+
+    if (!headerValue) {
+      next(
+        new ValidationError({
+          code: "ACTING_ACTOR_REQUIRED",
+          message: "X-Inferris-Actor-Id is required for API key requests to this endpoint",
+        }),
+      );
+      return;
+    }
+
+    if (!uuidPattern.test(headerValue)) {
+      next(
+        new ValidationError({
+          code: "INVALID_ACTING_ACTOR",
+          message: "X-Inferris-Actor-Id must be a valid actor UUID",
+        }),
+      );
+      return;
+    }
+
+    if (!(await repo.actorExists(headerValue))) {
+      next(
+        new NotFoundError({
+          code: "ACTING_ACTOR_NOT_FOUND",
+          message: "Acting actor was not found",
+        }),
+      );
+      return;
+    }
+
+    req.auth.actingActorId = headerValue;
     next();
   };
 }
@@ -66,17 +137,21 @@ export function auditMutation(repo: AuthRepository, action: string): RequestHand
         return;
       }
 
+      const metadata = {
+        method: req.method,
+        path: req.originalUrl,
+        ...(req.auth.apiKey ? { credentialOwnerActorId: req.auth.actorId } : {}),
+      };
+
       void repo.insertAuditLog({
-        actorId: req.auth.actorId,
+        actorId: getActingActorId(req),
+        ...(req.auth.apiKey ? { subjectActorId: req.auth.actorId } : {}),
         principalType: req.auth.principalType,
         principalId: req.auth.principalId,
         platform: req.auth.platform,
         action,
         result: "allowed",
-        metadata: {
-          method: req.method,
-          path: req.originalUrl,
-        },
+        metadata,
       });
     });
 
@@ -106,11 +181,10 @@ export function requireMinecraftPermission(
       return;
     }
 
-    // Require both an authenticated actor and the requested Minecraft permission.
-    if (
-      !req.auth.actorId ||
-      !(await repo.actorHasMinecraftPermission(req.auth.actorId, permissionKey))
-    ) {
+    const actingActorId = getActingActorId(req);
+
+    // Require both an acting actor and the requested Minecraft permission.
+    if (!actingActorId || !(await repo.actorHasMinecraftPermission(actingActorId, permissionKey))) {
       await auditDenied(repo, req, { apiScopes: ["minecraft:permission-check"] });
       next(
         new ForbiddenError({
@@ -123,6 +197,10 @@ export function requireMinecraftPermission(
 
     next();
   };
+}
+
+export function getActingActorId(req: Request): string | null {
+  return req.auth?.actingActorId ?? req.auth?.actorId ?? null;
 }
 
 function isPolicyAllowed(req: Request, policy: RoutePolicy): boolean {
@@ -180,7 +258,8 @@ async function auditDenied(repo: AuthRepository, req: Request, policy: RoutePoli
   }
 
   await repo.insertAuditLog({
-    actorId: req.auth.actorId,
+    actorId: getActingActorId(req),
+    ...(req.auth.apiKey ? { subjectActorId: req.auth.actorId } : {}),
     principalType: req.auth.principalType,
     principalId: req.auth.principalId,
     platform: req.auth.platform,
@@ -190,6 +269,7 @@ async function auditDenied(repo: AuthRepository, req: Request, policy: RoutePoli
     metadata: {
       path: req.originalUrl,
       policy,
+      ...(req.auth.apiKey ? { credentialOwnerActorId: req.auth.actorId } : {}),
     },
   });
 }

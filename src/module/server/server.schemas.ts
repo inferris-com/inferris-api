@@ -34,7 +34,6 @@ export const createLockdownBodySchema = z
     scope: lockdownScopeTypeSchema,
     requiredRankKey: z.string().max(30),
     reason: z.string(),
-    issuedByActorId: z.guid().optional(),
     isActive: z.boolean().optional().default(true),
     startsAtMs: BigIntStringSchema,
     endsAtMs: BigIntStringSchema.optional().nullable(),

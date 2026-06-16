@@ -33,7 +33,7 @@ import type {
   EncodePlayerFlagsQuery,
   ListPlayersQuery,
   ListPlayerFlagDefinitionsQuery,
-  ReplaceRankAssignmentBody,
+  ReplaceRankAssignmentInput,
   UpdatePlayerBody,
   UpdateProfileBody,
 } from "./player.schemas.js";
@@ -146,7 +146,7 @@ export class PlayerService {
     playerId: string,
     groupKey: string,
     rankKey: string,
-    input: ReplaceRankAssignmentBody,
+    input: ReplaceRankAssignmentInput,
   ): Promise<PlayerRankAssignmentResponse> {
     const assignment = await this.repository.replaceRankAssignment(
       playerId,

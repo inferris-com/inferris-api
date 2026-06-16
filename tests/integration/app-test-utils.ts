@@ -13,11 +13,17 @@ export const ids = {
   player: "00000000-0000-0000-0000-000000000002",
   server: "00000000-0000-0000-0000-000000000003",
   punishment: "00000000-0000-0000-0000-000000000004",
+  apiKeyOwnerActor: "00000000-0000-0000-0000-000000000005",
+  actingActor: "00000000-0000-0000-0000-000000000006",
+  unknownActor: "00000000-0000-0000-0000-000000000007",
+  report: "00000000-0000-0000-0000-000000000008",
+  modCase: "00000000-0000-0000-0000-000000000009",
 } as const;
 
 export type TestDependencies = Omit<AppDependencies, "authRepository" | "services"> & {
   authRepository: {
     insertAuditLog: AsyncMock;
+    actorExists: AsyncMock;
     actorHasMinecraftPermission: AsyncMock;
   };
   services: {
@@ -29,7 +35,14 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       getCurrentUser: AsyncMock;
     };
     chatMessage: Record<string, never>;
-    modCase: Record<string, never>;
+    modCase: {
+      listModCases: AsyncMock;
+      getModCase: AsyncMock;
+      createModCase: AsyncMock;
+      updateModCase: AsyncMock;
+      listActors: AsyncMock;
+      createActor: AsyncMock;
+    };
     permission: {
       findPermissionByKey: AsyncMock;
       findPermissionRuleByMinRank: AsyncMock;
@@ -59,7 +72,14 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       createPunishment: AsyncMock;
       revokePunishment: AsyncMock;
     };
-    report: Record<string, never>;
+    report: {
+      listReports: AsyncMock;
+      getReport: AsyncMock;
+      createReport: AsyncMock;
+      updateReport: AsyncMock;
+      listComments: AsyncMock;
+      createComment: AsyncMock;
+    };
     server: {
       createServer: AsyncMock;
       createLockdown: AsyncMock;
@@ -102,6 +122,18 @@ const unprivilegedModeratorAuth: AuthContext = {
   argus: { userId: "argus-unprivileged", role: "moderator" },
 };
 
+const serverApiKeyAuth: AuthContext = {
+  principalType: "server_api_key",
+  principalId: "server-key-1",
+  actorId: ids.apiKeyOwnerActor,
+  platform: "minecraft",
+  apiKey: {
+    id: "server-key-1",
+    scopes: ["*"],
+    isSuperKey: false,
+  },
+};
+
 function testAuthenticate(): RequestHandler {
   return (req, res, next) => {
     const authorization = req.header("authorization");
@@ -117,19 +149,25 @@ function testAuthenticate(): RequestHandler {
     }
 
     if (authorization === "Bearer admin-token") {
-      req.auth = adminAuth;
+      req.auth = structuredClone(adminAuth);
       next();
       return;
     }
 
     if (authorization === "Bearer moderator-token") {
-      req.auth = moderatorAuth;
+      req.auth = structuredClone(moderatorAuth);
       next();
       return;
     }
 
     if (authorization === "Bearer unprivileged-token") {
-      req.auth = unprivilegedModeratorAuth;
+      req.auth = structuredClone(unprivilegedModeratorAuth);
+      next();
+      return;
+    }
+
+    if (authorization === "ApiKey server-token") {
+      req.auth = structuredClone(serverApiKeyAuth);
       next();
       return;
     }
@@ -149,6 +187,9 @@ export function createTestDependencies(): TestDependencies {
       insertAuditLog: jest
         .fn<(...args: unknown[]) => Promise<unknown>>()
         .mockResolvedValue(undefined),
+      actorExists: jest
+        .fn<(...args: unknown[]) => Promise<unknown>>()
+        .mockImplementation((actorId) => Promise.resolve(actorId !== ids.unknownActor)),
       actorHasMinecraftPermission: jest
         .fn<(...args: unknown[]) => Promise<unknown>>()
         .mockResolvedValue(true),
@@ -169,7 +210,14 @@ export function createTestDependencies(): TestDependencies {
         }),
       },
       chatMessage: {},
-      modCase: {},
+      modCase: {
+        listModCases: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getModCase: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createModCase: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updateModCase: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        listActors: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createActor: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
       permission: {
         findPermissionByKey: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         findPermissionRuleByMinRank: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
@@ -199,7 +247,14 @@ export function createTestDependencies(): TestDependencies {
         createPunishment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         revokePunishment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
-      report: {},
+      report: {
+        listReports: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getReport: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createReport: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updateReport: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        listComments: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createComment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
       server: {
         createServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),

@@ -3,7 +3,12 @@ import type { ParamsDictionary } from "express-serve-static-core";
 
 import { validateRequest } from "../../middleware/validation.js";
 import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
-import { auditMutation, authorize } from "../auth/auth.middleware.js";
+import {
+  auditMutation,
+  authorize,
+  getActingActorId,
+  requireActingActor,
+} from "../auth/auth.middleware.js";
 import type { AuthRepository } from "../auth/auth.repository.js";
 import type { ModCaseActorResponse, ModCaseResponse } from "./mod-case.response-types.js";
 import {
@@ -53,7 +58,7 @@ export function createModCaseRouter(
     req,
     res,
   ) => {
-    const modCase = await service.createModCase(req.body, req.auth?.actorId ?? "");
+    const modCase = await service.createModCase(req.body, getActingActorId(req) ?? "");
     const body: ApiSuccess<ModCaseResponse> = { data: modCase };
 
     res.status(201).json(body);
@@ -66,7 +71,7 @@ export function createModCaseRouter(
     const modCase = await service.updateModCase(
       req.params.caseId,
       req.body,
-      req.auth?.actorId ?? "",
+      getActingActorId(req) ?? "",
     );
     const body: ApiSuccess<ModCaseResponse> = { data: modCase };
 
@@ -87,7 +92,11 @@ export function createModCaseRouter(
     req,
     res,
   ) => {
-    const actor = await service.createActor(req.params.caseId, req.body, req.auth?.actorId ?? "");
+    const actor = await service.createActor(
+      req.params.caseId,
+      req.body,
+      getActingActorId(req) ?? "",
+    );
     const body: ApiSuccess<ModCaseActorResponse> = { data: actor };
 
     res.status(201).json(body);
@@ -102,6 +111,7 @@ export function createModCaseRouter(
   router.post(
     "/",
     manageModCases,
+    requireActingActor(authRepository),
     auditMutation(authRepository, "mod_cases.create"),
     validateRequest({ body: createModCaseBodySchema }),
     createModCase,
@@ -115,6 +125,7 @@ export function createModCaseRouter(
   router.patch(
     "/:caseId",
     manageModCases,
+    requireActingActor(authRepository),
     auditMutation(authRepository, "mod_cases.update"),
     validateRequest({ params: modCaseIdParamsSchema, body: updateModCaseBodySchema }),
     updateModCase,
@@ -128,6 +139,7 @@ export function createModCaseRouter(
   router.post(
     "/:caseId/actors",
     manageModCases,
+    requireActingActor(authRepository),
     auditMutation(authRepository, "mod_cases.actors.create"),
     validateRequest({ params: modCaseIdParamsSchema, body: createModCaseActorBodySchema }),
     createActor,

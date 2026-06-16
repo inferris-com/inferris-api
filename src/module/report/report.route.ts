@@ -3,7 +3,12 @@ import type { ParamsDictionary } from "express-serve-static-core";
 
 import { validateRequest } from "../../middleware/validation.js";
 import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
-import { auditMutation, authorize } from "../auth/auth.middleware.js";
+import {
+  auditMutation,
+  authorize,
+  getActingActorId,
+  requireActingActor,
+} from "../auth/auth.middleware.js";
 import type { AuthRepository } from "../auth/auth.repository.js";
 import type { ReportCommentResponse, ReportResponse } from "./report.response-types.js";
 import {
@@ -66,7 +71,7 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
     const report = await service.updateReport(
       req.params.reportId,
       req.body,
-      req.auth?.actorId ?? "",
+      getActingActorId(req) ?? "",
     );
     const body: ApiSuccess<ReportResponse> = { data: report };
 
@@ -90,7 +95,7 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
     const comment = await service.createComment(
       req.params.reportId,
       req.body,
-      req.auth?.actorId ?? "",
+      getActingActorId(req) ?? "",
     );
     const body: ApiSuccess<ReportCommentResponse> = { data: comment };
 
@@ -119,6 +124,7 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
   router.patch(
     "/:reportId",
     manageReports,
+    requireActingActor(authRepository),
     auditMutation(authRepository, "reports.update"),
     validateRequest({ params: reportIdParamsSchema, body: updateReportBodySchema }),
     updateReport,
@@ -132,6 +138,7 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
   router.post(
     "/:reportId/comments",
     manageReports,
+    requireActingActor(authRepository),
     auditMutation(authRepository, "reports.comments.create"),
     validateRequest({ params: reportIdParamsSchema, body: createReportCommentBodySchema }),
     createComment,

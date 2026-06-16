@@ -2290,6 +2290,13 @@ paths:
           required: true
           name: "rankKey"
           in: "path"
+        - schema:
+            type: "string"
+            description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          required: false
+          description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          name: "x-inferris-actor-id"
+          in: "header"
       requestBody:
         required: true
         content:
@@ -2302,10 +2309,6 @@ paths:
                     - "string"
                     - "null"
                   maxLength: 64
-                assignedByActorId:
-                  type:
-                    - "string"
-                    - "null"
               additionalProperties: false
       responses:
         "200":
@@ -2810,6 +2813,13 @@ paths:
           required: true
           name: "serverId"
           in: "path"
+        - schema:
+            type: "string"
+            description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          required: false
+          description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          name: "x-inferris-actor-id"
+          in: "header"
       requestBody:
         required: true
         content:
@@ -2826,8 +2836,6 @@ paths:
                   type: "string"
                   maxLength: 30
                 reason:
-                  type: "string"
-                issuedByActorId:
                   type: "string"
                 isActive:
                   type: "boolean"
@@ -4809,6 +4817,14 @@ paths:
         - apiKeyAuth:
             []
       summary: "Create a punishment"
+      parameters:
+        - schema:
+            type: "string"
+            description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          required: false
+          description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          name: "x-inferris-actor-id"
+          in: "header"
       requestBody:
         required: true
         content:
@@ -5086,6 +5102,13 @@ paths:
           required: true
           name: "punishmentId"
           in: "path"
+        - schema:
+            type: "string"
+            description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          required: false
+          description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          name: "x-inferris-actor-id"
+          in: "header"
       requestBody:
         required: true
         content:
@@ -5667,6 +5690,13 @@ paths:
           required: true
           name: "reportId"
           in: "path"
+        - schema:
+            type: "string"
+            description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          required: false
+          description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          name: "x-inferris-actor-id"
+          in: "header"
       requestBody:
         required: true
         content:
@@ -5966,6 +5996,13 @@ paths:
           required: true
           name: "reportId"
           in: "path"
+        - schema:
+            type: "string"
+            description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          required: false
+          description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          name: "x-inferris-actor-id"
+          in: "header"
       requestBody:
         required: true
         content:
@@ -6282,6 +6319,14 @@ paths:
         - apiKeyAuth:
             []
       summary: "Create a moderation case"
+      parameters:
+        - schema:
+            type: "string"
+            description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          required: false
+          description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          name: "x-inferris-actor-id"
+          in: "header"
       requestBody:
         required: true
         content:
@@ -6587,6 +6632,13 @@ paths:
           required: true
           name: "caseId"
           in: "path"
+        - schema:
+            type: "string"
+            description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          required: false
+          description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          name: "x-inferris-actor-id"
+          in: "header"
       requestBody:
         required: true
         content:
@@ -6895,6 +6947,13 @@ paths:
           required: true
           name: "caseId"
           in: "path"
+        - schema:
+            type: "string"
+            description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          required: false
+          description: "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
+          name: "x-inferris-actor-id"
+          in: "header"
       requestBody:
         required: true
         content:
