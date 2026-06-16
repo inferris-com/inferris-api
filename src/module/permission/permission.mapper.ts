@@ -18,10 +18,11 @@ export function toPermissionNodeResponse(row: Selectable<PermissionNodes>): Perm
   };
 }
 export function toPermissionRuleResponse(
-  row: Selectable<PermissionPolicies>,
+  row: Selectable<PermissionPolicies> & { permission_key?: string },
 ): PermissionRuleResponse {
   return {
     permissionId: row.permission_id,
+    ...(row.permission_key ? { permissionKey: row.permission_key } : {}),
     rankKey: row.rank_key,
     effect: row.effect,
     createdAtMs: row.created_at_ms,
