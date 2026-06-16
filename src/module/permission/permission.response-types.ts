@@ -10,6 +10,7 @@ export type PermissionNodeResponse = {
 
 export type PermissionRuleResponse = {
   permissionId: string;
+  permissionKey?: string;
   rankKey: string | null;
   effect: "allow" | "deny";
   createdAtMs: string;

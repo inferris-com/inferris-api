@@ -1,5 +1,9 @@
 import type { PermissionPgRepository } from "./permission.pg-repository.js";
-import type { CreatePermissionNodeBody, ReplacePermissionRuleBody } from "./permission.schemas.js";
+import type {
+  CreatePermissionNodeBody,
+  ListPermissionsQuery,
+  ReplacePermissionRuleBody,
+} from "./permission.schemas.js";
 import {
   PermissionKeyAlreadyExistsError,
   PermissionKeyNotFoundError,
@@ -48,13 +52,27 @@ export class PermissionService {
     return toPermissionNodeResponse(permissionNode);
   }
 
-  async findPermissionRuleByMinRank(permissionKey: string) {
-    const permissionRule = await this.repo.findPermissionRuleByMinRank(permissionKey);
+  async listPermissions(query: ListPermissionsQuery) {
+    return (await this.repo.listPermissionNodes(query)).map(toPermissionNodeResponse);
+  }
+
+  async findPermissionRuleByMinRank(permissionKey: string, minRankKey: string) {
+    const permissionRule = await this.repo.findPermissionRuleByMinRank(permissionKey, minRankKey);
 
     if (!permissionRule) {
-      throw new PermissionRuleNotFoundError(permissionKey);
+      throw new PermissionRuleNotFoundError(`${permissionKey}:${minRankKey}`);
     }
 
     return toPermissionRuleResponse(permissionRule);
+  }
+
+  async listPermissionRules(permissionKey: string) {
+    const permissionRules = await this.repo.listPermissionRulesByPermissionKey(permissionKey);
+
+    if (!permissionRules) {
+      throw new PermissionKeyNotFoundError(permissionKey);
+    }
+
+    return permissionRules.map(toPermissionRuleResponse);
   }
 }

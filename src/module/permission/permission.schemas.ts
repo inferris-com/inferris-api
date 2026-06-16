@@ -26,6 +26,16 @@ export const permissionRuleParamsSchema = z.object({
   minRankKey: z.string({ message: "Invalid min rank string format." }),
 });
 
+export const listPermissionsQuerySchema = z
+  .object({
+    includeInactive: z
+      .enum(["true", "false"])
+      .optional()
+      .transform((value) => value === "true"),
+    category: PermissionCategoryType.optional(),
+  })
+  .strict();
+
 export const createPermissionNodeBodySchema = z
   .object({
     key: z.string().nonempty(),
@@ -55,6 +65,7 @@ export type PermissionIdParams = z.infer<typeof permissionIdParamsSchema>;
 export type PermissionKeyParams = z.infer<typeof permissionKeyParamsSchema>;
 export type PermissionMinRankKeyParams = z.infer<typeof permissionMinRankKeyParamsSchema>;
 export type PermissionRuleKeyParams = z.infer<typeof permissionRuleParamsSchema>;
+export type ListPermissionsQuery = z.infer<typeof listPermissionsQuerySchema>;
 
 export type CreatePermissionNodeBody = z.infer<typeof createPermissionNodeBodySchema>;
 export type ReplacePermissionRuleBody = z.infer<typeof replacePermissionRuleBodySchema>;

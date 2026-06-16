@@ -6,6 +6,8 @@ import type { PermissionService } from "./permission.service.js";
 import {
   type CreatePermissionNodeBody,
   createPermissionNodeBodySchema,
+  listPermissionsQuerySchema,
+  type ListPermissionsQuery,
   type PermissionKeyParams,
   permissionKeyParamsSchema,
   type PermissionRuleKeyParams,
@@ -33,10 +35,23 @@ export function createPermissionRouter(
     res.json(body);
   };
 
+  const listPermissionNodes: RequestHandler = async (req, res) => {
+    const nodes = await service.listPermissions(req.query as unknown as ListPermissionsQuery);
+    res.json({ data: nodes, meta: { count: nodes.length } });
+  };
+
   const getPermissionRuleByMinRank: RequestHandler<PermissionRuleKeyParams> = async (req, res) => {
-    const node = await service.findPermissionRuleByMinRank(req.params.permissionKey);
+    const node = await service.findPermissionRuleByMinRank(
+      req.params.permissionKey,
+      req.params.minRankKey,
+    );
     const body: ApiSuccess<PermissionRuleResponse> = { data: node };
     res.json(body);
+  };
+
+  const listPermissionRules: RequestHandler<PermissionKeyParams> = async (req, res) => {
+    const rules = await service.listPermissionRules(req.params.permissionKey);
+    res.json({ data: rules, meta: { count: rules.length } });
   };
 
   const createPermissionNode: RequestHandler<
@@ -74,10 +89,22 @@ export function createPermissionRouter(
   });
 
   router.get(
+    "/",
+    readPermissions,
+    validateRequest({ query: listPermissionsQuerySchema }) as unknown as RequestHandler,
+    listPermissionNodes,
+  );
+  router.get(
     "/:permissionKey",
     readPermissions,
     validateRequest({ params: permissionKeyParamsSchema }),
     getPermissionNodeByKey,
+  );
+  router.get(
+    "/:permissionKey/rules",
+    readPermissions,
+    validateRequest({ params: permissionKeyParamsSchema }),
+    listPermissionRules,
   );
   router.get(
     "/:permissionKey/rules/:minRankKey",
