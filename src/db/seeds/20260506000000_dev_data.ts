@@ -316,7 +316,7 @@ const seed = {
       .values([
         {
           id: ids.servers.velocity,
-          name: "Velocity Proxy",
+          name: "seed-velocity",
           type: "velocity",
           environment: "development",
           status: "offline",
@@ -324,7 +324,7 @@ const seed = {
         },
         {
           id: ids.servers.lobby,
-          name: "Lobby",
+          name: "seed-lobby",
           type: "paper",
           environment: "development",
           status: "offline",
