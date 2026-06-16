@@ -33,6 +33,8 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
+export type MessageVerdict = "allow" | "deny" | "warn";
+
 export type ModCaseResolution = "action_taken" | "duplicate" | "insufficient_evidence" | "invalid" | "monitoring" | "no_action" | "referred" | "resolved_elsewhere";
 
 export type ModCaseStatus = "closed" | "dismissed" | "investigating" | "open" | "pending_action" | "resolved";
@@ -213,8 +215,11 @@ export interface ChatMessages {
   ingest_stream_id: string | null;
   is_flagged: Generated<boolean>;
   message: string;
+  moderation_metadata: Generated<Json>;
+  moderation_reason: string | null;
   origin_server_id: string;
   producer_message_id: string;
+  verdict: Generated<MessageVerdict>;
 }
 
 export interface EntitlementItems {
