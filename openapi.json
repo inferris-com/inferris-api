@@ -11387,6 +11387,19 @@
           },
           {
             "schema": {
+              "type": "string",
+              "enum": [
+                "allow",
+                "warn",
+                "deny"
+              ]
+            },
+            "required": false,
+            "name": "verdict",
+            "in": "query"
+          },
+          {
+            "schema": {
               "anyOf": [
                 {
                   "type": "boolean"
@@ -11615,6 +11628,31 @@
                   "occurredAtMs": {
                     "type": "integer",
                     "exclusiveMinimum": 0
+                  },
+                  "verdict": {
+                    "type": "string",
+                    "enum": [
+                      "allow",
+                      "warn",
+                      "deny"
+                    ],
+                    "default": "allow"
+                  },
+                  "moderationReason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 4000
+                  },
+                  "moderationMetadata": {
+                    "type": "object",
+                    "additionalProperties": {},
+                    "default": {}
+                  },
+                  "isFlagged": {
+                    "type": "boolean",
+                    "default": false
                   }
                 },
                 "required": [
@@ -11815,6 +11853,31 @@
                         "occurredAtMs": {
                           "type": "integer",
                           "exclusiveMinimum": 0
+                        },
+                        "verdict": {
+                          "type": "string",
+                          "enum": [
+                            "allow",
+                            "warn",
+                            "deny"
+                          ],
+                          "default": "allow"
+                        },
+                        "moderationReason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 4000
+                        },
+                        "moderationMetadata": {
+                          "type": "object",
+                          "additionalProperties": {},
+                          "default": {}
+                        },
+                        "isFlagged": {
+                          "type": "boolean",
+                          "default": false
                         }
                       },
                       "required": [
