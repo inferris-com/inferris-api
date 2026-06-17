@@ -14,6 +14,8 @@ const occurredAtMsSchema = z.coerce
     message: `occurredAtMs is outside the allowed ${config.chat.allowedClockSkewMs}ms clock skew.`,
   });
 
+export const messageVerdictSchema = z.enum(["allow", "warn", "deny"]);
+
 export const createChatMessageBodySchema = z
   .object({
     producerMessageId: z.string().min(1).max(200),
@@ -23,6 +25,10 @@ export const createChatMessageBodySchema = z
     channelKey: z.string().min(1).max(30).default("global"),
     message: z.string().min(1).max(4000),
     occurredAtMs: occurredAtMsSchema.optional(),
+    verdict: messageVerdictSchema.default("allow"),
+    moderationReason: z.string().max(4000).optional().nullable(),
+    moderationMetadata: z.record(z.string(), z.unknown()).optional().default({}),
+    isFlagged: z.boolean().optional().default(false),
   })
   .strict()
   .refine((body) => Boolean(body.actorId) !== Boolean(body.playerId), {
@@ -45,6 +51,7 @@ export const listChatMessagesQuerySchema = z
     originServerId: z.guid().optional(),
     actorId: z.guid().optional(),
     playerId: z.guid().optional(),
+    verdict: messageVerdictSchema.optional(),
     includePending: boolQuerySchema.default(true),
   })
   .strict()

@@ -7,6 +7,9 @@ export type ChatMessageResponse = {
   originServerId: string;
   channelKey: string;
   message: string;
+  verdict: "allow" | "warn" | "deny";
+  moderationReason: string | null;
+  moderationMetadata: unknown;
   isFlagged: boolean;
   occurredAtMs: string;
   persistenceState: "pending" | "persisted";

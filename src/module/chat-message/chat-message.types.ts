@@ -7,6 +7,9 @@ export type ChatMessageRecord = {
   originServerId: string;
   channelKey: string;
   message: string;
+  verdict: "allow" | "warn" | "deny";
+  moderationReason: string | null;
+  moderationMetadata: unknown;
   isFlagged: boolean;
   occurredAtMs: string;
   persistenceState: "pending" | "persisted";
@@ -20,6 +23,10 @@ export type BufferedChatMessage = {
   originServerId: string;
   channelKey: string;
   message: string;
+  verdict: "allow" | "warn" | "deny";
+  moderationReason: string | null;
+  moderationMetadata: unknown;
+  isFlagged: boolean;
   occurredAtMs: string;
   ingestStreamId: string | null;
 };
@@ -34,4 +41,5 @@ export type ChatMessageListFilters = {
   originServerId?: string;
   actorId?: string;
   playerId?: string;
+  verdict?: "allow" | "warn" | "deny";
 };

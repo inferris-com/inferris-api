@@ -63,7 +63,7 @@ describe("auth middleware", () => {
     expect(next).toHaveBeenCalledWith();
   });
 
-  test("requireActingActor uses the API key owner actor when no acting actor header is supplied", async () => {
+  test("requireActingActor requires an acting actor header for API keys with an owner actor", async () => {
     const actorExists = jest.fn<(...args: unknown[]) => Promise<unknown>>();
     const repo = { actorExists } as unknown as AuthRepository;
     const req = {
@@ -84,9 +84,14 @@ describe("auth middleware", () => {
 
     await requireActingActor(repo)(req, {} as Response, next);
 
-    expect(req.auth?.actingActorId).toBe("00000000-0000-0000-0000-000000000005");
+    expect(req.auth?.actingActorId).toBeUndefined();
     expect(actorExists).not.toHaveBeenCalled();
-    expect(next).toHaveBeenCalledWith();
+    expect(next).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: "ACTING_ACTOR_REQUIRED",
+        message: "X-Inferris-Actor-Id is required for API key requests",
+      }),
+    );
   });
 
   test("requireActingActor still requires an acting actor header for actorless API keys", async () => {
@@ -113,7 +118,7 @@ describe("auth middleware", () => {
     expect(next).toHaveBeenCalledWith(
       expect.objectContaining({
         code: "ACTING_ACTOR_REQUIRED",
-        message: "X-Inferris-Actor-Id is required for API key requests without an owner actor",
+        message: "X-Inferris-Actor-Id is required for API key requests",
       }),
     );
   });

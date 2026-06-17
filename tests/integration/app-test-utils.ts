@@ -18,6 +18,8 @@ export const ids = {
   unknownActor: "00000000-0000-0000-0000-000000000007",
   report: "00000000-0000-0000-0000-000000000008",
   modCase: "00000000-0000-0000-0000-000000000009",
+  watchlist: "00000000-0000-0000-0000-00000000000a",
+  chatMessage: "00000000-0000-0000-0000-00000000000b",
 } as const;
 
 export type TestDependencies = Omit<AppDependencies, "authRepository" | "services"> & {
@@ -34,7 +36,11 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       logout: AsyncMock;
       getCurrentUser: AsyncMock;
     };
-    chatMessage: Record<string, never>;
+    chatMessage: {
+      listMessages: AsyncMock;
+      createMessage: AsyncMock;
+      createBatch: AsyncMock;
+    };
     modCase: {
       listModCases: AsyncMock;
       getModCase: AsyncMock;
@@ -218,7 +224,11 @@ export function createTestDependencies(): TestDependencies {
           privilegedRole: "superadmin",
         }),
       },
-      chatMessage: {},
+      chatMessage: {
+        listMessages: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createMessage: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createBatch: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
       modCase: {
         listModCases: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getModCase: jest.fn<(...args: unknown[]) => Promise<unknown>>(),

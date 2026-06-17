@@ -60,7 +60,6 @@ export class ChatMessageService {
       return toChatMessageResponse({
         ...writeInput,
         ingestStreamId: result.ingestStreamId,
-        isFlagged: false,
         persistenceState: "pending",
       });
     } catch (error) {
@@ -113,6 +112,10 @@ export class ChatMessageService {
       originServerId: input.originServerId,
       channelKey: input.channelKey,
       message: input.message,
+      verdict: input.verdict,
+      moderationReason: input.moderationReason ?? null,
+      moderationMetadata: input.moderationMetadata,
+      isFlagged: input.isFlagged,
       occurredAtMs: String(input.occurredAtMs ?? Date.now()),
     };
   }
@@ -234,6 +237,9 @@ function toFilters(query: ListChatMessagesQuery): ChatMessageListFilters {
 
   if (query.playerId !== undefined) {
     filters.playerId = query.playerId;
+  }
+  if (query.verdict !== undefined) {
+    filters.verdict = query.verdict;
   }
 
   return filters;

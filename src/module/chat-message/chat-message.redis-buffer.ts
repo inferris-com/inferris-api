@@ -224,7 +224,10 @@ function pendingPayloadToRecord(message: BufferedChatMessage): ChatMessageRecord
     originServerId: message.originServerId,
     channelKey: message.channelKey,
     message: message.message,
-    isFlagged: false,
+    verdict: message.verdict,
+    moderationReason: message.moderationReason,
+    moderationMetadata: message.moderationMetadata,
+    isFlagged: message.isFlagged,
     occurredAtMs: message.occurredAtMs,
     persistenceState: "pending",
   };

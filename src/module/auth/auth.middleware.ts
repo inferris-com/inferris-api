@@ -74,16 +74,10 @@ export function requireActingActor(repo: AuthRepository): RequestHandler {
     }
 
     if (!headerValue) {
-      if (req.auth.actorId) {
-        req.auth.actingActorId = req.auth.actorId;
-        next();
-        return;
-      }
-
       next(
         new ValidationError({
           code: "ACTING_ACTOR_REQUIRED",
-          message: "X-Inferris-Actor-Id is required for API key requests without an owner actor",
+          message: "X-Inferris-Actor-Id is required for API key requests",
         }),
       );
       return;

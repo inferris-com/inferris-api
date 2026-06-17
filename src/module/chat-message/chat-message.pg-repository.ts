@@ -1,6 +1,6 @@
 import { type Insertable, type Kysely, type Selectable, sql } from "kysely";
 
-import type { ChatMessages, DB } from "../../db/types.js";
+import type { ChatMessages, DB, JsonValue } from "../../db/types.js";
 import type {
   BufferedChatMessage,
   ChatMessageListFilters,
@@ -9,6 +9,9 @@ import type {
 
 type ChatMessageRow = Selectable<ChatMessages> & {
   player_id: string | null;
+  verdict: "allow" | "warn" | "deny";
+  moderation_reason: string | null;
+  moderation_metadata: JsonValue;
 };
 
 export type InsertChatMessageInput = Insertable<ChatMessages>;
@@ -82,6 +85,9 @@ export class ChatMessagePgRepository {
       .$if(filters.playerId !== undefined, (qb) =>
         qb.where("actors.player_id", "=", filters.playerId ?? ""),
       )
+      .$if(filters.verdict !== undefined, (qb) =>
+        qb.where(sql`chat_messages.verdict`, "=", filters.verdict ?? "allow"),
+      )
       .$if(filters.beforeMs !== undefined, (qb) =>
         qb.where("chat_messages.created_at_ms", "<", sql<string>`${filters.beforeMs ?? 0}::bigint`),
       )
@@ -113,8 +119,12 @@ export class ChatMessagePgRepository {
           message: message.message,
           channel_key: message.channelKey,
           origin_server_id: message.originServerId,
+          verdict: message.verdict,
+          moderation_reason: message.moderationReason,
+          moderation_metadata: JSON.stringify(message.moderationMetadata ?? {}),
+          is_flagged: message.isFlagged,
           created_at_ms: sql`${message.occurredAtMs}::bigint`,
-        })),
+        }) as InsertChatMessageInput),
       )
       .onConflict((oc) => oc.columns(["origin_server_id", "producer_message_id"]).doNothing())
       .execute();
@@ -133,6 +143,9 @@ export class ChatMessagePgRepository {
         "chat_messages.message",
         "chat_messages.channel_key",
         "chat_messages.origin_server_id",
+        sql<"allow" | "warn" | "deny">`chat_messages.verdict`.as("verdict"),
+        sql<string | null>`chat_messages.moderation_reason`.as("moderation_reason"),
+        sql<JsonValue>`chat_messages.moderation_metadata`.as("moderation_metadata"),
         "chat_messages.is_flagged",
         "chat_messages.created_at_ms",
       ]);
@@ -149,6 +162,9 @@ function toPersistedRecord(row: ChatMessageRow): ChatMessageRecord {
     originServerId: row.origin_server_id,
     channelKey: row.channel_key,
     message: row.message,
+    verdict: row.verdict,
+    moderationReason: row.moderation_reason,
+    moderationMetadata: row.moderation_metadata,
     isFlagged: row.is_flagged,
     occurredAtMs: row.created_at_ms.toString(),
     persistenceState: "persisted",
