@@ -16,7 +16,6 @@ import {
   addWatchlistBodySchema,
   type ClearWatchlistBody,
   clearWatchlistBodySchema,
-  type GetActiveWatchlistQuery,
   getActiveWatchlistQuerySchema,
   type ListWatchlistQuery,
   listWatchlistQuerySchema,
@@ -46,7 +45,7 @@ export function createWatchlistRouter(
   };
 
   const getActiveEntry: RequestHandler = async (req, res) => {
-    const entry = await service.getActiveEntry(req.query as unknown as GetActiveWatchlistQuery);
+    const entry = await service.getActiveEntry(req.query);
     const body: ApiSuccess<WatchlistEntryResponse> = { data: entry };
     res.json(body);
   };
