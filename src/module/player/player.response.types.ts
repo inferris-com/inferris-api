@@ -2,7 +2,10 @@ export type ChatChannel = string;
 
 export type PlayerSummaryResponse = {
   id: string;
+  mojangId: string;
+  actorId: string;
   username: string;
+  activeNickname: PlayerNicknameSummaryResponse | null;
   flags: string;
   orbs: string;
   chatChannel: ChatChannel;
@@ -26,7 +29,10 @@ export type PlayerFlagBitmaskResponse = {
 
 export type PlayerResponse = {
   id: string;
+  mojangId: string;
+  actorId: string;
   username: string;
+  activeNickname: PlayerNicknameSummaryResponse | null;
   flags: string;
   orbs: string;
   chatChannel: ChatChannel;
@@ -74,4 +80,21 @@ export type PlayerBadgeAssignmentResponse = {
   badgeId: number;
   earnedAtMs: string;
   source: string | null;
+};
+
+export type PlayerNicknameSummaryResponse = {
+  nickname: string;
+  coverRankKey: string | null;
+};
+
+export type PlayerNicknameResponse = {
+  id: number;
+  playerId: string;
+  nickname: string;
+  coverRankKey: string | null;
+  meta: unknown;
+  isActive: boolean;
+  revokedByActorId: string | null;
+  createdAtMs: string;
+  revokedAtMs: string | null;
 };

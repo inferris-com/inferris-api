@@ -7,6 +7,7 @@ import type {
   PlayerBadgeAssignmentResponse,
   PlayerFlagBitmaskResponse,
   PlayerFlagDefinitionResponse,
+  PlayerNicknameResponse,
   PlayerProfileResponse,
   PlayerRankAssignmentResponse,
   PlayerResponse,
@@ -16,6 +17,7 @@ import type { PlayerService } from "./player.service.js";
 import {
   type CreatePlayerBody,
   type CreatePlayerBadgeAssignmentBody,
+  type AssignPlayerNicknameBody,
   type DecodePlayerFlagsQuery,
   type DeletePlayerQuery,
   type EncodePlayerFlagsQuery,
@@ -23,8 +25,10 @@ import {
   type ListPlayerFlagDefinitionsQuery,
   type PlayerBadgeAssignmentParams,
   type PlayerIdParams,
+  type PlayerMojangIdParams,
   type PlayerRankAssignmentParams,
   createPlayerBadgeAssignmentBodySchema,
+  assignPlayerNicknameBodySchema,
   decodePlayerFlagsQuerySchema,
   encodePlayerFlagsQuerySchema,
   listPlayerFlagDefinitionsQuerySchema,
@@ -40,14 +44,15 @@ import {
   listPlayersQuerySchema,
   playerBadgeAssignmentParamsSchema,
   playerIdParamsSchema,
+  playerMojangIdParamsSchema,
   playerRankAssignmentParamsSchema,
   updatePlayerBodySchema,
 } from "./player.schemas.js";
 import {
   auditMutation,
   authorize,
-  getActingActorId,
-  requireActingActor,
+  getRequestActorId,
+  requireActor,
 } from "../auth/auth.middleware.js";
 import type { AuthRepository } from "../auth/auth.repository.js";
 
@@ -115,6 +120,12 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
     res.json(body);
   };
 
+  const getPlayerByMojangId: RequestHandler<PlayerMojangIdParams> = async (req, res) => {
+    const player = await service.getPlayerByMojangId(req.params.mojangId);
+    const body: ApiSuccess<PlayerResponse> = { data: player };
+    res.json(body);
+  };
+
   const getProfile: RequestHandler<PlayerIdParams> = async (req, res) => {
     const player = await service.getProfile(req.params.playerId);
     const body: ApiSuccess<PlayerProfileResponse> = { data: player };
@@ -126,6 +137,16 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
     const body: ApiListSuccess<PlayerBadgeAssignmentResponse> = {
       data: badges,
       meta: { count: badges.length },
+    };
+
+    res.json(body);
+  };
+
+  const listNicknames: RequestHandler<PlayerIdParams> = async (req, res) => {
+    const nicknames = await service.listNicknames(req.params.playerId);
+    const body: ApiListSuccess<PlayerNicknameResponse> = {
+      data: nicknames,
+      meta: { count: nicknames.length },
     };
 
     res.json(body);
@@ -152,6 +173,16 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
     res.status(201).json(body);
   };
 
+  const assignNickname: RequestHandler<PlayerIdParams, unknown, AssignPlayerNicknameBody> = async (
+    req,
+    res,
+  ) => {
+    const nickname = await service.assignNickname(req.params.playerId, req.body);
+    const body: ApiSuccess<PlayerNicknameResponse> = { data: nickname };
+
+    res.status(201).json(body);
+  };
+
   const updatePlayer: RequestHandler<PlayerIdParams, unknown, UpdatePlayerBody> = async (
     req,
     res,
@@ -172,7 +203,7 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
       req.params.rankKey,
       {
         ...req.body,
-        assignedByActorId: getActingActorId(req),
+        assignedByActorId: getRequestActorId(req),
       },
     );
     const body: ApiSuccess<PlayerRankAssignmentResponse> = { data: assignment };
@@ -213,6 +244,16 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
     res.status(204).send();
   };
 
+  const revokeActiveNickname: RequestHandler<PlayerIdParams> = async (req, res) => {
+    const nickname = await service.revokeActiveNickname(
+      req.params.playerId,
+      getRequestActorId(req) ?? "",
+    );
+    const body: ApiSuccess<PlayerNicknameResponse> = { data: nickname };
+
+    res.json(body);
+  };
+
   router.get(
     "/",
     readPlayers,
@@ -238,6 +279,12 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
     decodeFlags,
   );
   router.get(
+    "/by-mojang/:mojangId",
+    readPlayers,
+    validateRequest({ params: playerMojangIdParamsSchema }),
+    getPlayerByMojangId,
+  );
+  router.get(
     "/:playerId",
     readPlayers,
     validateRequest({ params: playerIdParamsSchema }),
@@ -254,6 +301,12 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
     readPlayers,
     validateRequest({ params: playerIdParamsSchema }),
     listBadgeAssignments,
+  );
+  router.get(
+    "/:playerId/nicknames",
+    readPlayers,
+    validateRequest({ params: playerIdParamsSchema }),
+    listNicknames,
   );
   router.post(
     "/",
@@ -272,10 +325,21 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
     }),
     createBadgeAssignment,
   );
+  router.post(
+    "/:playerId/nicknames",
+    managePlayerStaffState,
+    requireActor(),
+    auditMutation(authRepository, "players.nicknames.create"),
+    validateRequest({
+      params: playerIdParamsSchema,
+      body: assignPlayerNicknameBodySchema,
+    }),
+    assignNickname,
+  );
   router.put(
     "/:playerId/ranks/:groupKey/:rankKey",
     managePlayerStaffState,
-    requireActingActor(authRepository),
+    requireActor(),
     auditMutation(authRepository, "players.ranks.replace"),
     validateRequest({
       params: playerRankAssignmentParamsSchema,
@@ -326,6 +390,14 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
     auditMutation(authRepository, "players.badges.delete"),
     validateRequest({ params: playerBadgeAssignmentParamsSchema }) as unknown as RequestHandler,
     deleteBadgeAssignment,
+  );
+  router.delete(
+    "/:playerId/nicknames/active",
+    managePlayerStaffState,
+    requireActor(),
+    auditMutation(authRepository, "players.nicknames.revoke"),
+    validateRequest({ params: playerIdParamsSchema }),
+    revokeActiveNickname,
   );
 
   return router;

@@ -1,7 +1,6 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
-  actingActorHeaderSchema,
   userOrServiceSecurity,
   jsonBody,
   listResponse,
@@ -10,6 +9,7 @@ import {
   successResponse,
 } from "../../openapi/openapi.helpers.js";
 import {
+  assignPlayerNicknameBodySchema,
   createPlayerBadgeAssignmentBodySchema,
   createPlayerBodySchema,
   decodePlayerFlagsQuerySchema,
@@ -19,6 +19,7 @@ import {
   listPlayersQuerySchema,
   playerBadgeAssignmentParamsSchema,
   playerIdParamsSchema,
+  playerMojangIdParamsSchema,
   playerRankAssignmentParamsSchema,
   replacePlayerRankAssignmentBodySchema,
   updatePlayerBodySchema,
@@ -68,6 +69,16 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
 
   registry.registerPath({
     method: "get",
+    path: "/players/by-mojang/{mojangId}",
+    tags: ["Players"],
+    security: userOrServiceSecurity,
+    summary: "Get a player by Mojang UUID",
+    request: { params: playerMojangIdParamsSchema },
+    responses: { "200": successResponse(), ...standardErrorResponses },
+  });
+
+  registry.registerPath({
+    method: "get",
     path: "/players/{playerId}",
     tags: ["Players"],
     security: userOrServiceSecurity,
@@ -92,6 +103,16 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     tags: ["Players"],
     security: userOrServiceSecurity,
     summary: "List player badge assignments",
+    request: { params: playerIdParamsSchema },
+    responses: { "200": listResponse(), ...standardErrorResponses },
+  });
+
+  registry.registerPath({
+    method: "get",
+    path: "/players/{playerId}/nicknames",
+    tags: ["Players"],
+    security: userOrServiceSecurity,
+    summary: "List player nickname history",
     request: { params: playerIdParamsSchema },
     responses: { "200": listResponse(), ...standardErrorResponses },
   });
@@ -125,13 +146,28 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
   });
 
   registry.registerPath({
+    method: "post",
+    path: "/players/{playerId}/nicknames",
+    tags: ["Players"],
+    security: userOrServiceSecurity,
+    summary: "Assign a player nickname",
+    request: {
+      params: playerIdParamsSchema,
+      body: {
+        required: true,
+        content: { "application/json": jsonBody(assignPlayerNicknameBodySchema) },
+      },
+    },
+    responses: { "201": successResponse("Nickname assigned"), ...standardErrorResponses },
+  });
+
+  registry.registerPath({
     method: "put",
     path: "/players/{playerId}/ranks/{groupKey}/{rankKey}",
     tags: ["Players"],
     security: userOrServiceSecurity,
     summary: "Replace a player rank assignment",
     request: {
-      headers: actingActorHeaderSchema,
       params: playerRankAssignmentParamsSchema,
       body: {
         required: true,
@@ -198,5 +234,15 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     summary: "Delete a player badge assignment",
     request: { params: playerBadgeAssignmentParamsSchema },
     responses: { "204": noContentResponse, ...standardErrorResponses },
+  });
+
+  registry.registerPath({
+    method: "delete",
+    path: "/players/{playerId}/nicknames/active",
+    tags: ["Players"],
+    security: userOrServiceSecurity,
+    summary: "Revoke the active player nickname",
+    request: { params: playerIdParamsSchema },
+    responses: { "200": successResponse("Nickname revoked"), ...standardErrorResponses },
   });
 }

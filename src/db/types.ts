@@ -55,7 +55,7 @@ export type PermissionEffect = "allow" | "deny";
 
 export type Platform = "argus" | "bot" | "discord" | "minecraft" | "other";
 
-export type PrincipalType = "argus_user" | "discord_bot" | "internal_worker" | "server_api_key" | "system" | "unknown" | "user_api_key";
+export type PrincipalType = "argus_user" | "discord_bot" | "internal_worker" | "minecraft_session" | "server_api_key" | "service_actor_api_key" | "system" | "unknown" | "user_api_key";
 
 export type Punishment = "ban" | "kick" | "mute" | "warn";
 
@@ -86,7 +86,6 @@ export interface Actors {
   id: Generated<string>;
   last_updated_at_ms: Int8 | null;
   name: string | null;
-  player_id: string | null;
   type: Generated<ActorType>;
 }
 
@@ -391,6 +390,7 @@ export interface PlayerFlagDefinitions {
 }
 
 export interface PlayerNicknames {
+  cover_rank_key: string | null;
   created_at_ms: Generated<Int8>;
   id: Generated<number>;
   is_active: Generated<boolean>;
@@ -421,13 +421,15 @@ export interface PlayerRanks {
 
 export interface Players {
   active_channel_key: Generated<string>;
+  actor_id: string;
   created_at_ms: Generated<Int8>;
   deleted_at_ms: Int8 | null;
   deleted_reason: string | null;
   flags: Int8;
-  id: string;
+  id: Generated<string>;
   last_seen_at_ms: Int8 | null;
   last_server_id: string | null;
+  mojang_id: string;
   orbs: Generated<Int8>;
   username: string;
 }
@@ -520,7 +522,6 @@ export interface PurchaseOrders {
 export interface Ranks {
   created_at_ms: Generated<Int8>;
   description: string | null;
-  display_tag: string | null;
   group_key: string | null;
   is_active: Generated<boolean>;
   is_staff: Generated<boolean>;
@@ -528,7 +529,7 @@ export interface Ranks {
   label: string;
   tier: Generated<number>;
   updated_at_ms: Int8 | null;
-  username_color_hex: string | null;
+  visuals: Generated<Json>;
 }
 
 export interface RedemptionCampaignRewards {

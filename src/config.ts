@@ -34,6 +34,13 @@ const envSchema = z
       .positive()
       .default(60 * 60 * 24 * 7),
     CHAT_ALLOWED_CLOCK_SKEW_MS: z.coerce.number().int().nonnegative().default(300000),
+    MINECRAFT_SESSION_TTL_SECONDS: z.coerce.number().int().positive().default(300),
+    MINECRAFT_HEARTBEAT_STALE_SECONDS: z.coerce.number().int().positive().default(120),
+    MINECRAFT_PLAYER_IDENTITY_CACHE_TTL_SECONDS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(60 * 60),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== "production") {
@@ -90,6 +97,11 @@ export const config = {
     accessTokenTtlSeconds: env.AUTH_ACCESS_TOKEN_TTL_SECONDS,
     refreshTokenTtlSeconds: env.AUTH_REFRESH_TOKEN_TTL_SECONDS,
     apiKeyPepper: env.AUTH_API_KEY_PEPPER,
+  },
+  minecraft: {
+    sessionTtlSeconds: env.MINECRAFT_SESSION_TTL_SECONDS,
+    heartbeatStaleSeconds: env.MINECRAFT_HEARTBEAT_STALE_SECONDS,
+    playerIdentityCacheTtlSeconds: env.MINECRAFT_PLAYER_IDENTITY_CACHE_TTL_SECONDS,
   },
   chat: {
     flushBatchSize: env.CHAT_FLUSH_BATCH_SIZE,

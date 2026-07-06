@@ -18,6 +18,7 @@ import type {
   UpdateProfileBody,
 } from "./player.schemas.js";
 import type { DbExecutor } from "../../db/index.js";
+import { isPgErrorCode, PgErrorCode } from "../../shared/db/pg-error.utils.js";
 
 export class PlayerPgRepository implements PlayerRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -25,12 +26,21 @@ export class PlayerPgRepository implements PlayerRepository {
   async listPlayers({ limit, offset, username }: ListPlayersQuery) {
     return this.db
       .selectFrom("players")
+      .leftJoin("player_nicknames as active_nicknames", (join) =>
+        join
+          .onRef("active_nicknames.player_id", "=", "players.id")
+          .on("active_nicknames.is_active", "=", true),
+      )
       .select([
         "players.id",
+        "players.mojang_id",
+        "players.actor_id",
         "players.username",
         "players.flags",
         "players.orbs",
         "players.active_channel_key",
+        "active_nicknames.nickname as active_nickname",
+        "active_nicknames.cover_rank_key as active_nickname_cover_rank_key",
       ])
       .$if(username !== undefined, (qb) => qb.where("players.username", "ilike", `%${username}%`))
       .where("players.deleted_at_ms", "is", null)
@@ -91,26 +101,44 @@ export class PlayerPgRepository implements PlayerRepository {
 
   async createPlayer(input: CreatePlayerBody): Promise<CreatePlayerResult> {
     return this.db.transaction().execute(async (trx) => {
-      const { id, username, flags, chatChannel } = input;
+      const { username, flags, chatChannel } = input;
 
       const existingPlayer = await trx
         .selectFrom("players")
         .select(["id", "deleted_at_ms"])
-        .where("id", "=", id)
+        .where("mojang_id", "=", input.mojangId)
         .executeTakeFirst();
 
       if (existingPlayer && existingPlayer.deleted_at_ms === null) {
         return { status: "player_exists" };
       }
 
+      const existingActor = await trx
+        .selectFrom("actors")
+        .select("id")
+        .where("name", "=", username)
+        .executeTakeFirst();
+
+      const actor =
+        existingActor ??
+        (await trx
+          .insertInto("actors")
+          .values({ name: username, type: "user" })
+          .returning("id")
+          .executeTakeFirstOrThrow());
+
       const playerInsert: {
-        id: string;
+        id?: string;
+        mojang_id: string;
+        actor_id: string;
         username: string;
         flags: string;
         orbs?: string;
         active_channel_key: CreatePlayerBody["chatChannel"];
       } = {
-        id,
+        ...(input.id ? { id: input.id } : {}),
+        mojang_id: input.mojangId,
+        actor_id: actor.id,
         username,
         flags,
         active_channel_key: chatChannel,
@@ -128,59 +156,159 @@ export class PlayerPgRepository implements PlayerRepository {
             deleted_at_ms: null,
             deleted_reason: null,
           })
-          .where("id", "=", id)
+          .where("id", "=", existingPlayer.id)
           .executeTakeFirstOrThrow();
       } else {
         await trx.insertInto("players").values(playerInsert).executeTakeFirstOrThrow();
       }
 
+      const playerId =
+        existingPlayer?.id ??
+        input.id ??
+        (
+          await trx
+            .selectFrom("players")
+            .select("id")
+            .where("mojang_id", "=", input.mojangId)
+            .executeTakeFirstOrThrow()
+        ).id;
+
       await trx
         .insertInto("player_profiles")
-        .values({ player_id: id })
+        .values({ player_id: playerId })
         .onConflict((oc) => oc.column("player_id").doNothing())
         .executeTakeFirstOrThrow();
 
-      const linkedActor = await trx
-        .selectFrom("actors")
-        .select("id")
-        .where("player_id", "=", id)
+      return { status: "created", player: await this.loadPlayerDetailsOrThrow(trx, playerId) };
+    });
+  }
+
+  async ensureMinecraftPlayerIdentity(input: {
+    mojangId: string;
+    username: string;
+    serverId: string;
+  }) {
+    return this.db.transaction().execute(async (trx) => {
+      const existing = await trx
+        .selectFrom("players")
+        .select(["id", "mojang_id", "actor_id", "username"])
+        .where("mojang_id", "=", input.mojangId)
         .executeTakeFirst();
 
-      const unlinkedActor = await trx
-        .selectFrom("actors")
-        .select("id")
-        .where("name", "=", username)
-        .where("player_id", "is", null)
-        .executeTakeFirst();
+      if (existing) {
+        await trx
+          .updateTable("players")
+          .set({
+            username: input.username,
+            last_seen_at_ms: sql`get_unix_ms()`,
+            last_server_id: input.serverId,
+            deleted_at_ms: null,
+            deleted_reason: null,
+          })
+          .where("id", "=", existing.id)
+          .execute();
 
-      if (linkedActor) {
         await trx
           .updateTable("actors")
-          .set({ name: username, type: "user" })
-          .where("id", "=", linkedActor.id)
-          .executeTakeFirstOrThrow();
-      } else if (unlinkedActor) {
-        await trx
-          .updateTable("actors")
-          .set({ player_id: id, type: "user" })
-          .where("id", "=", unlinkedActor.id)
-          .executeTakeFirstOrThrow();
-      } else {
-        await trx
-          .insertInto("actors")
-          .values({ name: username, type: "user", player_id: id })
-          .executeTakeFirstOrThrow();
+          .set({ name: input.username, type: "user" })
+          .where("id", "=", existing.actor_id)
+          .execute();
+
+        return { ...existing, username: input.username };
       }
 
-      return { status: "created", player: await this.loadPlayerDetailsOrThrow(trx, id) };
+      const existingActor = await trx
+        .selectFrom("actors")
+        .select("id")
+        .where("name", "=", input.username)
+        .executeTakeFirst();
+
+      if (existingActor) {
+        const playerForActor = await trx
+          .selectFrom("players")
+          .select(["id", "mojang_id", "actor_id", "username"])
+          .where("actor_id", "=", existingActor.id)
+          .executeTakeFirst();
+
+        if (playerForActor) {
+          await trx
+            .updateTable("players")
+            .set({
+              mojang_id: input.mojangId,
+              username: input.username,
+              last_seen_at_ms: sql`get_unix_ms()`,
+              last_server_id: input.serverId,
+              deleted_at_ms: null,
+              deleted_reason: null,
+            })
+            .where("id", "=", playerForActor.id)
+            .execute();
+
+          await trx
+            .updateTable("actors")
+            .set({ type: "user" })
+            .where("id", "=", existingActor.id)
+            .execute();
+
+          await trx
+            .insertInto("player_profiles")
+            .values({ player_id: playerForActor.id })
+            .onConflict((oc) => oc.column("player_id").doNothing())
+            .execute();
+
+          return {
+            ...playerForActor,
+            mojang_id: input.mojangId,
+            username: input.username,
+          };
+        }
+      }
+
+      const actor =
+        existingActor ??
+        (await trx
+          .insertInto("actors")
+          .values({ name: input.username, type: "user" })
+          .returning("id")
+          .executeTakeFirstOrThrow());
+
+      const player = await trx
+        .insertInto("players")
+        .values({
+          mojang_id: input.mojangId,
+          actor_id: actor.id,
+          username: input.username,
+          flags: "0",
+          last_seen_at_ms: sql`get_unix_ms()`,
+          last_server_id: input.serverId,
+        })
+        .returning(["id", "mojang_id", "actor_id", "username"])
+        .executeTakeFirstOrThrow();
+
+      await trx
+        .insertInto("player_profiles")
+        .values({ player_id: player.id })
+        .onConflict((oc) => oc.column("player_id").doNothing())
+        .execute();
+
+      return player;
     });
+  }
+
+  async getPlayerIdentityByMojangId(mojangId: string) {
+    return this.db
+      .selectFrom("players")
+      .select(["id", "mojang_id", "actor_id", "username"])
+      .where("mojang_id", "=", mojangId)
+      .where("deleted_at_ms", "is", null)
+      .executeTakeFirst();
   }
 
   async updatePlayer(id: string, input: UpdatePlayerBody): Promise<PlayerDetailsRecord | null> {
     return this.db.transaction().execute(async (trx) => {
       const playerExists = await trx
         .selectFrom("players")
-        .select("id")
+        .select(["id", "actor_id"])
         .where("id", "=", id)
         .where("deleted_at_ms", "is", null)
         .executeTakeFirst();
@@ -202,7 +330,7 @@ export class PlayerPgRepository implements PlayerRepository {
         await trx
           .updateTable("actors")
           .set({ name: input.username })
-          .where("player_id", "=", id)
+          .where("id", "=", playerExists.actor_id)
           .where("type", "=", "user")
           .execute();
       }
@@ -349,6 +477,133 @@ export class PlayerPgRepository implements PlayerRepository {
     });
   }
 
+  async listNicknames(playerId: string) {
+    return this.db.transaction().execute(async (trx) => {
+      const playerExists = await trx
+        .selectFrom("players")
+        .select("id")
+        .where("id", "=", playerId)
+        .where("deleted_at_ms", "is", null)
+        .executeTakeFirst();
+
+      if (!playerExists) {
+        return null;
+      }
+
+      return trx
+        .selectFrom("player_nicknames")
+        .selectAll()
+        .where("player_id", "=", playerId)
+        .orderBy("created_at_ms", "desc")
+        .orderBy("id", "desc")
+        .execute();
+    });
+  }
+
+  async assignNickname(
+    playerId: string,
+    input: { nickname: string; coverRankKey: string | null; meta?: unknown },
+  ) {
+    return this.db.transaction().execute(async (trx) => {
+      const playerExists = await trx
+        .selectFrom("players")
+        .select("id")
+        .where("id", "=", playerId)
+        .where("deleted_at_ms", "is", null)
+        .executeTakeFirst();
+
+      if (!playerExists) {
+        return { status: "player_not_found" } as const;
+      }
+
+      if (input.coverRankKey !== null) {
+        const rankExists = await trx
+          .selectFrom("ranks")
+          .select("key")
+          .where("key", "=", input.coverRankKey)
+          .executeTakeFirst();
+
+        if (!rankExists) {
+          return { status: "rank_not_found" } as const;
+        }
+      }
+
+      const activeForPlayer = await trx
+        .selectFrom("player_nicknames")
+        .select("id")
+        .where("player_id", "=", playerId)
+        .where("is_active", "=", true)
+        .executeTakeFirst();
+
+      if (activeForPlayer) {
+        const updated = await trx
+          .updateTable("player_nicknames")
+          .set({
+            nickname: input.nickname,
+            cover_rank_key: input.coverRankKey,
+            meta: JSON.stringify(input.meta ?? {}),
+          })
+          .where("id", "=", activeForPlayer.id)
+          .returningAll()
+          .executeTakeFirstOrThrow();
+
+        return { status: "assigned", nickname: updated } as const;
+      }
+
+      try {
+        const nickname = await trx
+          .insertInto("player_nicknames")
+          .values({
+            player_id: playerId,
+            nickname: input.nickname,
+            cover_rank_key: input.coverRankKey,
+            meta: JSON.stringify(input.meta ?? {}),
+          })
+          .returningAll()
+          .executeTakeFirstOrThrow();
+
+        return { status: "assigned", nickname } as const;
+      } catch (error) {
+        if (isPgErrorCode(error, PgErrorCode.UniqueViolation)) {
+          return { status: "nickname_conflict" } as const;
+        }
+
+        throw error;
+      }
+    });
+  }
+
+  async revokeActiveNickname(playerId: string, revokedByActorId: string) {
+    return this.db.transaction().execute(async (trx) => {
+      const playerExists = await trx
+        .selectFrom("players")
+        .select("id")
+        .where("id", "=", playerId)
+        .where("deleted_at_ms", "is", null)
+        .executeTakeFirst();
+
+      if (!playerExists) {
+        return { status: "player_not_found" } as const;
+      }
+
+      const nickname = await trx
+        .updateTable("player_nicknames")
+        .set({
+          is_active: false,
+          revoked_by_actor_id: revokedByActorId,
+          revoked_at_ms: sql`get_unix_ms()`,
+        })
+        .where("player_id", "=", playerId)
+        .where("is_active", "=", true)
+        .returningAll()
+        .executeTakeFirst();
+
+      return nickname
+        ? ({ status: "revoked", nickname } as const)
+        : ({ status: "nickname_not_found" } as const);
+    });
+  }
+
   async deletePlayer(id: string, { hard }: DeletePlayerOptions): Promise<boolean> {
     if (hard) {
       const result = await this.db.deleteFrom("players").where("id", "=", id).executeTakeFirst();
@@ -430,18 +685,27 @@ export class PlayerPgRepository implements PlayerRepository {
   ): Promise<PlayerDetailsRecord | null> {
     const player = await executor
       .selectFrom("players")
+      .leftJoin("player_nicknames as active_nicknames", (join) =>
+        join
+          .onRef("active_nicknames.player_id", "=", "players.id")
+          .on("active_nicknames.is_active", "=", true),
+      )
       .select([
-        "id",
-        "username",
-        "flags",
-        "orbs",
-        "active_channel_key",
-        "created_at_ms",
-        "last_seen_at_ms",
-        "last_server_id",
+        "players.id",
+        "players.mojang_id",
+        "players.actor_id",
+        "players.username",
+        "players.flags",
+        "players.orbs",
+        "players.active_channel_key",
+        "players.created_at_ms",
+        "players.last_seen_at_ms",
+        "players.last_server_id",
+        "active_nicknames.nickname as active_nickname",
+        "active_nicknames.cover_rank_key as active_nickname_cover_rank_key",
       ])
-      .where("id", "=", id)
-      .where("deleted_at_ms", "is", null)
+      .where("players.id", "=", id)
+      .where("players.deleted_at_ms", "is", null)
       .executeTakeFirst();
 
     if (!player) {

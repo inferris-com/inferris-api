@@ -5,6 +5,7 @@ import {
   compareHashes,
   createRefreshToken,
   hashApiKeySecret,
+  hashMinecraftSessionToken,
   hashRefreshToken,
   parseApiKeyToken,
   signAccessToken,
@@ -19,6 +20,15 @@ import type { AuthContext } from "./auth.types.js";
 type RefreshSession = {
   argusUserId: string;
   createdAtMs: number;
+};
+
+export type MinecraftSessionState = {
+  actorId: string;
+  playerId: string;
+  mojangId: string;
+  serverId: string;
+  sessionEventId: string;
+  issuedAtMs: number;
 };
 
 export class AuthService {
@@ -47,17 +57,66 @@ export class AuthService {
       return null;
     }
 
+    const actorId = record.principalType === "service_actor_api_key" ? record.ownerActorId : null;
+    const privileged = await this.repo.findActivePrivilegedSubject(actorId);
+
     return {
       principalType: record.principalType,
       principalId: record.id,
-      actorId: record.ownerActorId,
+      actorId,
+      credentialOwnerActorId: record.ownerActorId,
       platform: record.platform,
       apiKey: {
         id: record.id,
         scopes: record.scopes,
         isSuperKey: record.isSuperKey,
       },
+      ...(privileged ? { privileged } : {}),
     };
+  }
+
+  async authenticateMinecraftSession(token: string): Promise<AuthContext | null> {
+    const state = await this.readMinecraftSession(token);
+
+    if (!state) {
+      return null;
+    }
+
+    const current = await this.repo.findCurrentPlayerSession(state.playerId);
+
+    if (
+      !current ||
+      current.serverId !== state.serverId ||
+      current.sessionEventId !== state.sessionEventId
+    ) {
+      return null;
+    }
+
+    const privileged = await this.repo.findActivePrivilegedSubject(state.actorId);
+
+    return {
+      principalType: "minecraft_session",
+      principalId: state.sessionEventId,
+      actorId: state.actorId,
+      platform: "minecraft",
+      minecraftSession: {
+        playerId: state.playerId,
+        mojangId: state.mojangId,
+        serverId: state.serverId,
+        sessionEventId: state.sessionEventId,
+      },
+      ...(privileged ? { privileged } : {}),
+    };
+  }
+
+  async readMinecraftSession(token: string): Promise<MinecraftSessionState | null> {
+    const raw = await this.redis.get(minecraftSessionTokenKey(hashMinecraftSessionToken(token)));
+
+    if (!raw) {
+      return null;
+    }
+
+    return JSON.parse(raw) as MinecraftSessionState;
   }
 
   async authenticateAccessToken(token: string): Promise<AuthContext | null> {
@@ -197,6 +256,14 @@ export class AuthService {
 
 function refreshKey(refreshTokenHash: string): string {
   return `auth:refresh:${refreshTokenHash}`;
+}
+
+export function minecraftSessionTokenKey(tokenHash: string): string {
+  return `auth:minecraft-session:token:${tokenHash}`;
+}
+
+export function minecraftSessionPlayerKey(playerId: string): string {
+  return `auth:minecraft-session:player:${playerId}`;
 }
 
 function invalidCredentials(): UnauthorizedError {

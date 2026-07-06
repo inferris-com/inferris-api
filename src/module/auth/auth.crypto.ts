@@ -60,7 +60,7 @@ export function createApiKeyToken(keyId = randomUUID()): {
 }
 
 export async function verifyPassword(passwordHash: string | null, password: string): Promise<boolean> {
-  if(passwordHash == null){
+  if (passwordHash == null) {
     return false;
   }
 
@@ -113,5 +113,18 @@ export function createRefreshToken(): { token: string; tokenHash: string } {
 }
 
 export function hashRefreshToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+export function createMinecraftSessionToken(): { token: string; tokenHash: string } {
+  const token = randomBytes(48).toString("base64url");
+
+  return {
+    token,
+    tokenHash: hashMinecraftSessionToken(token),
+  };
+}
+
+export function hashMinecraftSessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }

@@ -1,4 +1,4 @@
-import type { Kysely, Selectable } from "kysely";
+import { type Kysely, type Selectable, sql } from "kysely";
 
 import type {
   DB,
@@ -13,6 +13,7 @@ import type {
   AuthenticatedCreateLockdownBody,
   CreateServerBody,
   ReplaceServerAccessBody,
+  ServerHeartbeatBody,
   UpdateLockdownBody,
   UpdateServerBody,
 } from "./server.schemas.js";
@@ -26,8 +27,29 @@ export type CreatePolicyResult =
   | { status: "not_found" };
 export type DeleteLockdownResult = DeleteResult;
 
+type PlayerSessionIdentity = {
+  playerId: string;
+  actorId: string;
+  mojangId: string;
+};
+
+type PlayerSessionRecord = PlayerSessionIdentity & {
+  serverId: string;
+  sessionEventId: string;
+};
+
 export class ServerPgRepository {
   constructor(private readonly db: Kysely<DB>) {}
+
+  async listServers(): Promise<Selectable<Servers>[]> {
+    return this.db
+      .selectFrom("servers")
+      .selectAll()
+      .orderBy("environment", "asc")
+      .orderBy("type", "asc")
+      .orderBy("name", "asc")
+      .execute();
+  }
 
   async registerServer(input: CreateServerBody): Promise<Selectable<Servers>> {
     return await this.db.transaction().execute(async (trx) => {
@@ -70,6 +92,151 @@ export class ServerPgRepository {
         .execute();
 
       return server;
+    });
+  }
+
+  async startPlayerSession(
+    serverId: string,
+    player: PlayerSessionIdentity,
+  ): Promise<PlayerSessionRecord | null> {
+    return this.db.transaction().execute(async (trx) => {
+      const server = await trx
+        .selectFrom("servers")
+        .select("id")
+        .where("id", "=", serverId)
+        .executeTakeFirst();
+
+      if (!server) {
+        return null;
+      }
+
+      await trx
+        .updateTable("player_session_events")
+        .set({
+          disconnected_at_ms: sql`get_unix_ms()`,
+          disconnect_reason: "replaced",
+          updated_at_ms: sql`get_unix_ms()`,
+        })
+        .where("player_id", "=", player.playerId)
+        .where("disconnected_at_ms", "is", null)
+        .execute();
+
+      const session = await trx
+        .insertInto("player_session_events")
+        .values({
+          player_id: player.playerId,
+          server_id: serverId,
+        })
+        .returning(["id", "server_id"])
+        .executeTakeFirstOrThrow();
+
+      await trx
+        .updateTable("players")
+        .set({
+          last_seen_at_ms: sql`get_unix_ms()`,
+          last_server_id: serverId,
+        })
+        .where("id", "=", player.playerId)
+        .execute();
+
+      return {
+        ...player,
+        serverId: session.server_id,
+        sessionEventId: session.id,
+      };
+    });
+  }
+
+  async endPlayerSession(
+    serverId: string,
+    player: PlayerSessionIdentity,
+    reason: string,
+  ): Promise<PlayerSessionRecord | null> {
+    return this.db.transaction().execute(async (trx) => {
+      const session = await trx
+        .updateTable("player_session_events")
+        .set({
+          disconnected_at_ms: sql`get_unix_ms()`,
+          disconnect_reason: reason,
+          updated_at_ms: sql`get_unix_ms()`,
+        })
+        .where("player_id", "=", player.playerId)
+        .where("server_id", "=", serverId)
+        .where("disconnected_at_ms", "is", null)
+        .returning(["id", "server_id"])
+        .executeTakeFirst();
+
+      if (!session) {
+        return null;
+      }
+
+      return {
+        ...player,
+        serverId: session.server_id,
+        sessionEventId: session.id,
+      };
+    });
+  }
+
+  async heartbeat(
+    serverId: string,
+    input: ServerHeartbeatBody,
+  ): Promise<PlayerSessionRecord[] | null> {
+    return this.db.transaction().execute(async (trx) => {
+      const serverUpdate: {
+        status?: "online" | "offline";
+        port?: number | null;
+        version?: string;
+        last_heartbeat_at_ms: string;
+      } = {
+        last_heartbeat_at_ms: Date.now().toString(),
+      };
+
+      if (input.status !== undefined) {
+        serverUpdate.status = input.status;
+      }
+      if (input.port !== undefined) {
+        serverUpdate.port = input.port;
+      }
+      if (input.version !== undefined) {
+        serverUpdate.version = input.version;
+      }
+
+      const updateResult = await trx
+        .updateTable("servers")
+        .set(serverUpdate)
+        .where("id", "=", serverId)
+        .executeTakeFirst();
+
+      if (updateResult.numUpdatedRows === 0n) {
+        return null;
+      }
+
+      if (input.onlineMojangIds.length === 0) {
+        return [];
+      }
+
+      const rows = await trx
+        .selectFrom("player_sessions_current")
+        .innerJoin("players", "players.id", "player_sessions_current.player_id")
+        .select([
+          "players.id as playerId",
+          "players.actor_id as actorId",
+          "players.mojang_id as mojangId",
+          "player_sessions_current.server_id as serverId",
+          "player_sessions_current.session_event_id as sessionEventId",
+        ])
+        .where("player_sessions_current.server_id", "=", serverId)
+        .where("players.mojang_id", "in", input.onlineMojangIds)
+        .execute();
+
+      return rows.map((row) => ({
+        playerId: row.playerId,
+        actorId: row.actorId,
+        mojangId: row.mojangId,
+        serverId: row.serverId,
+        sessionEventId: row.sessionEventId,
+      }));
     });
   }
 

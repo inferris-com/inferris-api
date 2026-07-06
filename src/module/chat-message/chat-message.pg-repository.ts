@@ -51,12 +51,12 @@ export class ChatMessagePgRepository {
 
   async findActorIdByPlayerId(playerId: string): Promise<string | null> {
     const row = await this.db
-      .selectFrom("actors")
-      .select("id")
-      .where("player_id", "=", playerId)
+      .selectFrom("players")
+      .select("actor_id")
+      .where("id", "=", playerId)
       .executeTakeFirst();
 
-    return row?.id ?? null;
+    return row?.actor_id ?? null;
   }
 
   async findByProducerMessageId(
@@ -83,7 +83,7 @@ export class ChatMessagePgRepository {
         qb.where("chat_messages.actor_id", "=", filters.actorId ?? ""),
       )
       .$if(filters.playerId !== undefined, (qb) =>
-        qb.where("actors.player_id", "=", filters.playerId ?? ""),
+        qb.where("players.id", "=", filters.playerId ?? ""),
       )
       .$if(filters.verdict !== undefined, (qb) =>
         qb.where(sql`chat_messages.verdict`, "=", filters.verdict ?? "allow"),
@@ -134,10 +134,11 @@ export class ChatMessagePgRepository {
     return this.db
       .selectFrom("chat_messages")
       .innerJoin("actors", "actors.id", "chat_messages.actor_id")
+      .leftJoin("players", "players.actor_id", "actors.id")
       .select([
         "chat_messages.id",
         "chat_messages.actor_id",
-        "actors.player_id",
+        "players.id as player_id",
         "chat_messages.producer_message_id",
         "chat_messages.ingest_stream_id",
         "chat_messages.message",

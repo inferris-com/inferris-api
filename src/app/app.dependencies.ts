@@ -59,11 +59,13 @@ export type AppDependencies = {
 type CreateAppDependenciesOptions = {
   database?: DbExecutor;
   redisClient?: RedisClient;
+  chatMessageWorkerRedisClient?: RedisClient;
 };
 
 export function createAppDependencies({
   database = defaultDb,
   redisClient = defaultRedis,
+  chatMessageWorkerRedisClient = redisClient,
 }: CreateAppDependenciesOptions = {}): AppDependencies {
   const actorRepository = new ActorPgRepository(database);
   const authRepository = new AuthRepository(database);
@@ -79,6 +81,7 @@ export function createAppDependencies({
   const watchlistRepository = new WatchlistPgRepository(database);
 
   const authService = new AuthService(authRepository, redisClient);
+  const playerService = new PlayerService(playerRepository);
 
   return {
     authRepository,
@@ -90,15 +93,15 @@ export function createAppDependencies({
       chatMessage: new ChatMessageService(chatMessageRepository, chatMessageBuffer),
       modCase: new ModCaseService(modCaseRepository, new ModCasePublisher(redisClient)),
       permission: new PermissionService(permissionRepository),
-      player: new PlayerService(playerRepository),
+      player: playerService,
       punishment: new PunishmentService(punishmentRepository, new PunishmentPublisher(redisClient)),
       report: new ReportService(reportRepository, new ReportPublisher(redisClient)),
-      server: new ServerService(serverRepository),
+      server: new ServerService(serverRepository, redisClient, playerService),
       watchlist: new WatchlistService(watchlistRepository),
     },
     workers: {
       chatMessageFlush: new ChatMessageFlushWorker(
-        redisClient,
+        chatMessageWorkerRedisClient,
         chatMessageBuffer,
         chatMessageRepository,
       ),

@@ -19,13 +19,14 @@ export type ApiScope =
   | "chat:write"
   | "moderation:read"
   | "moderation:write"
+  | "minecraft:sessions:manage"
   | "minecraft:permission-check";
 
 export type AuthContext = {
   principalType: PrincipalType;
   principalId: string;
   actorId: string | null;
-  actingActorId?: string;
+  credentialOwnerActorId?: string | null;
   platform: Platform;
   apiKey?: {
     id: string;
@@ -35,6 +36,12 @@ export type AuthContext = {
   argus?: {
     userId: string;
     role: ArgusAccountRole;
+  };
+  minecraftSession?: {
+    playerId: string;
+    mojangId: string;
+    serverId: string;
+    sessionEventId: string;
   };
   privileged?: {
     id: string;

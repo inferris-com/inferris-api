@@ -42,6 +42,29 @@ describe("player routes", () => {
     expect(dependencies.services.player.createPlayer).not.toHaveBeenCalled();
   });
 
+  test("GET /players/by-mojang/:mojangId resolves by Mojang UUID", async () => {
+    const { dependencies, request } = createTestApp();
+    const mojangId = "30000000-0000-0000-0000-000000000007";
+    dependencies.services.player.getPlayerByMojangId.mockResolvedValue({
+      id: ids.player,
+      mojangId,
+      username: "Refrizor",
+    });
+
+    const response = await request
+      .get(`/players/by-mojang/${mojangId}`)
+      .set("Authorization", "Bearer moderator-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      data: {
+        id: ids.player,
+        mojangId,
+      },
+    });
+    expect(dependencies.services.player.getPlayerByMojangId).toHaveBeenCalledWith(mojangId);
+  });
+
   test("PUT /players/:playerId/ranks/:groupKey/:rankKey injects assigning actor", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.player.updateRankAssignment.mockResolvedValue({
@@ -73,19 +96,18 @@ describe("player routes", () => {
     );
   });
 
-  test("PUT /players/:playerId/ranks/:groupKey/:rankKey uses API-key acting actor", async () => {
+  test("PUT /players/:playerId/ranks/:groupKey/:rankKey uses service actor API-key owner", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.player.updateRankAssignment.mockResolvedValue({
       playerId: ids.player,
       groupKey: "staff",
       rankKey: "moderator",
-      assignedByActorId: ids.actingActor,
+      assignedByActorId: ids.apiKeyOwnerActor,
     });
 
     const response = await request
       .put(`/players/${ids.player}/ranks/staff/moderator`)
-      .set("Authorization", "ApiKey server-token")
-      .set("X-Inferris-Actor-Id", ids.actingActor)
+      .set("Authorization", "ApiKey service-actor-token")
       .send({ source: "minecraft" });
 
     expect(response.status).toBe(200);
@@ -95,7 +117,7 @@ describe("player routes", () => {
       "moderator",
       {
         source: "minecraft",
-        assignedByActorId: ids.actingActor,
+        assignedByActorId: ids.apiKeyOwnerActor,
       },
     );
   });

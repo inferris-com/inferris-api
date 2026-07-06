@@ -2,12 +2,14 @@ import { int8ToStringOrNull, int8ToStringOrDefault, int8ToString } from "../../s
 import type {
   PlayerBadgeRow,
   PlayerDetailsRecord,
+  PlayerNicknameRecord,
   PlayerProfileRow,
   PlayerRankRow,
   PlayerSummaryRecord,
 } from "./player.repository.js";
 import type {
   PlayerBadgeAssignmentResponse,
+  PlayerNicknameResponse,
   PlayerProfileResponse,
   PlayerRankAssignmentResponse,
   PlayerResponse,
@@ -17,7 +19,15 @@ import type {
 export function toPlayerSummaryResponse(row: PlayerSummaryRecord): PlayerSummaryResponse {
   return {
     id: row.id,
+    mojangId: row.mojang_id,
+    actorId: row.actor_id,
     username: row.username,
+    activeNickname: row.active_nickname
+      ? {
+          nickname: row.active_nickname,
+          coverRankKey: row.active_nickname_cover_rank_key,
+        }
+      : null,
     flags: int8ToStringOrDefault(row.flags, "0"),
     orbs: int8ToStringOrDefault(row.orbs, "0"),
     chatChannel: row.active_channel_key,
@@ -29,7 +39,15 @@ export function toPlayerResponse(input: PlayerDetailsRecord): PlayerResponse {
 
   return {
     id: player.id,
+    mojangId: player.mojang_id,
+    actorId: player.actor_id,
     username: player.username,
+    activeNickname: player.active_nickname
+      ? {
+          nickname: player.active_nickname,
+          coverRankKey: player.active_nickname_cover_rank_key,
+        }
+      : null,
     flags: int8ToStringOrDefault(player.flags, "0"),
     orbs: int8ToStringOrDefault(player.orbs, "0"),
     chatChannel: player.active_channel_key,
@@ -87,5 +105,19 @@ export function toPlayerBadgeAssignmentResponse(
     badgeId: input.badge_id,
     earnedAtMs: int8ToString(input.earned_at_ms),
     source: input.source,
+  };
+}
+
+export function toPlayerNicknameResponse(input: PlayerNicknameRecord): PlayerNicknameResponse {
+  return {
+    id: input.id,
+    playerId: input.player_id,
+    nickname: input.nickname,
+    coverRankKey: input.cover_rank_key,
+    meta: input.meta,
+    isActive: input.is_active,
+    revokedByActorId: input.revoked_by_actor_id,
+    createdAtMs: int8ToString(input.created_at_ms),
+    revokedAtMs: int8ToStringOrNull(input.revoked_at_ms),
   };
 }

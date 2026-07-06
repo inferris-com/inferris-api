@@ -34,6 +34,12 @@ export type PrivilegedRecord = {
   role: UserPrivilegeRole;
 };
 
+export type CurrentPlayerSessionRecord = {
+  playerId: string;
+  serverId: string;
+  sessionEventId: string;
+};
+
 export type AuditInput = {
   actorId: string | null;
   subjectActorId?: string | null;
@@ -156,7 +162,8 @@ export class AuthRepository {
   async actorHasMinecraftPermission(actorId: string, permissionKey: string): Promise<boolean> {
     const rules = await this.db
       .selectFrom("actors")
-      .innerJoin("player_ranks", "player_ranks.player_id", "actors.player_id")
+      .innerJoin("players", "players.actor_id", "actors.id")
+      .innerJoin("player_ranks", "player_ranks.player_id", "players.id")
       .innerJoin("ranks", "ranks.key", "player_ranks.rank_key")
       .innerJoin("permission_policies", "permission_policies.rank_key", "ranks.key")
       .innerJoin("permission_nodes", "permission_nodes.id", "permission_policies.permission_id")
@@ -177,6 +184,22 @@ export class AuthRepository {
     }
 
     return matchingEffects.includes("allow");
+  }
+
+  async findCurrentPlayerSession(playerId: string): Promise<CurrentPlayerSessionRecord | null> {
+    const row = await this.db
+      .selectFrom("player_sessions_current")
+      .select(["player_id", "server_id", "session_event_id"])
+      .where("player_id", "=", playerId)
+      .executeTakeFirst();
+
+    return row
+      ? {
+          playerId: row.player_id,
+          serverId: row.server_id,
+          sessionEventId: row.session_event_id,
+        }
+      : null;
   }
 
   async insertAuditLog(input: AuditInput): Promise<void> {

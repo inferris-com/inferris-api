@@ -17,6 +17,10 @@ export const serverNameParamsSchema = z.object({
   serverName: z.string().max(100).nonempty(),
 });
 
+export const serverPlayerSessionParamsSchema = serverIdParamsSchema.extend({
+  mojangId: z.string().min(1),
+});
+
 // POST
 export const createServerBodySchema = z
   .object({
@@ -41,6 +45,22 @@ export const createLockdownBodySchema = z
     isActive: z.boolean().optional().default(true),
     startsAtMs: BigIntStringSchema,
     endsAtMs: BigIntStringSchema.optional().nullable(),
+  })
+  .strict();
+
+export const createPlayerSessionBodySchema = z
+  .object({
+    mojangId: z.string().min(1),
+    username: z.string().min(1).max(32),
+  })
+  .strict();
+
+export const serverHeartbeatBodySchema = z
+  .object({
+    status: serverStatusTypeSchema.optional(),
+    port: z.int().min(1).max(65535).nullable().optional(),
+    version: z.string().optional(),
+    onlineMojangIds: z.array(z.string().min(1)).default([]),
   })
   .strict();
 
@@ -99,11 +119,14 @@ export type LockdownScopeType = z.infer<typeof lockdownScopeTypeSchema>;
 
 export type ServerIdParamsSchema = z.infer<typeof serverIdParamsSchema>;
 export type ServerNameParamsSchema = z.infer<typeof serverNameParamsSchema>;
+export type ServerPlayerSessionParamsSchema = z.infer<typeof serverPlayerSessionParamsSchema>;
 
 export type CreateServerBody = z.infer<typeof createServerBodySchema>;
 export type CreateLockdownBody = z.infer<typeof createLockdownBodySchema>;
+export type CreatePlayerSessionBody = z.infer<typeof createPlayerSessionBodySchema>;
 export type AuthenticatedCreateLockdownBody = CreateLockdownBody & { issuedByActorId: string };
 export type CreateLockdownInput = ServerIdParamsSchema & AuthenticatedCreateLockdownBody;
+export type ServerHeartbeatBody = z.infer<typeof serverHeartbeatBodySchema>;
 export type UpdateServerBody = z.infer<typeof updateServerBodySchema>;
 export type ReplaceServerAccessBody = z.infer<typeof replaceServerAccessBodySchema>;
 export type UpdateLockdownBody = z.infer<typeof updateLockdownBodySchema>;

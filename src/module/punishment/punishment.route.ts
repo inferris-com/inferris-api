@@ -4,8 +4,8 @@ import type { ParamsDictionary } from "express-serve-static-core";
 import {
   auditMutation,
   authorize,
-  getActingActorId,
-  requireActingActor,
+  getRequestActorId,
+  requireActor,
 } from "../auth/auth.middleware.js";
 import type { AuthRepository } from "../auth/auth.repository.js";
 import { validateRequest } from "../../middleware/validation.js";
@@ -56,7 +56,7 @@ export function createPunishmentRouter(
     req,
     res,
   ) => {
-    const punishment = await service.createPunishment(req.body, getActingActorId(req) ?? "");
+    const punishment = await service.createPunishment(req.body, getRequestActorId(req) ?? "");
     const body: ApiSuccess<PunishmentResponse> = { data: punishment };
 
     res.status(201).json(body);
@@ -70,7 +70,7 @@ export function createPunishmentRouter(
     const punishment = await service.revokePunishment(
       req.params.punishmentId,
       req.body,
-      getActingActorId(req) ?? "",
+      getRequestActorId(req) ?? "",
     );
     const body: ApiSuccess<PunishmentResponse> = { data: punishment };
 
@@ -92,7 +92,7 @@ export function createPunishmentRouter(
   router.post(
     "/",
     writePunishments,
-    requireActingActor(authRepository),
+    requireActor(),
     auditMutation(authRepository, "punishments.create"),
     validateRequest({ body: createPunishmentBodySchema }),
     createPunishment,
@@ -100,7 +100,7 @@ export function createPunishmentRouter(
   router.post(
     "/:punishmentId/revoke",
     writePunishments,
-    requireActingActor(authRepository),
+    requireActor(),
     auditMutation(authRepository, "punishments.revoke"),
     validateRequest({ params: punishmentIdParamsSchema, body: revokePunishmentBodySchema }),
     revokePunishment,

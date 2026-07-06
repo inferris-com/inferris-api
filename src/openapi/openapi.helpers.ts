@@ -14,13 +14,6 @@ export const userOrServiceSecurity: NonNullable<RouteConfig["security"]> = [
   ...serviceSecurity,
 ];
 
-export const actingActorHeaderSchema = z.object({
-  "x-inferris-actor-id": z
-    .guid()
-    .optional()
-    .describe("Acting actor UUID. Required for API-key requests to executor-stamped mutations."),
-});
-
 const responseEnvelopeSchema = z
   .object({
     data: z.unknown(),

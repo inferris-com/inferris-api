@@ -5,6 +5,10 @@ export const playerIdParamsSchema = z.object({
   playerId: z.guid({ message: "Invalid player UUID format." }),
 });
 
+export const playerMojangIdParamsSchema = z.object({
+  mojangId: z.guid({ message: "Invalid Mojang UUID format." }),
+});
+
 export const playerRankAssignmentParamsSchema = playerIdParamsSchema.extend({
   groupKey: z.string().trim().min(1).max(64),
   rankKey: z.string().trim().min(1).max(64),
@@ -64,7 +68,9 @@ export const decodePlayerFlagsQuerySchema = z
 
 export const createPlayerBodySchema = z
   .object({
-    id: z.guid(),
+    id: z.guid().optional(),
+
+    mojangId: z.guid(),
 
     username: UsernameSchema,
 
@@ -122,6 +128,14 @@ export const createPlayerBadgeAssignmentBodySchema = z
   })
   .strict();
 
+export const assignPlayerNicknameBodySchema = z
+  .object({
+    nickname: UsernameSchema,
+    coverRankKey: z.string().trim().min(1).max(30).nullable().optional(),
+    meta: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+
 export const deletePlayerQuerySchema = z
   .object({
     hard: z
@@ -132,6 +146,7 @@ export const deletePlayerQuerySchema = z
   .strict();
 
 export type PlayerIdParams = z.infer<typeof playerIdParamsSchema>;
+export type PlayerMojangIdParams = z.infer<typeof playerMojangIdParamsSchema>;
 export type PlayerRankAssignmentParams = z.infer<typeof playerRankAssignmentParamsSchema>;
 export type PlayerBadgeAssignmentParams = z.infer<typeof playerBadgeAssignmentParamsSchema>;
 
@@ -143,6 +158,7 @@ export type DeletePlayerQuery = z.infer<typeof deletePlayerQuerySchema>;
 
 export type CreatePlayerBody = z.infer<typeof createPlayerBodySchema>;
 export type CreatePlayerBadgeAssignmentBody = z.infer<typeof createPlayerBadgeAssignmentBodySchema>;
+export type AssignPlayerNicknameBody = z.infer<typeof assignPlayerNicknameBodySchema>;
 export type ReplaceRankAssignmentBody = z.infer<typeof replacePlayerRankAssignmentBodySchema>;
 export type ReplaceRankAssignmentInput = ReplaceRankAssignmentBody & {
   assignedByActorId: string | null;

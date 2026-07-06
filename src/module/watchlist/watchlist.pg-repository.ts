@@ -176,23 +176,23 @@ export class WatchlistPgRepository {
     }
 
     const row = await this.db
-      .selectFrom("actors")
-      .select("id")
-      .where("player_id", "=", playerId)
+      .selectFrom("players")
+      .select("actor_id")
+      .where("id", "=", playerId)
       .executeTakeFirst();
 
-    return row?.id ?? null;
+    return row?.actor_id ?? null;
   }
 
   private baseSelect() {
     return this.db
       .selectFrom("actor_watchlist_entries")
       .innerJoin("actors", "actors.id", "actor_watchlist_entries.subject_actor_id")
-      .leftJoin("players", "players.id", "actors.player_id")
+      .leftJoin("players", "players.actor_id", "actors.id")
       .select([
         "actor_watchlist_entries.id",
         "actor_watchlist_entries.subject_actor_id",
-        "actors.player_id as subject_player_id",
+        "players.id as subject_player_id",
         "players.username as subject_username",
         "actor_watchlist_entries.added_by_actor_id",
         "actor_watchlist_entries.reason",
@@ -216,11 +216,11 @@ async function loadEntryById(
   return db
     .selectFrom("actor_watchlist_entries")
     .innerJoin("actors", "actors.id", "actor_watchlist_entries.subject_actor_id")
-    .leftJoin("players", "players.id", "actors.player_id")
+    .leftJoin("players", "players.actor_id", "actors.id")
     .select([
       "actor_watchlist_entries.id",
       "actor_watchlist_entries.subject_actor_id",
-      "actors.player_id as subject_player_id",
+      "players.id as subject_player_id",
       "players.username as subject_username",
       "actor_watchlist_entries.added_by_actor_id",
       "actor_watchlist_entries.reason",
@@ -276,15 +276,7 @@ async function setWatchlistedFlag(
         : sql`(players.flags & ~${bit.toString()}::bigint)`,
     })
     .where((eb) =>
-      eb(
-        "players.id",
-        "in",
-        eb
-          .selectFrom("actors")
-          .select("player_id")
-          .where("actors.id", "=", subjectActorId)
-          .where("actors.player_id", "is not", null),
-      ),
+      eb("players.actor_id", "=", subjectActorId),
     )
     .execute();
 }

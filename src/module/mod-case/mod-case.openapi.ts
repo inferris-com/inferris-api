@@ -1,7 +1,6 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
-  actingActorHeaderSchema,
   userOrServiceSecurity,
   jsonBody,
   listResponse,
@@ -34,7 +33,6 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
     security: userOrServiceSecurity,
     summary: "Create a moderation case",
     request: {
-      headers: actingActorHeaderSchema,
       body: { required: true, content: { "application/json": jsonBody(createModCaseBodySchema) } },
     },
     responses: { "201": successResponse("Moderation case created"), ...standardErrorResponses },
@@ -57,7 +55,6 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
     security: userOrServiceSecurity,
     summary: "Update a moderation case",
     request: {
-      headers: actingActorHeaderSchema,
       params: modCaseIdParamsSchema,
       body: { required: true, content: { "application/json": jsonBody(updateModCaseBodySchema) } },
     },
@@ -81,7 +78,6 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
     security: userOrServiceSecurity,
     summary: "Add a moderation case actor",
     request: {
-      headers: actingActorHeaderSchema,
       params: modCaseIdParamsSchema,
       body: {
         required: true,

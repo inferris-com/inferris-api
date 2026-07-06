@@ -10,7 +10,12 @@ import { registerAppRoutes } from "./app/app.routes.js";
 import { db } from "./db/index.js";
 import { errorHandler } from "./error/app-error.js";
 import { logger } from "./logger.js";
-import { connectRedis, disconnectRedis } from "./redis/index.js";
+import {
+  connectRedis,
+  createRedisClient,
+  disconnectRedis,
+  type RedisClient,
+} from "./redis/index.js";
 import { openApiDocument } from "./openapi/openapi.js";
 
 type ServerProps = {
@@ -57,9 +62,13 @@ export function createApp(dependencies = createAppDependencies()) {
 }
 
 export async function startServer({ host = "0.0.0.0", port = 3000 }: ServerProps) {
-  await connectRedis();
+  const chatMessageWorkerRedis = createRedisClient();
 
-  const dependencies = createAppDependencies();
+  await Promise.all([connectRedis(), connectRedis(chatMessageWorkerRedis)]);
+
+  const dependencies = createAppDependencies({
+    chatMessageWorkerRedisClient: chatMessageWorkerRedis,
+  });
   const app = createApp(dependencies);
   const backgroundRuntime = createBackgroundRuntime(dependencies);
   backgroundRuntime.start();
@@ -68,19 +77,25 @@ export async function startServer({ host = "0.0.0.0", port = 3000 }: ServerProps
     console.log(`Listening on ${host}:${port}`);
   });
 
-  registerShutdown(server, backgroundRuntime);
+  registerShutdown(server, backgroundRuntime, chatMessageWorkerRedis);
 
   return server;
 }
 
-function registerShutdown(server: HttpServer, backgroundRuntime: BackgroundRuntime) {
+function registerShutdown(
+  server: HttpServer,
+  backgroundRuntime: BackgroundRuntime,
+  chatMessageWorkerRedis: RedisClient,
+) {
   const shutdown = (signal: NodeJS.Signals) => {
     logger.info({ signal }, "Shutting down server");
 
     void backgroundRuntime
       .stop()
       .then(() => closeServer(server))
-      .then(() => Promise.all([disconnectRedis(), db.destroy()]))
+      .then(() =>
+        Promise.all([disconnectRedis(chatMessageWorkerRedis), disconnectRedis(), db.destroy()]),
+      )
       .then(() => {
         process.exit(0);
       })

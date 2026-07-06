@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import {
   authorize,
-  requireActingActor,
+  requireActor,
   requireMinecraftPermission,
 } from "../../../src/module/auth/auth.middleware.js";
 import type { AuthRepository } from "../../../src/module/auth/auth.repository.js";
@@ -41,7 +41,7 @@ describe("auth middleware", () => {
     const repo = { insertAuditLog } as unknown as AuthRepository;
     const req = {
       auth: {
-        principalType: "minecraft_actor",
+        principalType: "minecraft_session",
         principalId: "minecraft-actor-1",
         actorId: "00000000-0000-0000-0000-000000000005",
         platform: "minecraft",
@@ -63,44 +63,13 @@ describe("auth middleware", () => {
     expect(next).toHaveBeenCalledWith();
   });
 
-  test("requireActingActor requires an acting actor header for API keys with an owner actor", async () => {
-    const actorExists = jest.fn<(...args: unknown[]) => Promise<unknown>>();
-    const repo = { actorExists } as unknown as AuthRepository;
-    const req = {
-      auth: {
-        principalType: "argus_api_key",
-        principalId: "argus-key-1",
-        actorId: "00000000-0000-0000-0000-000000000005",
-        platform: "argus",
-        apiKey: {
-          id: "argus-key-1",
-          scopes: ["moderation:write"],
-          isSuperKey: false,
-        },
-      },
-      header: jest.fn<(...args: unknown[]) => unknown>().mockReturnValue(undefined),
-    } as unknown as Request;
-    const next = jest.fn() as NextFunction;
-
-    await requireActingActor(repo)(req, {} as Response, next);
-
-    expect(req.auth?.actingActorId).toBeUndefined();
-    expect(actorExists).not.toHaveBeenCalled();
-    expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({
-        code: "ACTING_ACTOR_REQUIRED",
-        message: "X-Inferris-Actor-Id is required for API key requests",
-      }),
-    );
-  });
-
-  test("requireActingActor still requires an acting actor header for actorless API keys", async () => {
-    const repo = {} as AuthRepository;
+  test("requireActor rejects service credentials without a resolved actor", () => {
     const req = {
       auth: {
         principalType: "server_api_key",
         principalId: "server-key-1",
         actorId: null,
+        credentialOwnerActorId: "00000000-0000-0000-0000-000000000005",
         platform: "minecraft",
         apiKey: {
           id: "server-key-1",
@@ -108,22 +77,41 @@ describe("auth middleware", () => {
           isSuperKey: false,
         },
       },
-      header: jest.fn<(...args: unknown[]) => unknown>().mockReturnValue(undefined),
     } as unknown as Request;
     const next = jest.fn() as NextFunction;
 
-    await requireActingActor(repo)(req, {} as Response, next);
+    requireActor()(req, {} as Response, next);
 
-    expect(req.auth?.actingActorId).toBeUndefined();
     expect(next).toHaveBeenCalledWith(
       expect.objectContaining({
-        code: "ACTING_ACTOR_REQUIRED",
-        message: "X-Inferris-Actor-Id is required for API key requests",
+        code: "ACTOR_REQUIRED",
+        message: "This endpoint requires an actor-bearing credential.",
       }),
     );
   });
 
-  test("requireMinecraftPermission evaluates the acting actor", async () => {
+  test("requireActor accepts actor-bearing credentials", () => {
+    const req = {
+      auth: {
+        principalType: "service_actor_api_key",
+        principalId: "service-key-1",
+        actorId: "00000000-0000-0000-0000-000000000006",
+        platform: "minecraft",
+        apiKey: {
+          id: "service-key-1",
+          scopes: ["moderation:write"],
+          isSuperKey: false,
+        },
+      },
+    } as unknown as Request;
+    const next = jest.fn() as NextFunction;
+
+    requireActor()(req, {} as Response, next);
+
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  test("requireMinecraftPermission evaluates the resolved actor", async () => {
     const actorHasMinecraftPermission = jest
       .fn<(...args: unknown[]) => Promise<unknown>>()
       .mockResolvedValue(true);
@@ -136,8 +124,8 @@ describe("auth middleware", () => {
       auth: {
         principalType: "server_api_key",
         principalId: "server-key-1",
-        actorId: "00000000-0000-0000-0000-000000000005",
-        actingActorId: "00000000-0000-0000-0000-000000000006",
+        actorId: "00000000-0000-0000-0000-000000000006",
+        credentialOwnerActorId: "00000000-0000-0000-0000-000000000005",
         platform: "minecraft",
         apiKey: {
           id: "server-key-1",

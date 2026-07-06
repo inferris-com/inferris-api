@@ -4,6 +4,36 @@ import { ServerNotFoundError } from "../../src/module/server/server.errors.js";
 import { createTestApp, ids } from "./app-test-utils.js";
 
 describe("server and lockdown routes", () => {
+  test("GET /servers returns list envelope for plugin cache warmup", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.server.listServers.mockResolvedValue([
+      {
+        id: ids.server,
+        name: "lobby",
+        type: "paper",
+        environment: "development",
+        status: "online",
+      },
+    ]);
+
+    const response = await request.get("/servers").set("Authorization", "ApiKey server-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: [
+        {
+          id: ids.server,
+          name: "lobby",
+          type: "paper",
+          environment: "development",
+          status: "online",
+        },
+      ],
+      meta: { count: 1 },
+    });
+    expect(dependencies.services.server.listServers).toHaveBeenCalledWith();
+  });
+
   test("POST /servers/register registers by stable server name", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.server.registerServer.mockResolvedValue({
@@ -103,18 +133,17 @@ describe("server and lockdown routes", () => {
     });
   });
 
-  test("POST /servers/:serverId/lockdown uses API-key acting actor", async () => {
+  test("POST /servers/:serverId/lockdown uses service actor API-key owner", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.server.createLockdown.mockResolvedValue({
       id: "lockdown-1",
       serverId: ids.server,
-      issuedByActorId: ids.actingActor,
+      issuedByActorId: ids.apiKeyOwnerActor,
     });
 
     const response = await request
       .post(`/servers/${ids.server}/lockdown`)
-      .set("Authorization", "ApiKey server-token")
-      .set("X-Inferris-Actor-Id", ids.actingActor)
+      .set("Authorization", "ApiKey service-actor-token")
       .send({
         scope: "local",
         requiredRankKey: "moderator",
@@ -129,7 +158,7 @@ describe("server and lockdown routes", () => {
       reason: "Maintenance",
       startsAtMs: "1000",
       isActive: true,
-      issuedByActorId: ids.actingActor,
+      issuedByActorId: ids.apiKeyOwnerActor,
     });
   });
 

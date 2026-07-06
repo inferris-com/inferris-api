@@ -6,8 +6,8 @@ import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.
 import {
   auditMutation,
   authorize,
-  getActingActorId,
-  requireActingActor,
+  getRequestActorId,
+  requireActor,
 } from "../auth/auth.middleware.js";
 import type { AuthRepository } from "../auth/auth.repository.js";
 import type { ReportCommentResponse, ReportResponse } from "./report.response-types.js";
@@ -71,7 +71,7 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
     const report = await service.updateReport(
       req.params.reportId,
       req.body,
-      getActingActorId(req) ?? "",
+      getRequestActorId(req) ?? "",
     );
     const body: ApiSuccess<ReportResponse> = { data: report };
 
@@ -95,7 +95,7 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
     const comment = await service.createComment(
       req.params.reportId,
       req.body,
-      getActingActorId(req) ?? "",
+      getRequestActorId(req) ?? "",
     );
     const body: ApiSuccess<ReportCommentResponse> = { data: comment };
 
@@ -124,7 +124,7 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
   router.patch(
     "/:reportId",
     manageReports,
-    requireActingActor(authRepository),
+    requireActor(),
     auditMutation(authRepository, "reports.update"),
     validateRequest({ params: reportIdParamsSchema, body: updateReportBodySchema }),
     updateReport,
@@ -138,7 +138,7 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
   router.post(
     "/:reportId/comments",
     manageReports,
-    requireActingActor(authRepository),
+    requireActor(),
     auditMutation(authRepository, "reports.comments.create"),
     validateRequest({ params: reportIdParamsSchema, body: createReportCommentBodySchema }),
     createComment,

@@ -1,16 +1,27 @@
 import type { Selectable } from "kysely";
 
-import type { PlayerBadges, PlayerProfiles, PlayerRanks, Players } from "../../db/types.js";
+import type {
+  PlayerBadges,
+  PlayerNicknames,
+  PlayerProfiles,
+  PlayerRanks,
+  Players,
+} from "../../db/types.js";
 import type { CreatePlayerBody, ListPlayersQuery, UpdatePlayerBody } from "./player.schemas.js";
 
 export type PlayerSummaryRecord = Pick<
   Selectable<Players>,
-  "id" | "username" | "flags" | "orbs" | "active_channel_key"
->;
+  "id" | "mojang_id" | "actor_id" | "username" | "flags" | "orbs" | "active_channel_key"
+> & {
+  active_nickname: string | null;
+  active_nickname_cover_rank_key: string | null;
+};
 
 export type PlayerRecord = Pick<
   Selectable<Players>,
   | "id"
+  | "mojang_id"
+  | "actor_id"
   | "username"
   | "flags"
   | "orbs"
@@ -18,6 +29,13 @@ export type PlayerRecord = Pick<
   | "last_server_id"
   | "created_at_ms"
   | "last_seen_at_ms"
+> & {
+  active_nickname: string | null;
+  active_nickname_cover_rank_key: string | null;
+};
+export type PlayerIdentityRecord = Pick<
+  Selectable<Players>,
+  "id" | "mojang_id" | "actor_id" | "username"
 >;
 
 export type PlayerProfileRecord = Pick<
@@ -28,6 +46,7 @@ export type PlayerProfileRecord = Pick<
 export type PlayerRankAssignmentRecord = Pick<Selectable<PlayerRanks>, "group_key" | "rank_key">;
 
 export type PlayerBadgeAssignmentRecord = Pick<Selectable<PlayerBadges>, "badge_id">;
+export type PlayerNicknameRecord = Selectable<PlayerNicknames>;
 
 export type PlayerDetailsRecord = {
   player: PlayerRecord;

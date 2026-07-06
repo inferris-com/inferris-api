@@ -1,7 +1,6 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import {
-  actingActorHeaderSchema,
   userOrServiceSecurity,
   jsonBody,
   listResponse,
@@ -56,7 +55,6 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     security: userOrServiceSecurity,
     summary: "Update a report",
     request: {
-      headers: actingActorHeaderSchema,
       params: reportIdParamsSchema,
       body: { required: true, content: { "application/json": jsonBody(updateReportBodySchema) } },
     },
@@ -80,7 +78,6 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     security: userOrServiceSecurity,
     summary: "Create a report comment",
     request: {
-      headers: actingActorHeaderSchema,
       params: reportIdParamsSchema,
       body: {
         required: true,

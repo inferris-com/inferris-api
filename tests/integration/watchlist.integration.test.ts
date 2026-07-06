@@ -41,7 +41,7 @@ describe("watchlist routes", () => {
     );
   });
 
-  test("POST /watchlist stamps the acting actor and audits the mutation", async () => {
+  test("POST /watchlist stamps service actor API-key owner and audits the mutation", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.watchlist.addEntry.mockResolvedValue({
       id: ids.watchlist,
@@ -52,8 +52,7 @@ describe("watchlist routes", () => {
 
     const response = await request
       .post("/watchlist")
-      .set("Authorization", "ApiKey server-token")
-      .set("X-Inferris-Actor-Id", ids.actingActor)
+      .set("Authorization", "ApiKey service-actor-token")
       .send({
         subjectActorId: ids.actor,
         reason: "Testing",
@@ -61,18 +60,17 @@ describe("watchlist routes", () => {
       });
 
     expect(response.status).toBe(201);
-    expect(dependencies.authRepository.actorExists).toHaveBeenCalledWith(ids.actingActor);
     expect(dependencies.services.watchlist.addEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         subjectActorId: ids.actor,
         reason: "Testing",
         severity: "medium",
       }),
-      ids.actingActor,
+      ids.apiKeyOwnerActor,
     );
     expect(dependencies.authRepository.insertAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({
-        actorId: ids.actingActor,
+        actorId: ids.apiKeyOwnerActor,
         subjectActorId: ids.apiKeyOwnerActor,
         action: "watchlist.add",
       }),

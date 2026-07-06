@@ -1,7 +1,10 @@
 import {
   BadgeNotFoundError,
   PlayerAlreadyExistsError,
+  PlayerNicknameConflictError,
+  PlayerNicknameNotFoundError,
   PlayerNotFoundError,
+  RankNotFoundError,
 } from "./player.errors.js";
 import {
   encodePlayerFlags,
@@ -13,6 +16,7 @@ import {
 } from "./player-flags.js";
 import {
   toPlayerBadgeAssignmentResponse,
+  toPlayerNicknameResponse,
   toPlayerProfileResponse,
   toPlayerRankAssignmentResponse,
   toPlayerResponse,
@@ -21,6 +25,7 @@ import {
 import type { DeletePlayerOptions } from "./player.repository.js";
 import type {
   PlayerBadgeAssignmentResponse,
+  PlayerNicknameResponse,
   PlayerProfileResponse,
   PlayerRankAssignmentResponse,
   PlayerResponse,
@@ -29,6 +34,7 @@ import type {
 import type {
   CreatePlayerBody,
   CreatePlayerBadgeAssignmentBody,
+  AssignPlayerNicknameBody,
   DecodePlayerFlagsQuery,
   EncodePlayerFlagsQuery,
   ListPlayersQuery,
@@ -117,10 +123,32 @@ export class PlayerService {
     const result = await this.repository.createPlayer(input);
 
     if (result.status === "player_exists") {
-      throw new PlayerAlreadyExistsError(input.id);
+      throw new PlayerAlreadyExistsError(input.mojangId);
     }
 
     return toPlayerResponse(result.player);
+  }
+
+  async ensureMinecraftPlayerIdentity(input: {
+    mojangId: string;
+    username: string;
+    serverId: string;
+  }) {
+    return this.repository.ensureMinecraftPlayerIdentity(input);
+  }
+
+  async getPlayerIdentityByMojangId(mojangId: string) {
+    return this.repository.getPlayerIdentityByMojangId(mojangId);
+  }
+
+  async getPlayerByMojangId(mojangId: string): Promise<PlayerResponse> {
+    const identity = await this.repository.getPlayerIdentityByMojangId(mojangId);
+
+    if (!identity) {
+      throw new PlayerNotFoundError(mojangId);
+    }
+
+    return this.getPlayer(identity.id);
   }
 
   async updatePlayer(id: string, input: UpdatePlayerBody): Promise<PlayerResponse> {
@@ -177,6 +205,58 @@ export class PlayerService {
     }
 
     return toPlayerBadgeAssignmentResponse(result.badge);
+  }
+
+  async listNicknames(playerId: string): Promise<PlayerNicknameResponse[]> {
+    const nicknames = await this.repository.listNicknames(playerId);
+
+    if (!nicknames) {
+      throw new PlayerNotFoundError(playerId);
+    }
+
+    return nicknames.map(toPlayerNicknameResponse);
+  }
+
+  async assignNickname(
+    playerId: string,
+    input: AssignPlayerNicknameBody,
+  ): Promise<PlayerNicknameResponse> {
+    const result = await this.repository.assignNickname(playerId, {
+      nickname: input.nickname,
+      coverRankKey: input.coverRankKey ?? null,
+      meta: input.meta,
+    });
+
+    if (result.status === "player_not_found") {
+      throw new PlayerNotFoundError(playerId);
+    }
+
+    if (result.status === "rank_not_found") {
+      throw new RankNotFoundError(input.coverRankKey ?? "");
+    }
+
+    if (result.status === "nickname_conflict") {
+      throw new PlayerNicknameConflictError(input.nickname);
+    }
+
+    return toPlayerNicknameResponse(result.nickname);
+  }
+
+  async revokeActiveNickname(
+    playerId: string,
+    revokedByActorId: string,
+  ): Promise<PlayerNicknameResponse> {
+    const result = await this.repository.revokeActiveNickname(playerId, revokedByActorId);
+
+    if (result.status === "player_not_found") {
+      throw new PlayerNotFoundError(playerId);
+    }
+
+    if (result.status === "nickname_not_found") {
+      throw new PlayerNicknameNotFoundError(playerId);
+    }
+
+    return toPlayerNicknameResponse(result.nickname);
   }
 
   async deletePlayer(id: string, options: DeletePlayerOptions): Promise<void> {

@@ -3,18 +3,17 @@ import { describe, expect, test } from "@jest/globals";
 import { createTestApp, ids } from "./app-test-utils.js";
 
 describe("mod case routes", () => {
-  test("POST /mod-cases uses API-key acting actor", async () => {
+  test("POST /mod-cases uses service actor API-key owner", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.modCase.createModCase.mockResolvedValue({
       id: ids.modCase,
       title: "Spawn griefing",
-      openedByActorId: ids.actingActor,
+      openedByActorId: ids.apiKeyOwnerActor,
     });
 
     const response = await request
       .post("/mod-cases")
-      .set("Authorization", "ApiKey server-token")
-      .set("X-Inferris-Actor-Id", ids.actingActor)
+      .set("Authorization", "ApiKey service-actor-token")
       .send({ title: "Spawn griefing" });
 
     expect(response.status).toBe(201);
@@ -24,22 +23,21 @@ describe("mod case routes", () => {
         isSticky: false,
         actors: [],
       },
-      ids.actingActor,
+      ids.apiKeyOwnerActor,
     );
   });
 
-  test("PATCH /mod-cases/:caseId uses API-key acting actor", async () => {
+  test("PATCH /mod-cases/:caseId uses service actor API-key owner", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.modCase.updateModCase.mockResolvedValue({
       id: ids.modCase,
       status: "closed",
-      closedByActorId: ids.actingActor,
+      closedByActorId: ids.apiKeyOwnerActor,
     });
 
     const response = await request
       .patch(`/mod-cases/${ids.modCase}`)
-      .set("Authorization", "ApiKey server-token")
-      .set("X-Inferris-Actor-Id", ids.actingActor)
+      .set("Authorization", "ApiKey service-actor-token")
       .send({ status: "closed", resolution: "action_taken" });
 
     expect(response.status).toBe(200);
@@ -49,22 +47,21 @@ describe("mod case routes", () => {
         status: "closed",
         resolution: "action_taken",
       },
-      ids.actingActor,
+      ids.apiKeyOwnerActor,
     );
   });
 
-  test("POST /mod-cases/:caseId/actors uses API-key acting actor", async () => {
+  test("POST /mod-cases/:caseId/actors uses service actor API-key owner", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.modCase.createActor.mockResolvedValue({
       caseId: ids.modCase,
       actorId: ids.actor,
-      addedByActorId: ids.actingActor,
+      addedByActorId: ids.apiKeyOwnerActor,
     });
 
     const response = await request
       .post(`/mod-cases/${ids.modCase}/actors`)
-      .set("Authorization", "ApiKey server-token")
-      .set("X-Inferris-Actor-Id", ids.actingActor)
+      .set("Authorization", "ApiKey service-actor-token")
       .send({ actorId: ids.actor, role: "subject" });
 
     expect(response.status).toBe(201);
@@ -74,7 +71,7 @@ describe("mod case routes", () => {
         actorId: ids.actor,
         role: "subject",
       },
-      ids.actingActor,
+      ids.apiKeyOwnerActor,
     );
   });
 });

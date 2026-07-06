@@ -6,8 +6,8 @@ import type { ApiSuccess } from "../../shared/http/api-response.types.js";
 import {
   auditMutation,
   authorize,
-  getActingActorId,
-  requireActingActor,
+  getRequestActorId,
+  requireActor,
 } from "../auth/auth.middleware.js";
 import type { AuthRepository } from "../auth/auth.repository.js";
 import type { WatchlistEntryResponse } from "./watchlist.response-types.js";
@@ -55,7 +55,7 @@ export function createWatchlistRouter(
     req,
     res,
   ) => {
-    const entry = await service.addEntry(req.body, getActingActorId(req) ?? "");
+    const entry = await service.addEntry(req.body, getRequestActorId(req) ?? "");
     const body: ApiSuccess<WatchlistEntryResponse> = { data: entry };
     res.status(201).json(body);
   };
@@ -64,7 +64,7 @@ export function createWatchlistRouter(
     req,
     res,
   ) => {
-    const entry = await service.clearEntry(req.body, getActingActorId(req) ?? "");
+    const entry = await service.clearEntry(req.body, getRequestActorId(req) ?? "");
     const body: ApiSuccess<WatchlistEntryResponse> = { data: entry };
     res.json(body);
   };
@@ -84,7 +84,7 @@ export function createWatchlistRouter(
   router.post(
     "/",
     writeWatchlist,
-    requireActingActor(authRepository),
+    requireActor(),
     auditMutation(authRepository, "watchlist.add"),
     validateRequest({ body: addWatchlistBodySchema }),
     addEntry,
@@ -92,7 +92,7 @@ export function createWatchlistRouter(
   router.post(
     "/clear",
     writeWatchlist,
-    requireActingActor(authRepository),
+    requireActor(),
     auditMutation(authRepository, "watchlist.clear"),
     validateRequest({ body: clearWatchlistBodySchema }),
     clearEntry,

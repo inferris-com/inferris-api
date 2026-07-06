@@ -37,6 +37,19 @@ export class RankNotFoundError extends NotFoundError {
   }
 }
 
+export class PlayerNicknameNotFoundError extends NotFoundError {
+  readonly playerId: string;
+
+  constructor(playerId: string) {
+    super({
+      code: "PLAYER_NICKNAME_NOT_FOUND",
+      message: "Active player nickname not found.",
+    });
+
+    this.playerId = playerId;
+  }
+}
+
 export class BadgeNotFoundError extends NotFoundError {
   readonly badgeId: number;
 
@@ -60,6 +73,19 @@ export class PlayerAlreadyExistsError extends ConflictError {
     });
 
     this.playerId = playerId;
+  }
+}
+
+export class PlayerNicknameConflictError extends ConflictError {
+  readonly nickname: string;
+
+  constructor(nickname: string) {
+    super({
+      code: "PLAYER_NICKNAME_CONFLICT",
+      message: "Player nickname is already active.",
+    });
+
+    this.nickname = nickname;
   }
 }
 

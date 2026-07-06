@@ -599,6 +599,8 @@ const seed = {
       .values([
         {
           id: ids.players.dummy,
+          mojang_id: "30000000-0000-0000-0000-000000000003",
+          actor_id: ids.actors.dummy,
           username: "Dummy",
           flags: 33792,
           orbs: 0,
@@ -606,16 +608,22 @@ const seed = {
         },
         {
           id: ids.players.moderatorDummy,
+          mojang_id: "30000000-0000-0000-0000-000000000004",
+          actor_id: ids.actors.moderatorDummy,
           username: "ModDummy",
           flags: "1048583", // STAFF, VANISHED, NICKED, ARGUS_ACCESS
         },
         {
           id: ids.players.adminDummy,
+          mojang_id: "30000000-0000-0000-0000-000000000005",
+          actor_id: ids.actors.adminDummy,
           username: "AdminDummy",
           flags: "1048583", // STAFF, VANISHED, NICKED, ARGUS_ACCESS
         },
         {
           id: ids.players.refrizor,
+          mojang_id: "30000000-0000-0000-0000-000000000007",
+          actor_id: ids.actors.refrizor,
           username: "Refrizor",
           flags: 3,
           orbs: 500,
@@ -940,31 +948,6 @@ const seed = {
         },
       ])
       .execute();
-
-    // Set any actor–player links
-
-    const actorPlayerLinks = [
-      {
-        actorId: ids.actors.dummy,
-        playerId: ids.players.dummy,
-      },
-      {
-        actorId: ids.actors.refrizor,
-        playerId: ids.players.refrizor,
-      },
-      {
-        actorId: ids.actors.moderatorDummy,
-        playerId: ids.players.moderatorDummy,
-      },
-    ];
-
-    for (const link of actorPlayerLinks) {
-      await db
-        .updateTable("actors")
-        .set({ player_id: link.playerId })
-        .where("id", "=", link.actorId)
-        .execute();
-    }
 
     await db
       .insertInto("player_nicknames")

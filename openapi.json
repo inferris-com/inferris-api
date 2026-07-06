@@ -1741,6 +1741,9 @@
                   "id": {
                     "type": "string"
                   },
+                  "mojangId": {
+                    "type": "string"
+                  },
                   "username": {
                     "type": "string",
                     "minLength": 3,
@@ -1787,7 +1790,7 @@
                   }
                 },
                 "required": [
-                  "id",
+                  "mojangId",
                   "username"
                 ],
                 "additionalProperties": false
@@ -2340,6 +2343,164 @@
             "required": false,
             "name": "includeInactive",
             "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {}
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/players/by-mojang/{mojangId}": {
+      "get": {
+        "tags": [
+          "Players"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Get a player by Mojang UUID",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "mojangId",
+            "in": "path"
           }
         ],
         "responses": {
@@ -3728,6 +3889,382 @@
         }
       }
     },
+    "/players/{playerId}/nicknames": {
+      "get": {
+        "tags": [
+          "Players"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "List player nickname history",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "playerId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "total": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "limit": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        },
+                        "offset": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Players"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Assign a player nickname",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "playerId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nickname": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 16,
+                    "pattern": "^[a-zA-Z0-9_]+$"
+                  },
+                  "coverRankKey": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "maxLength": 30
+                  },
+                  "meta": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "nickname"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Nickname assigned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {}
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/players/{playerId}/ranks/{groupKey}/{rankKey}": {
       "put": {
         "tags": [
@@ -3770,16 +4307,6 @@
             "required": true,
             "name": "rankKey",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
-            },
-            "required": false,
-            "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations.",
-            "name": "x-inferris-actor-id",
-            "in": "header"
           }
         ],
         "requestBody": {
@@ -4257,7 +4784,339 @@
         }
       }
     },
+    "/players/{playerId}/nicknames/active": {
+      "delete": {
+        "tags": [
+          "Players"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Revoke the active player nickname",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "playerId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Nickname revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {}
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/servers": {
+      "get": {
+        "tags": [
+          "Servers"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "List servers",
+        "responses": {
+          "200": {
+            "description": "Successful list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "total": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "limit": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        },
+                        "offset": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "Servers"
@@ -4695,16 +5554,6 @@
             "required": true,
             "name": "serverId",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
-            },
-            "required": false,
-            "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations.",
-            "name": "x-inferris-actor-id",
-            "in": "header"
           }
         ],
         "requestBody": {
@@ -5307,6 +6156,387 @@
         "responses": {
           "204": {
             "description": "No content"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/servers/{serverId}/player-sessions": {
+      "post": {
+        "tags": [
+          "Servers"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Start a Minecraft player session",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "serverId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "mojangId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  }
+                },
+                "required": [
+                  "mojangId",
+                  "username"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Player session started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {}
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/servers/{serverId}/heartbeat": {
+      "post": {
+        "tags": [
+          "Servers"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Refresh server heartbeat and online Minecraft sessions",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "serverId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "online",
+                      "offline"
+                    ]
+                  },
+                  "port": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 65535
+                  },
+                  "version": {
+                    "type": "string"
+                  },
+                  "onlineMojangIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "default": []
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {}
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
           },
           "400": {
             "description": "Bad request",
@@ -6825,6 +8055,162 @@
         }
       }
     },
+    "/servers/{serverId}/player-sessions/{mojangId}": {
+      "delete": {
+        "tags": [
+          "Servers"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "End a Minecraft player session",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "serverId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "mojangId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "details": {}
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/permissions": {
       "get": {
         "tags": [
@@ -8201,18 +9587,6 @@
           }
         ],
         "summary": "Create a punishment",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
-            },
-            "required": false,
-            "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations.",
-            "name": "x-inferris-actor-id",
-            "in": "header"
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -8599,16 +9973,6 @@
             "required": true,
             "name": "punishmentId",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
-            },
-            "required": false,
-            "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations.",
-            "name": "x-inferris-actor-id",
-            "in": "header"
           }
         ],
         "requestBody": {
@@ -9408,16 +10772,6 @@
             "required": true,
             "name": "reportId",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
-            },
-            "required": false,
-            "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations.",
-            "name": "x-inferris-actor-id",
-            "in": "header"
           }
         ],
         "requestBody": {
@@ -9824,16 +11178,6 @@
             "required": true,
             "name": "reportId",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
-            },
-            "required": false,
-            "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations.",
-            "name": "x-inferris-actor-id",
-            "in": "header"
           }
         ],
         "requestBody": {
@@ -10269,18 +11613,6 @@
           }
         ],
         "summary": "Create a moderation case",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
-            },
-            "required": false,
-            "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations.",
-            "name": "x-inferris-actor-id",
-            "in": "header"
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -10694,16 +12026,6 @@
             "required": true,
             "name": "caseId",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
-            },
-            "required": false,
-            "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations.",
-            "name": "x-inferris-actor-id",
-            "in": "header"
           }
         ],
         "requestBody": {
@@ -11121,16 +12443,6 @@
             "required": true,
             "name": "caseId",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations."
-            },
-            "required": false,
-            "description": "Acting actor UUID. Required for API-key requests to executor-stamped mutations.",
-            "name": "x-inferris-actor-id",
-            "in": "header"
           }
         ],
         "requestBody": {

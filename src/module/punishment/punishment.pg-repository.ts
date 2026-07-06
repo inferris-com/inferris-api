@@ -32,9 +32,9 @@ export class PunishmentPgRepository {
             "punishments.subject_actor_id",
             "in",
             eb
-              .selectFrom("actors")
-              .select("id")
-              .where("actors.player_id", "=", query.subjectPlayerId ?? ""),
+              .selectFrom("players")
+              .select("actor_id")
+              .where("players.id", "=", query.subjectPlayerId ?? ""),
           ),
         ),
       )
@@ -115,12 +115,12 @@ export class PunishmentPgRepository {
 
   async findActorIdByPlayerId(playerId: string): Promise<string | null> {
     const row = await this.db
-      .selectFrom("actors")
-      .select("id")
-      .where("player_id", "=", playerId)
+      .selectFrom("players")
+      .select("actor_id")
+      .where("id", "=", playerId)
       .executeTakeFirst();
 
-    return row?.id ?? null;
+    return row?.actor_id ?? null;
   }
 
   async createPunishment(input: CreatePunishmentInput): Promise<Selectable<Punishments>> {

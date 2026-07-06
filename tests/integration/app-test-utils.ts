@@ -61,16 +61,20 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       encodeFlags: AsyncMock;
       decodeFlags: AsyncMock;
       getPlayer: AsyncMock;
+      getPlayerByMojangId: AsyncMock;
       getProfile: AsyncMock;
       listBadgeAssignments: AsyncMock;
+      listNicknames: AsyncMock;
       createPlayer: AsyncMock;
       updatePlayer: AsyncMock;
       updateProfile: AsyncMock;
       updateRankAssignment: AsyncMock;
       createBadgeAssignment: AsyncMock;
+      assignNickname: AsyncMock;
       deletePlayer: AsyncMock;
       deleteRankAssignment: AsyncMock;
       deleteBadgeAssignment: AsyncMock;
+      revokeActiveNickname: AsyncMock;
     };
     punishment: {
       listPunishments: AsyncMock;
@@ -87,6 +91,7 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       createComment: AsyncMock;
     };
     server: {
+      listServers: AsyncMock;
       registerServer: AsyncMock;
       createServer: AsyncMock;
       createLockdown: AsyncMock;
@@ -98,6 +103,9 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       getAccessPolicy: AsyncMock;
       getLockdownByServer: AsyncMock;
       getActiveGlobalLockdown: AsyncMock;
+      startPlayerSession: AsyncMock;
+      endPlayerSession: AsyncMock;
+      heartbeat: AsyncMock;
       deleteServer: AsyncMock;
       deletePolicy: AsyncMock;
       deleteLockdown: AsyncMock;
@@ -140,10 +148,23 @@ const unprivilegedModeratorAuth: AuthContext = {
 const serverApiKeyAuth: AuthContext = {
   principalType: "server_api_key",
   principalId: "server-key-1",
-  actorId: ids.apiKeyOwnerActor,
+  actorId: null,
   platform: "minecraft",
   apiKey: {
     id: "server-key-1",
+    scopes: ["*"],
+    isSuperKey: false,
+  },
+};
+
+const serviceActorApiKeyAuth: AuthContext = {
+  principalType: "service_actor_api_key",
+  principalId: "service-actor-key-1",
+  actorId: ids.apiKeyOwnerActor,
+  platform: "minecraft",
+  credentialOwnerActorId: ids.apiKeyOwnerActor,
+  apiKey: {
+    id: "service-actor-key-1",
     scopes: ["*"],
     isSuperKey: false,
   },
@@ -183,6 +204,12 @@ function testAuthenticate(): RequestHandler {
 
     if (authorization === "ApiKey server-token") {
       req.auth = structuredClone(serverApiKeyAuth);
+      next();
+      return;
+    }
+
+    if (authorization === "ApiKey service-actor-token") {
+      req.auth = structuredClone(serviceActorApiKeyAuth);
       next();
       return;
     }
@@ -249,16 +276,20 @@ export function createTestDependencies(): TestDependencies {
         encodeFlags: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         decodeFlags: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getPlayer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getPlayerByMojangId: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getProfile: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         listBadgeAssignments: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        listNicknames: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createPlayer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         updatePlayer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         updateProfile: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         updateRankAssignment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createBadgeAssignment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        assignNickname: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deletePlayer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deleteRankAssignment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deleteBadgeAssignment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        revokeActiveNickname: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
       punishment: {
         listPunishments: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
@@ -275,6 +306,7 @@ export function createTestDependencies(): TestDependencies {
         createComment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
       server: {
+        listServers: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         registerServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
@@ -286,6 +318,9 @@ export function createTestDependencies(): TestDependencies {
         getAccessPolicy: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getLockdownByServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getActiveGlobalLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        startPlayerSession: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        endPlayerSession: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        heartbeat: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deleteServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deletePolicy: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deleteLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),

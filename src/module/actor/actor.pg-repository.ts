@@ -24,9 +24,11 @@ export class ActorPgRepository {
   async findActorByPlayerId(id: string) {
     return await this.db.transaction().execute(async (trx) => {
       const actor = await trx
-        .selectFrom("actors")
-        .selectAll()
-        .where("player_id", "=", id)
+        .selectFrom("players")
+        .innerJoin("actors", "actors.id", "players.actor_id")
+        .selectAll("actors")
+        .select("players.id as player_id")
+        .where("players.id", "=", id)
         .executeTakeFirst();
 
       if (!actor) return null;
@@ -41,7 +43,6 @@ export class ActorPgRepository {
       const actorUpdate: {
         name?: string;
         type?: ActorType;
-        player_id?: string;
         created_at_ms?: string;
         last_updated_at_ms?: string;
       } = {};
@@ -51,9 +52,6 @@ export class ActorPgRepository {
       }
       if (input.type != undefined) {
         actorUpdate.type = input.type;
-      }
-      if (input.playerId != undefined) {
-        actorUpdate.player_id = input.playerId;
       }
       if (input.createdAtMs != undefined) {
         actorUpdate.created_at_ms = input.createdAtMs;
@@ -72,6 +70,14 @@ export class ActorPgRepository {
         .where("id", "=", id)
         .returningAll()
         .executeTakeFirst();
+
+      if (actor && input.playerId != undefined) {
+        await trx
+          .updateTable("players")
+          .set({ actor_id: actor.id })
+          .where("id", "=", input.playerId)
+          .executeTakeFirst();
+      }
 
       return actor ?? null;
     });

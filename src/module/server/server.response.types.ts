@@ -43,3 +43,18 @@ export type LockdownResponse = {
   startedAtMs: string;
   endsAtMs: string | null;
 };
+
+export type PlayerSessionResponse = {
+  playerId: string;
+  actorId: string;
+  mojangId: string;
+  serverId: string;
+  sessionEventId: string;
+  token: string;
+  expiresAtMs: string;
+};
+
+export type ServerHeartbeatResponse = {
+  refreshedMojangIds: string[];
+  missingMojangIds: string[];
+};

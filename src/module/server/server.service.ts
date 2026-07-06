@@ -4,23 +4,164 @@ import {
   ServerNotFoundError,
 } from "./server.errors.js";
 import { toAccessResponse, toLockdownResponse, toServerResponse } from "./server.mapper.js";
-import type { AccessResponse, LockdownResponse, ServerResponse } from "./server.response.types.js";
+import type {
+  AccessResponse,
+  LockdownResponse,
+  PlayerSessionResponse,
+  ServerHeartbeatResponse,
+  ServerResponse,
+} from "./server.response.types.js";
 import type { ServerPgRepository } from "./server.pg-repository.js";
 import type {
   AuthenticatedCreateLockdownBody,
+  CreatePlayerSessionBody,
   CreateServerBody,
   ReplaceServerAccessBody,
+  ServerHeartbeatBody,
   UpdateLockdownBody,
   UpdateServerBody,
 } from "./server.schemas.js";
+import type { RedisClient } from "../../redis/index.js";
+import { config } from "../../config.js";
+import { createMinecraftSessionToken } from "../auth/auth.crypto.js";
+import {
+  minecraftSessionPlayerKey,
+  minecraftSessionTokenKey,
+  type MinecraftSessionState,
+} from "../auth/auth.service.js";
+import type { PlayerService } from "../player/player.service.js";
 
 export class ServerService {
-  constructor(private readonly repo: ServerPgRepository) {}
+  constructor(
+    private readonly repo: ServerPgRepository,
+    private readonly redis: RedisClient,
+    private readonly players: PlayerService,
+  ) {}
 
   async registerServer(input: CreateServerBody): Promise<ServerResponse> {
     const server = await this.repo.registerServer(input);
 
     return toServerResponse(server);
+  }
+
+  async listServers(): Promise<ServerResponse[]> {
+    const servers = await this.repo.listServers();
+
+    return servers.map(toServerResponse);
+  }
+
+  async startPlayerSession(
+    serverId: string,
+    input: CreatePlayerSessionBody,
+  ): Promise<PlayerSessionResponse> {
+    const server = await this.repo.findServerById(serverId);
+    if (!server) {
+      throw new ServerNotFoundError(serverId);
+    }
+
+    const player = await this.players.ensureMinecraftPlayerIdentity({
+      mojangId: input.mojangId,
+      username: input.username,
+      serverId,
+    });
+    const session = await this.repo.startPlayerSession(serverId, {
+      playerId: player.id,
+      actorId: player.actor_id,
+      mojangId: player.mojang_id,
+    });
+
+    if (!session) {
+      throw new ServerNotFoundError(serverId);
+    }
+
+    const existingTokenHash = await this.redis.get(minecraftSessionPlayerKey(session.playerId));
+    if (existingTokenHash) {
+      await this.redis.del(minecraftSessionTokenKey(existingTokenHash));
+    }
+
+    const token = createMinecraftSessionToken();
+    const issuedAtMs = Date.now();
+    const state: MinecraftSessionState = {
+      actorId: session.actorId,
+      playerId: session.playerId,
+      mojangId: session.mojangId,
+      serverId: session.serverId,
+      sessionEventId: session.sessionEventId,
+      issuedAtMs,
+    };
+
+    await this.redis.set(minecraftSessionTokenKey(token.tokenHash), JSON.stringify(state), {
+      EX: config.minecraft.sessionTtlSeconds,
+    });
+    await this.redis.set(minecraftSessionPlayerKey(session.playerId), token.tokenHash, {
+      EX: config.minecraft.sessionTtlSeconds,
+    });
+
+    return {
+      ...session,
+      token: token.token,
+      expiresAtMs: (issuedAtMs + config.minecraft.sessionTtlSeconds * 1000).toString(),
+    };
+  }
+
+  async endPlayerSession(serverId: string, mojangId: string): Promise<void> {
+    const player = await this.players.getPlayerIdentityByMojangId(mojangId);
+    if (!player) {
+      return;
+    }
+
+    const session = await this.repo.endPlayerSession(
+      serverId,
+      {
+        playerId: player.id,
+        actorId: player.actor_id,
+        mojangId: player.mojang_id,
+      },
+      "disconnect",
+    );
+
+    if (!session) {
+      return;
+    }
+
+    const tokenHash = await this.redis.get(minecraftSessionPlayerKey(session.playerId));
+    if (tokenHash) {
+      await this.redis.del(minecraftSessionTokenKey(tokenHash));
+    }
+    await this.redis.del(minecraftSessionPlayerKey(session.playerId));
+  }
+
+  async heartbeat(serverId: string, input: ServerHeartbeatBody): Promise<ServerHeartbeatResponse> {
+    const sessions = await this.repo.heartbeat(serverId, input);
+
+    if (!sessions) {
+      throw new ServerNotFoundError(serverId);
+    }
+
+    const refreshedMojangIds: string[] = [];
+    const missing = new Set(input.onlineMojangIds);
+
+    for (const session of sessions) {
+      const playerKey = minecraftSessionPlayerKey(session.playerId);
+      const tokenHash = await this.redis.get(playerKey);
+
+      if (!tokenHash) {
+        continue;
+      }
+
+      await this.redis.expire(playerKey, config.minecraft.sessionTtlSeconds);
+      await this.redis.expire(
+        minecraftSessionTokenKey(tokenHash),
+        config.minecraft.sessionTtlSeconds,
+      );
+      refreshedMojangIds.push(session.mojangId);
+      missing.delete(session.mojangId);
+    }
+
+    return {
+      refreshedMojangIds,
+      missingMojangIds: [...missing],
+    };
   }
 
   async createServer(input: CreateServerBody): Promise<ServerResponse> {

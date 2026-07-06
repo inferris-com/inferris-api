@@ -78,12 +78,12 @@ export class ReportPgRepository {
 
   async findActorIdByPlayerId(playerId: string): Promise<string | null> {
     const row = await this.db
-      .selectFrom("actors")
-      .select("id")
-      .where("player_id", "=", playerId)
+      .selectFrom("players")
+      .select("actor_id")
+      .where("id", "=", playerId)
       .executeTakeFirst();
 
-    return row?.id ?? null;
+    return row?.actor_id ?? null;
   }
 
   async createReport(input: CreateReportInput): Promise<Selectable<Reports>> {
