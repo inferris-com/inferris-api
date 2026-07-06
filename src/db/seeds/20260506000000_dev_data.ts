@@ -120,6 +120,20 @@ const seed = {
           key: "collaborator",
           group_key: "staff",
           label: "Collaborator",
+          description: "Trusted project collaborator with limited staff access.",
+          visuals: {
+            version: 1,
+            tag: {
+              segments: [
+                { text: "[", color: "#4b5563" },
+                { text: "Collab", color: "#22c55e" },
+                { text: "]", color: "#4b5563" },
+              ],
+            },
+            username: {
+              color: "#22c55e",
+            },
+          },
           tier: 1,
           is_staff: true,
           is_active: true,
@@ -128,6 +142,20 @@ const seed = {
           key: "moderator",
           group_key: "staff",
           label: "Moderator",
+          description: "Community moderator responsible for player safety and enforcement.",
+          visuals: {
+            version: 1,
+            tag: {
+              segments: [
+                { text: "[", color: "#4b5563" },
+                { text: "Mod", color: "#38bdf8" },
+                { text: "]", color: "#4b5563" },
+              ],
+            },
+            username: {
+              color: "#38bdf8",
+            },
+          },
           tier: 2,
           is_staff: true,
           is_active: true,
@@ -136,6 +164,20 @@ const seed = {
           key: "admin",
           group_key: "staff",
           label: "Admin",
+          description: "Staff group. Authorized staff only.",
+          visuals: {
+            version: 1,
+            tag: {
+              segments: [
+                { text: "[", color: "#555555" },
+                { text: "Admin", color: "#ff5555" },
+                { text: "]", color: "#555555" },
+              ],
+            },
+            username: {
+              color: "#ff5555",
+            },
+          },
           tier: 3,
           is_staff: true,
           is_active: true,
@@ -144,6 +186,21 @@ const seed = {
           key: "supporter_i",
           group_key: "patron",
           label: "Supporter (I)",
+          description: "Entry supporter rank for players who help support the server.",
+          visuals: {
+            version: 1,
+            tag: {
+              segments: [
+                { text: "[", color: "#6b7280" },
+                { text: "Supporter", color: "#f59e0b" },
+                { text: " I", color: "#fbbf24" },
+                { text: "]", color: "#6b7280" },
+              ],
+            },
+            username: {
+              color: "#f59e0b",
+            },
+          },
           tier: 1,
           is_staff: false,
           is_active: true,
@@ -152,6 +209,21 @@ const seed = {
           key: "supporter_ii",
           group_key: "patron",
           label: "Supporter (II) (Disabled)",
+          description: "Legacy supporter rank. Currently disabled and unavailable for assignment.",
+          visuals: {
+            version: 1,
+            tag: {
+              segments: [
+                { text: "[", color: "#52525b" },
+                { text: "Supporter", color: "#a78bfa" },
+                { text: " II", color: "#c4b5fd" },
+                { text: "]", color: "#52525b" },
+              ],
+            },
+            username: {
+              color: "#a78bfa",
+            },
+          },
           tier: 2,
           is_staff: false,
           is_active: false,
@@ -666,6 +738,11 @@ const seed = {
           badge_id: ids.badges.inactive,
           source: "Seeding",
         },
+        {
+          player_id: ids.players.refrizor,
+          badge_id: ids.badges.dev,
+          source: "Seeding"
+        }
       ])
       .execute();
 
