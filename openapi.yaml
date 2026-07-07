@@ -5939,14 +5939,12 @@ paths:
           name: "limit"
           in: "query"
         - schema:
-            type: "integer"
-            exclusiveMinimum: 0
+            type: "string"
           required: false
           name: "beforeMs"
           in: "query"
         - schema:
-            type: "integer"
-            exclusiveMinimum: 0
+            type: "string"
           required: false
           name: "afterMs"
           in: "query"
@@ -6076,8 +6074,7 @@ paths:
                   minLength: 1
                   maxLength: 4000
                 occurredAtMs:
-                  type: "integer"
-                  exclusiveMinimum: 0
+                  type: "string"
                 verdict:
                   type: "string"
                   enum:
@@ -6183,8 +6180,7 @@ paths:
                         minLength: 1
                         maxLength: 4000
                       occurredAtMs:
-                        type: "integer"
-                        exclusiveMinimum: 0
+                        type: "string"
                       verdict:
                         type: "string"
                         enum:

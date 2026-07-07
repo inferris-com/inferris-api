@@ -9121,8 +9121,7 @@
           },
           {
             "schema": {
-              "type": "integer",
-              "exclusiveMinimum": 0
+              "type": "string"
             },
             "required": false,
             "name": "beforeMs",
@@ -9130,8 +9129,7 @@
           },
           {
             "schema": {
-              "type": "integer",
-              "exclusiveMinimum": 0
+              "type": "string"
             },
             "required": false,
             "name": "afterMs",
@@ -9329,8 +9327,7 @@
                     "maxLength": 4000
                   },
                   "occurredAtMs": {
-                    "type": "integer",
-                    "exclusiveMinimum": 0
+                    "type": "string"
                   },
                   "verdict": {
                     "type": "string",
@@ -9483,8 +9480,7 @@
                           "maxLength": 4000
                         },
                         "occurredAtMs": {
-                          "type": "integer",
-                          "exclusiveMinimum": 0
+                          "type": "string"
                         },
                         "verdict": {
                           "type": "string",
