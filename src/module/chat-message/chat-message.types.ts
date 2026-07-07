@@ -35,8 +35,8 @@ export type ChatMessageWriteInput = Omit<BufferedChatMessage, "ingestStreamId">;
 
 export type ChatMessageListFilters = {
   limit: number;
-  beforeMs?: number;
-  afterMs?: number;
+  beforeMs?: string;
+  afterMs?: string;
   channelKey?: string;
   originServerId?: string;
   actorId?: string;

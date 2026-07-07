@@ -6,14 +6,6 @@ const boolQuerySchema = z
   .union([z.boolean(), z.enum(["true", "false"])])
   .transform((value) => (typeof value === "boolean" ? value : value === "true"));
 
-const occurredAtMsSchema = z.coerce
-  .number()
-  .int()
-  .positive()
-  .refine((value) => Math.abs(Date.now() - value) <= config.chat.allowedClockSkewMs, {
-    message: `occurredAtMs is outside the allowed ${config.chat.allowedClockSkewMs}ms clock skew.`,
-  });
-
 export const messageVerdictSchema = z.enum(["allow", "warn", "deny"]);
 
 export const createChatMessageBodySchema = z
@@ -24,7 +16,7 @@ export const createChatMessageBodySchema = z
     originServerId: z.guid(),
     channelKey: z.string().min(1).max(30).default("global"),
     message: z.string().min(1).max(4000),
-    occurredAtMs: occurredAtMsSchema.optional(),
+    occurredAtMs: z.string().optional(),
     verdict: messageVerdictSchema.default("allow"),
     moderationReason: z.string().max(4000).optional().nullable(),
     moderationMetadata: z.record(z.string(), z.unknown()).optional().default({}),
@@ -45,8 +37,8 @@ export const createChatMessageBatchBodySchema = z
 export const listChatMessagesQuerySchema = z
   .object({
     limit: z.coerce.number().int().min(1).max(500).default(100),
-    beforeMs: z.coerce.number().int().positive().optional(),
-    afterMs: z.coerce.number().int().positive().optional(),
+    beforeMs: z.string().optional(),
+    afterMs: z.string().optional(),
     channelKey: z.string().min(1).max(30).optional(),
     originServerId: z.guid().optional(),
     actorId: z.guid().optional(),
