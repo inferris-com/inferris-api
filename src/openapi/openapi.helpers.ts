@@ -1,5 +1,7 @@
-import type {RouteConfig, ZodMediaTypeObject} from "@asteasolutions/zod-to-openapi";
+import type { RouteConfig, ZodMediaTypeObject } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
+
+import { apiErrorEnvelopeSchema } from "./envelope.schemas.js";
 
 export const userSecurity: NonNullable<RouteConfig["security"]> = [
   { bearerAuth: [] },
@@ -35,37 +37,43 @@ const listResponseEnvelopeSchema = z
   })
   .passthrough();
 
-const errorResponseSchema = z
-  .object({
-    error: z
-      .object({
-        message: z.string(),
-        code: z.string().optional(),
-        details: z.unknown().optional(),
-      })
-      .passthrough()
-      .optional(),
-  })
-  .passthrough();
-
 export function jsonBody(schema: z.ZodType): ZodMediaTypeObject {
   return { schema };
 }
 
-export function successResponse(description = "Successful response") {
+export function successResponse(schema: z.ZodType, description?: string): RouteConfig["responses"][string];
+export function successResponse(description?: string): RouteConfig["responses"][string];
+export function successResponse(
+  schemaOrDescription: z.ZodType | string = "Successful response",
+  description = "Successful response",
+) {
+  const schema = typeof schemaOrDescription === "string" ? responseEnvelopeSchema : schemaOrDescription;
+  const resolvedDescription =
+    typeof schemaOrDescription === "string" ? schemaOrDescription : description;
+
   return {
-    description,
+    description: resolvedDescription,
     content: {
-      "application/json": jsonBody(responseEnvelopeSchema),
+      "application/json": jsonBody(schema),
     },
   };
 }
 
-export function listResponse(description = "Successful list response") {
+export function listResponse(schema: z.ZodType, description?: string): RouteConfig["responses"][string];
+export function listResponse(description?: string): RouteConfig["responses"][string];
+export function listResponse(
+  schemaOrDescription: z.ZodType | string = "Successful list response",
+  description = "Successful list response",
+) {
+  const schema =
+    typeof schemaOrDescription === "string" ? listResponseEnvelopeSchema : schemaOrDescription;
+  const resolvedDescription =
+    typeof schemaOrDescription === "string" ? schemaOrDescription : description;
+
   return {
-    description,
+    description: resolvedDescription,
     content: {
-      "application/json": jsonBody(listResponseEnvelopeSchema),
+      "application/json": jsonBody(schema),
     },
   };
 }
@@ -74,7 +82,7 @@ export function errorResponse(description: string) {
   return {
     description,
     content: {
-      "application/json": jsonBody(errorResponseSchema),
+      "application/json": jsonBody(apiErrorEnvelopeSchema),
     },
   };
 }

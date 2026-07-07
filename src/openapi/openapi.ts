@@ -35,6 +35,7 @@ registry.registerPath({
   path: "/health",
   tags: ["System"],
   summary: "Check API health",
+  operationId: "getHealth",
   responses: {
     "200": {
       description: "API is healthy",

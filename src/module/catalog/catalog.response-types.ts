@@ -1,33 +1,48 @@
-export type GroupResponse = {
-  key: string;
-  label: string;
-  priority: number;
-  isStaff: boolean;
-  createdAtMs: string;
-  updatedAtMs: string | null;
-};
+import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import z from "zod";
 
-export type RankResponse = {
-  key: string;
-  groupKey: string | null;
-  label: string;
-  description: string | null;
-  displayTag: string | null;
-  usernameColorHex: string | null;
-  tier: number;
-  isStaff: boolean;
-  isActive: boolean;
-  createdAtMs: string;
-  updatedAtMs: string | null;
-};
+extendZodWithOpenApi(z);
 
-export type BadgeResponse = {
-  id: number;
-  key: string;
-  label: string;
-  description: string | null;
-  color: string | null;
-  emoji: string | null;
-  displayOrder: number;
-  isActive: boolean;
-};
+export const groupResponseSchema = z
+  .object({
+    key: z.string(),
+    label: z.string(),
+    priority: z.number().int(),
+    isStaff: z.boolean(),
+    createdAtMs: z.string(),
+    updatedAtMs: z.string().nullable(),
+  })
+  .openapi("GroupResponse");
+
+export const rankResponseSchema = z
+  .object({
+    key: z.string(),
+    groupKey: z.string().nullable(),
+    label: z.string(),
+    description: z.string().nullable(),
+    displayTag: z.string().nullable(),
+    usernameColorHex: z.string().nullable(),
+    tier: z.number().int(),
+    isStaff: z.boolean(),
+    isActive: z.boolean(),
+    createdAtMs: z.string(),
+    updatedAtMs: z.string().nullable(),
+  })
+  .openapi("RankResponse");
+
+export const badgeResponseSchema = z
+  .object({
+    id: z.number().int(),
+    key: z.string(),
+    label: z.string(),
+    description: z.string().nullable(),
+    color: z.string().nullable(),
+    emoji: z.string().nullable(),
+    displayOrder: z.number().int(),
+    isActive: z.boolean(),
+  })
+  .openapi("BadgeResponse");
+
+export type GroupResponse = z.infer<typeof groupResponseSchema>;
+export type RankResponse = z.infer<typeof rankResponseSchema>;
+export type BadgeResponse = z.infer<typeof badgeResponseSchema>;

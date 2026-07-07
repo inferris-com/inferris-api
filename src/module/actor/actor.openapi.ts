@@ -6,8 +6,12 @@ import {
   standardErrorResponses,
   successResponse,
 } from "../../openapi/openapi.helpers.js";
+import { successEnvelopeSchema } from "../../openapi/envelope.schemas.js";
 import { playerIdParamsSchema } from "../player/player.schemas.js";
+import { actorResponseSchema } from "./actor.response.types.js";
 import { actorIdParamsSchema, updateActorBodySchema } from "./actor.schemas.js";
+
+const actorEnvelopeSchema = successEnvelopeSchema("ActorEnvelope", actorResponseSchema);
 
 export function registerActorOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
@@ -16,8 +20,9 @@ export function registerActorOpenApi(registry: OpenAPIRegistry) {
     tags: ["Actors"],
     security: userOrServiceSecurity,
     summary: "Get an actor by player ID",
+    operationId: "getActorByPlayerId",
     request: { params: playerIdParamsSchema },
-    responses: { "200": successResponse(), ...standardErrorResponses },
+    responses: { "200": successResponse(actorEnvelopeSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -26,8 +31,9 @@ export function registerActorOpenApi(registry: OpenAPIRegistry) {
     tags: ["Actors"],
     security: userOrServiceSecurity,
     summary: "Get an actor",
+    operationId: "getActor",
     request: { params: actorIdParamsSchema },
-    responses: { "200": successResponse(), ...standardErrorResponses },
+    responses: { "200": successResponse(actorEnvelopeSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -36,10 +42,11 @@ export function registerActorOpenApi(registry: OpenAPIRegistry) {
     tags: ["Actors"],
     security: userOrServiceSecurity,
     summary: "Update an actor",
+    operationId: "updateActor",
     request: {
       params: actorIdParamsSchema,
       body: { required: true, content: { "application/json": jsonBody(updateActorBodySchema) } },
     },
-    responses: { "200": successResponse(), ...standardErrorResponses },
+    responses: { "200": successResponse(actorEnvelopeSchema), ...standardErrorResponses },
   });
 }

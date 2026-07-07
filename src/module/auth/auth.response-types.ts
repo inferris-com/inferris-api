@@ -1,17 +1,36 @@
 import type { ArgusAccountRole, UserPrivilegeRole } from "../../db/types.js";
+import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import z from "zod";
 
-export type AuthUserResponse = {
-  id: string;
-  username: string;
+extendZodWithOpenApi(z);
+
+export const authUserResponseSchema = z
+  .object({
+    id: z.string().uuid(),
+    username: z.string(),
+    role: z.enum(["admin", "moderator"]),
+    actorId: z.string().uuid().nullable(),
+    privilegedRole: z
+      .enum(["administrator", "collaborator", "moderator", "none", "superadmin"])
+      .nullable(),
+  })
+  .openapi("AuthUserResponse");
+
+export const authTokenResponseSchema = z
+  .object({
+    accessToken: z.string(),
+    refreshToken: z.string(),
+    tokenType: z.literal("Bearer"),
+    expiresInSeconds: z.number().int().positive(),
+    user: authUserResponseSchema,
+  })
+  .openapi("AuthTokenResponse");
+
+export type AuthUserResponse = z.infer<typeof authUserResponseSchema> & {
   role: ArgusAccountRole;
-  actorId: string | null;
   privilegedRole: UserPrivilegeRole | null;
 };
 
-export type AuthTokenResponse = {
-  accessToken: string;
-  refreshToken: string;
-  tokenType: "Bearer";
-  expiresInSeconds: number;
+export type AuthTokenResponse = Omit<z.infer<typeof authTokenResponseSchema>, "user"> & {
   user: AuthUserResponse;
 };

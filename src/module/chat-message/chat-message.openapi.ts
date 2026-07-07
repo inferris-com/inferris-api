@@ -7,11 +7,22 @@ import {
   standardErrorResponses,
   successResponse,
 } from "../../openapi/openapi.helpers.js";
+import { listEnvelopeSchema, successEnvelopeSchema } from "../../openapi/envelope.schemas.js";
+import { chatMessageResponseSchema } from "./chat-message.response-types.js";
 import {
   createChatMessageBatchBodySchema,
   createChatMessageBodySchema,
   listChatMessagesQuerySchema,
 } from "./chat-message.schemas.js";
+
+const chatMessageEnvelopeSchema = successEnvelopeSchema(
+  "ChatMessageEnvelope",
+  chatMessageResponseSchema,
+);
+const chatMessageListEnvelopeSchema = listEnvelopeSchema(
+  "ChatMessageListEnvelope",
+  chatMessageResponseSchema,
+);
 
 export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
@@ -20,8 +31,9 @@ export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
     tags: ["Chat Messages"],
     security: userOrServiceSecurity,
     summary: "List chat messages",
+    operationId: "listChatMessages",
     request: { query: listChatMessagesQuerySchema },
-    responses: { "200": listResponse(), ...standardErrorResponses },
+    responses: { "200": listResponse(chatMessageListEnvelopeSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -30,13 +42,17 @@ export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
     tags: ["Chat Messages"],
     security: userOrServiceSecurity,
     summary: "Create a chat message",
+    operationId: "createChatMessage",
     request: {
       body: {
         required: true,
         content: { "application/json": jsonBody(createChatMessageBodySchema) },
       },
     },
-    responses: { "202": successResponse("Chat message accepted"), ...standardErrorResponses },
+    responses: {
+      "202": successResponse(chatMessageEnvelopeSchema, "Chat message accepted"),
+      ...standardErrorResponses,
+    },
   });
 
   registry.registerPath({
@@ -45,12 +61,16 @@ export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
     tags: ["Chat Messages"],
     security: userOrServiceSecurity,
     summary: "Create chat messages in a batch",
+    operationId: "createChatMessagesInBatch",
     request: {
       body: {
         required: true,
         content: { "application/json": jsonBody(createChatMessageBatchBodySchema) },
       },
     },
-    responses: { "202": listResponse("Chat messages accepted"), ...standardErrorResponses },
+    responses: {
+      "202": listResponse(chatMessageListEnvelopeSchema, "Chat messages accepted"),
+      ...standardErrorResponses,
+    },
   });
 }
