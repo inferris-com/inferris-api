@@ -8,7 +8,6 @@ import {
   standardErrorResponses,
   successResponse,
 } from "../../openapi/openapi.helpers.js";
-import { listEnvelopeSchema, successEnvelopeSchema } from "../../openapi/envelope.schemas.js";
 import {
   accessResponseSchema,
   lockdownResponseSchema,
@@ -29,19 +28,6 @@ import {
   updateServerBodySchema,
 } from "./server.schemas.js";
 
-const serverEnvelopeSchema = successEnvelopeSchema("ServerEnvelope", serverResponseSchema);
-const serverListEnvelopeSchema = listEnvelopeSchema("ServerListEnvelope", serverResponseSchema);
-const accessEnvelopeSchema = successEnvelopeSchema("AccessEnvelope", accessResponseSchema);
-const lockdownEnvelopeSchema = successEnvelopeSchema("LockdownEnvelope", lockdownResponseSchema);
-const playerSessionEnvelopeSchema = successEnvelopeSchema(
-  "PlayerSessionEnvelope",
-  playerSessionResponseSchema,
-);
-const serverHeartbeatEnvelopeSchema = successEnvelopeSchema(
-  "ServerHeartbeatEnvelope",
-  serverHeartbeatResponseSchema,
-);
-
 export function registerServerOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
     method: "get",
@@ -50,7 +36,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     security: userOrServiceSecurity,
     summary: "List servers",
     operationId: "listServers",
-    responses: { "200": listResponse(serverListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(serverResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -63,7 +49,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     request: {
       body: { required: true, content: { "application/json": jsonBody(createServerBodySchema) } },
     },
-    responses: { "200": successResponse(serverEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(serverResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -76,7 +62,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     request: {
       body: { required: true, content: { "application/json": jsonBody(createServerBodySchema) } },
     },
-    responses: { "200": successResponse(serverEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(serverResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -90,7 +76,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
       params: serverIdParamsSchema,
       body: { required: true, content: { "application/json": jsonBody(createLockdownBodySchema) } },
     },
-    responses: { "200": successResponse(lockdownEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(lockdownResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -108,7 +94,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "201": successResponse(playerSessionEnvelopeSchema, "Player session started"),
+      "201": successResponse(playerSessionResponseSchema, "Player session started"),
       ...standardErrorResponses,
     },
   });
@@ -127,7 +113,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
         content: { "application/json": jsonBody(serverHeartbeatBodySchema) },
       },
     },
-    responses: { "200": successResponse(serverHeartbeatEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(serverHeartbeatResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -144,7 +130,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
         content: { "application/json": jsonBody(replaceServerAccessBodySchema) },
       },
     },
-    responses: { "200": successResponse(accessEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(accessResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -158,7 +144,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
       params: serverIdParamsSchema,
       body: { required: true, content: { "application/json": jsonBody(updateServerBodySchema) } },
     },
-    responses: { "200": successResponse(serverEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(serverResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -175,7 +161,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
         content: { "application/json": jsonBody(updateLockdownBodySchema) },
       },
     },
-    responses: { "200": successResponse(lockdownEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(lockdownResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -185,7 +171,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     security: userOrServiceSecurity,
     summary: "Get the active global server lockdown",
     operationId: "getActiveGlobalServerLockdown",
-    responses: { "200": successResponse(lockdownEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(lockdownResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -196,7 +182,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     summary: "Get a server",
     operationId: "getServer",
     request: { params: serverIdParamsSchema },
-    responses: { "200": successResponse(serverEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(serverResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -207,7 +193,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     summary: "Get a server access policy",
     operationId: "getServerAccessPolicy",
     request: { params: serverIdParamsSchema },
-    responses: { "200": successResponse(accessEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(accessResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -218,7 +204,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     summary: "Get a server lockdown",
     operationId: "getServerLockdown",
     request: { params: serverIdParamsSchema },
-    responses: { "200": successResponse(lockdownEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(lockdownResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -229,7 +215,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     summary: "Get a server by stable name",
     operationId: "getServerByStableName",
     request: { params: serverNameParamsSchema },
-    responses: { "200": successResponse(serverEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(serverResponseSchema), ...standardErrorResponses },
   });
 
   for (const [path, summary, operationId] of [

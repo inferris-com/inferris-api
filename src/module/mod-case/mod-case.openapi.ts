@@ -7,7 +7,6 @@ import {
   standardErrorResponses,
   successResponse,
 } from "../../openapi/openapi.helpers.js";
-import { listEnvelopeSchema, successEnvelopeSchema } from "../../openapi/envelope.schemas.js";
 import { modCaseActorResponseSchema, modCaseResponseSchema } from "./mod-case.response-types.js";
 import {
   createModCaseActorBodySchema,
@@ -16,17 +15,6 @@ import {
   modCaseIdParamsSchema,
   updateModCaseBodySchema,
 } from "./mod-case.schemas.js";
-
-const modCaseEnvelopeSchema = successEnvelopeSchema("ModCaseEnvelope", modCaseResponseSchema);
-const modCaseListEnvelopeSchema = listEnvelopeSchema("ModCaseListEnvelope", modCaseResponseSchema);
-const modCaseActorEnvelopeSchema = successEnvelopeSchema(
-  "ModCaseActorEnvelope",
-  modCaseActorResponseSchema,
-);
-const modCaseActorListEnvelopeSchema = listEnvelopeSchema(
-  "ModCaseActorListEnvelope",
-  modCaseActorResponseSchema,
-);
 
 export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
@@ -37,7 +25,7 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
     summary: "List moderation cases",
     operationId: "listModerationCases",
     request: { query: listModCasesQuerySchema },
-    responses: { "200": listResponse(modCaseListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(modCaseResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -51,7 +39,7 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
       body: { required: true, content: { "application/json": jsonBody(createModCaseBodySchema) } },
     },
     responses: {
-      "201": successResponse(modCaseEnvelopeSchema, "Moderation case created"),
+      "201": successResponse(modCaseResponseSchema, "Moderation case created"),
       ...standardErrorResponses,
     },
   });
@@ -64,7 +52,7 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
     summary: "Get a moderation case",
     operationId: "getModerationCase",
     request: { params: modCaseIdParamsSchema },
-    responses: { "200": successResponse(modCaseEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(modCaseResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -78,7 +66,7 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
       params: modCaseIdParamsSchema,
       body: { required: true, content: { "application/json": jsonBody(updateModCaseBodySchema) } },
     },
-    responses: { "200": successResponse(modCaseEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(modCaseResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -89,7 +77,7 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
     summary: "List moderation case actors",
     operationId: "listModerationCaseActors",
     request: { params: modCaseIdParamsSchema },
-    responses: { "200": listResponse(modCaseActorListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(modCaseActorResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -107,7 +95,7 @@ export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "201": successResponse(modCaseActorEnvelopeSchema, "Moderation case actor added"),
+      "201": successResponse(modCaseActorResponseSchema, "Moderation case actor added"),
       ...standardErrorResponses,
     },
   });

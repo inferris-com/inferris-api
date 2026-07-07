@@ -6,12 +6,8 @@ import {
   standardErrorResponses,
   successResponse,
 } from "../../openapi/openapi.helpers.js";
-import { successEnvelopeSchema } from "../../openapi/envelope.schemas.js";
 import { authTokenResponseSchema, authUserResponseSchema } from "./auth.response-types.js";
 import { loginBodySchema, logoutBodySchema, refreshBodySchema } from "./auth.schemas.js";
-
-const authUserEnvelopeSchema = successEnvelopeSchema("AuthUserEnvelope", authUserResponseSchema);
-const authTokenEnvelopeSchema = successEnvelopeSchema("AuthTokenEnvelope", authTokenResponseSchema);
 
 export function registerAuthOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
@@ -22,7 +18,7 @@ export function registerAuthOpenApi(registry: OpenAPIRegistry) {
     operationId: "getCurrentArgusUser",
     security: userSecurity,
     responses: {
-      "200": successResponse(authUserEnvelopeSchema, "Current Argus user"),
+      "200": successResponse(authUserResponseSchema, "Current Argus user"),
       "401": standardErrorResponses["401"],
     },
   });
@@ -40,7 +36,7 @@ export function registerAuthOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "201": successResponse(authTokenEnvelopeSchema, "Token pair created"),
+      "201": successResponse(authTokenResponseSchema, "Token pair created"),
       "400": standardErrorResponses["400"],
       "401": standardErrorResponses["401"],
     },
@@ -59,7 +55,7 @@ export function registerAuthOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "200": successResponse(authTokenEnvelopeSchema, "Token pair refreshed"),
+      "200": successResponse(authTokenResponseSchema, "Token pair refreshed"),
       "400": standardErrorResponses["400"],
       "401": standardErrorResponses["401"],
     },

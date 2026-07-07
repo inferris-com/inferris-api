@@ -5,7 +5,6 @@ import {
   standardErrorResponses,
   userOrServiceSecurity,
 } from "../../openapi/openapi.helpers.js";
-import { listEnvelopeSchema } from "../../openapi/envelope.schemas.js";
 import {
   badgeResponseSchema,
   groupResponseSchema,
@@ -17,10 +16,6 @@ import {
   listRanksQuerySchema,
 } from "./catalog.schemas.js";
 
-const groupListEnvelopeSchema = listEnvelopeSchema("GroupListEnvelope", groupResponseSchema);
-const rankListEnvelopeSchema = listEnvelopeSchema("RankListEnvelope", rankResponseSchema);
-const badgeListEnvelopeSchema = listEnvelopeSchema("BadgeListEnvelope", badgeResponseSchema);
-
 export function registerCatalogOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
     method: "get",
@@ -30,7 +25,7 @@ export function registerCatalogOpenApi(registry: OpenAPIRegistry) {
     summary: "List groups",
     operationId: "listGroups",
     request: { query: listGroupsQuerySchema },
-    responses: { "200": listResponse(groupListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(groupResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -41,7 +36,7 @@ export function registerCatalogOpenApi(registry: OpenAPIRegistry) {
     summary: "List ranks",
     operationId: "listRanks",
     request: { query: listRanksQuerySchema },
-    responses: { "200": listResponse(rankListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(rankResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -52,6 +47,6 @@ export function registerCatalogOpenApi(registry: OpenAPIRegistry) {
     summary: "List badges",
     operationId: "listBadges",
     request: { query: listBadgesQuerySchema },
-    responses: { "200": listResponse(badgeListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(badgeResponseSchema), ...standardErrorResponses },
   });
 }

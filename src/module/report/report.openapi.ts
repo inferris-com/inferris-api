@@ -7,7 +7,6 @@ import {
   standardErrorResponses,
   successResponse,
 } from "../../openapi/openapi.helpers.js";
-import { listEnvelopeSchema, successEnvelopeSchema } from "../../openapi/envelope.schemas.js";
 import { reportCommentResponseSchema, reportResponseSchema } from "./report.response-types.js";
 import {
   createReportBodySchema,
@@ -16,17 +15,6 @@ import {
   reportIdParamsSchema,
   updateReportBodySchema,
 } from "./report.schemas.js";
-
-const reportEnvelopeSchema = successEnvelopeSchema("ReportEnvelope", reportResponseSchema);
-const reportListEnvelopeSchema = listEnvelopeSchema("ReportListEnvelope", reportResponseSchema);
-const reportCommentEnvelopeSchema = successEnvelopeSchema(
-  "ReportCommentEnvelope",
-  reportCommentResponseSchema,
-);
-const reportCommentListEnvelopeSchema = listEnvelopeSchema(
-  "ReportCommentListEnvelope",
-  reportCommentResponseSchema,
-);
 
 export function registerReportOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
@@ -40,7 +28,7 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
       body: { required: true, content: { "application/json": jsonBody(createReportBodySchema) } },
     },
     responses: {
-      "201": successResponse(reportEnvelopeSchema, "Report created"),
+      "201": successResponse(reportResponseSchema, "Report created"),
       ...standardErrorResponses,
     },
   });
@@ -53,7 +41,7 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     summary: "List reports",
     operationId: "listReports",
     request: { query: listReportsQuerySchema },
-    responses: { "200": listResponse(reportListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(reportResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -64,7 +52,7 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     summary: "Get a report",
     operationId: "getReport",
     request: { params: reportIdParamsSchema },
-    responses: { "200": successResponse(reportEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(reportResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -78,7 +66,7 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
       params: reportIdParamsSchema,
       body: { required: true, content: { "application/json": jsonBody(updateReportBodySchema) } },
     },
-    responses: { "200": successResponse(reportEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(reportResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -89,7 +77,7 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     summary: "List report comments",
     operationId: "listReportComments",
     request: { params: reportIdParamsSchema },
-    responses: { "200": listResponse(reportCommentListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(reportCommentResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -107,7 +95,7 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "201": successResponse(reportCommentEnvelopeSchema, "Report comment created"),
+      "201": successResponse(reportCommentResponseSchema, "Report comment created"),
       ...standardErrorResponses,
     },
   });

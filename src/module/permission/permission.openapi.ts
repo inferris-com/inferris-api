@@ -7,7 +7,6 @@ import {
   standardErrorResponses,
   successResponse,
 } from "../../openapi/openapi.helpers.js";
-import { listEnvelopeSchema, successEnvelopeSchema } from "../../openapi/envelope.schemas.js";
 import {
   permissionNodeResponseSchema,
   permissionRuleResponseSchema,
@@ -20,23 +19,6 @@ import {
   replacePermissionRuleBodySchema,
 } from "./permission.schemas.js";
 
-const permissionNodeEnvelopeSchema = successEnvelopeSchema(
-  "PermissionNodeEnvelope",
-  permissionNodeResponseSchema,
-);
-const permissionNodeListEnvelopeSchema = listEnvelopeSchema(
-  "PermissionNodeListEnvelope",
-  permissionNodeResponseSchema,
-);
-const permissionRuleEnvelopeSchema = successEnvelopeSchema(
-  "PermissionRuleEnvelope",
-  permissionRuleResponseSchema,
-);
-const permissionRuleListEnvelopeSchema = listEnvelopeSchema(
-  "PermissionRuleListEnvelope",
-  permissionRuleResponseSchema,
-);
-
 export function registerPermissionOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
     method: "get",
@@ -46,7 +28,7 @@ export function registerPermissionOpenApi(registry: OpenAPIRegistry) {
     summary: "List permission nodes",
     operationId: "listPermissionNodes",
     request: { query: listPermissionsQuerySchema },
-    responses: { "200": listResponse(permissionNodeListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(permissionNodeResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -57,7 +39,7 @@ export function registerPermissionOpenApi(registry: OpenAPIRegistry) {
     summary: "Get a permission node",
     operationId: "getPermissionNode",
     request: { params: permissionKeyParamsSchema },
-    responses: { "200": successResponse(permissionNodeEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(permissionNodeResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -68,7 +50,7 @@ export function registerPermissionOpenApi(registry: OpenAPIRegistry) {
     summary: "List permission rules",
     operationId: "listPermissionRules",
     request: { params: permissionKeyParamsSchema },
-    responses: { "200": listResponse(permissionRuleListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(permissionRuleResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -79,7 +61,7 @@ export function registerPermissionOpenApi(registry: OpenAPIRegistry) {
     summary: "Get a permission rule",
     operationId: "getPermissionRule",
     request: { params: permissionRuleParamsSchema },
-    responses: { "200": successResponse(permissionRuleEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(permissionRuleResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -96,7 +78,7 @@ export function registerPermissionOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "201": successResponse(permissionNodeEnvelopeSchema, "Permission node created"),
+      "201": successResponse(permissionNodeResponseSchema, "Permission node created"),
       ...standardErrorResponses,
     },
   });
@@ -116,7 +98,7 @@ export function registerPermissionOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "201": successResponse(permissionRuleEnvelopeSchema, "Permission rule replaced"),
+      "201": successResponse(permissionRuleResponseSchema, "Permission rule replaced"),
       ...standardErrorResponses,
     },
   });

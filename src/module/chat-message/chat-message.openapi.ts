@@ -7,22 +7,12 @@ import {
   standardErrorResponses,
   successResponse,
 } from "../../openapi/openapi.helpers.js";
-import { listEnvelopeSchema, successEnvelopeSchema } from "../../openapi/envelope.schemas.js";
 import { chatMessageResponseSchema } from "./chat-message.response-types.js";
 import {
   createChatMessageBatchBodySchema,
   createChatMessageBodySchema,
   listChatMessagesQuerySchema,
 } from "./chat-message.schemas.js";
-
-const chatMessageEnvelopeSchema = successEnvelopeSchema(
-  "ChatMessageEnvelope",
-  chatMessageResponseSchema,
-);
-const chatMessageListEnvelopeSchema = listEnvelopeSchema(
-  "ChatMessageListEnvelope",
-  chatMessageResponseSchema,
-);
 
 export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
@@ -33,7 +23,7 @@ export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
     summary: "List chat messages",
     operationId: "listChatMessages",
     request: { query: listChatMessagesQuerySchema },
-    responses: { "200": listResponse(chatMessageListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(chatMessageResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -50,7 +40,7 @@ export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "202": successResponse(chatMessageEnvelopeSchema, "Chat message accepted"),
+      "202": successResponse(chatMessageResponseSchema, "Chat message accepted"),
       ...standardErrorResponses,
     },
   });
@@ -69,7 +59,7 @@ export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "202": listResponse(chatMessageListEnvelopeSchema, "Chat messages accepted"),
+      "202": listResponse(chatMessageResponseSchema, "Chat messages accepted"),
       ...standardErrorResponses,
     },
   });

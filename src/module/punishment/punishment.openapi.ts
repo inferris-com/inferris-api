@@ -7,7 +7,6 @@ import {
   standardErrorResponses,
   successResponse,
 } from "../../openapi/openapi.helpers.js";
-import { listEnvelopeSchema, successEnvelopeSchema } from "../../openapi/envelope.schemas.js";
 import { punishmentResponseSchema } from "./punishment.response-types.js";
 import {
   createPunishmentBodySchema,
@@ -15,15 +14,6 @@ import {
   punishmentIdParamsSchema,
   revokePunishmentBodySchema,
 } from "./punishment.schemas.js";
-
-const punishmentEnvelopeSchema = successEnvelopeSchema(
-  "PunishmentEnvelope",
-  punishmentResponseSchema,
-);
-const punishmentListEnvelopeSchema = listEnvelopeSchema(
-  "PunishmentListEnvelope",
-  punishmentResponseSchema,
-);
 
 export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
@@ -34,7 +24,7 @@ export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
     summary: "List punishments",
     operationId: "listPunishments",
     request: { query: listPunishmentsQuerySchema },
-    responses: { "200": listResponse(punishmentListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(punishmentResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -45,7 +35,7 @@ export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
     summary: "Get a punishment",
     operationId: "getPunishment",
     request: { params: punishmentIdParamsSchema },
-    responses: { "200": successResponse(punishmentEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(punishmentResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -62,7 +52,7 @@ export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "201": successResponse(punishmentEnvelopeSchema, "Punishment created"),
+      "201": successResponse(punishmentResponseSchema, "Punishment created"),
       ...standardErrorResponses,
     },
   });
@@ -82,7 +72,7 @@ export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "200": successResponse(punishmentEnvelopeSchema, "Punishment revoked"),
+      "200": successResponse(punishmentResponseSchema, "Punishment revoked"),
       ...standardErrorResponses,
     },
   });

@@ -28,17 +28,6 @@
       }
     },
     "schemas": {
-      "AuthUserEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/AuthUserResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
       "AuthUserResponse": {
         "type": "object",
         "properties": {
@@ -98,54 +87,16 @@
               "message": {
                 "type": "string"
               },
-              "details": {},
-              "issues": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "path": {
-                      "type": "array",
-                      "items": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "number"
-                          }
-                        ]
-                      }
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "path",
-                    "message"
-                  ]
-                }
-              }
+              "details": {}
             },
             "required": [
+              "code",
               "message"
             ]
           }
         },
         "required": [
           "error"
-        ]
-      },
-      "AuthTokenEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/AuthTokenResponse"
-          }
-        },
-        "required": [
-          "data"
         ]
       },
       "AuthTokenResponse": {
@@ -177,33 +128,6 @@
           "tokenType",
           "expiresInSeconds",
           "user"
-        ]
-      },
-      "GroupListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GroupResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
         ]
       },
       "GroupResponse": {
@@ -238,33 +162,6 @@
           "isStaff",
           "createdAtMs",
           "updatedAtMs"
-        ]
-      },
-      "RankListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RankResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
         ]
       },
       "RankResponse": {
@@ -333,33 +230,6 @@
           "updatedAtMs"
         ]
       },
-      "BadgeListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BadgeResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
       "BadgeResponse": {
         "type": "object",
         "properties": {
@@ -408,17 +278,6 @@
           "isActive"
         ]
       },
-      "ActorEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ActorResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
       "ActorResponse": {
         "type": "object",
         "properties": {
@@ -465,33 +324,6 @@
           "playerId",
           "createdAtMs",
           "lastUpdatedAtMs"
-        ]
-      },
-      "PlayerSummaryListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PlayerSummaryResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
         ]
       },
       "PlayerSummaryResponse": {
@@ -557,33 +389,6 @@
           "coverRankKey"
         ]
       },
-      "PlayerFlagDefinitionListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PlayerFlagDefinitionResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
       "PlayerFlagDefinitionResponse": {
         "type": "object",
         "properties": {
@@ -618,17 +423,6 @@
           "isActive"
         ]
       },
-      "PlayerFlagBitmaskEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/PlayerFlagBitmaskResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
       "PlayerFlagBitmaskResponse": {
         "type": "object",
         "properties": {
@@ -656,17 +450,6 @@
           "binary",
           "flags",
           "unknownBits"
-        ]
-      },
-      "PlayerEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/PlayerResponse"
-          }
-        },
-        "required": [
-          "data"
         ]
       },
       "PlayerResponse": {
@@ -799,17 +582,6 @@
           "rankKey"
         ]
       },
-      "PlayerProfileEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/PlayerProfileResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
       "PlayerProfileResponse": {
         "type": "object",
         "properties": {
@@ -848,33 +620,6 @@
           "locale"
         ]
       },
-      "PlayerBadgeAssignmentListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PlayerBadgeAssignmentResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
       "PlayerBadgeAssignmentResponse": {
         "type": "object",
         "properties": {
@@ -900,33 +645,6 @@
           "badgeId",
           "earnedAtMs",
           "source"
-        ]
-      },
-      "PlayerNicknameListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PlayerNicknameResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
         ]
       },
       "PlayerNicknameResponse": {
@@ -980,39 +698,6 @@
           "revokedAtMs"
         ]
       },
-      "PlayerBadgeAssignmentEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/PlayerBadgeAssignmentResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "PlayerNicknameEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/PlayerNicknameResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "PlayerRankAssignmentEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/PlayerRankAssignmentResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
       "PlayerRankAssignmentResponse": {
         "type": "object",
         "properties": {
@@ -1050,33 +735,6 @@
           "assignedAtMs",
           "assignedByActorId",
           "source"
-        ]
-      },
-      "ServerListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ServerResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
         ]
       },
       "ServerResponse": {
@@ -1143,28 +801,6 @@
           "lastUpdatedAtMs"
         ]
       },
-      "ServerEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ServerResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "LockdownEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/LockdownResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
       "LockdownResponse": {
         "type": "object",
         "properties": {
@@ -1217,17 +853,6 @@
           "endsAtMs"
         ]
       },
-      "PlayerSessionEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/PlayerSessionResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
       "PlayerSessionResponse": {
         "type": "object",
         "properties": {
@@ -1268,17 +893,6 @@
           "expiresAtMs"
         ]
       },
-      "ServerHeartbeatEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ServerHeartbeatResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
       "ServerHeartbeatResponse": {
         "type": "object",
         "properties": {
@@ -1300,17 +914,6 @@
         "required": [
           "refreshedMojangIds",
           "missingMojangIds"
-        ]
-      },
-      "AccessEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/AccessResponse"
-          }
-        },
-        "required": [
-          "data"
         ]
       },
       "AccessResponse": {
@@ -1362,33 +965,6 @@
           "updatedAtMs"
         ]
       },
-      "PermissionNodeListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PermissionNodeResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
       "PermissionNodeResponse": {
         "type": "object",
         "properties": {
@@ -1431,44 +1007,6 @@
           "updatedAtMs"
         ]
       },
-      "PermissionNodeEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/PermissionNodeResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "PermissionRuleListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PermissionRuleResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
       "PermissionRuleResponse": {
         "type": "object",
         "properties": {
@@ -1508,44 +1046,6 @@
           "effect",
           "createdAtMs",
           "updatedAtMs"
-        ]
-      },
-      "PermissionRuleEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/PermissionRuleResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "PunishmentListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PunishmentResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
         ]
       },
       "PunishmentResponse": {
@@ -1661,28 +1161,6 @@
           "liftNote",
           "createdAtMs",
           "updatedAtMs"
-        ]
-      },
-      "PunishmentEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/PunishmentResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "ReportEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ReportResponse"
-          }
-        },
-        "required": [
-          "data"
         ]
       },
       "ReportResponse": {
@@ -1824,60 +1302,6 @@
           "updatedAtMs"
         ]
       },
-      "ReportListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReportResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
-      "ReportCommentListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReportCommentResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
       "ReportCommentResponse": {
         "type": "object",
         "properties": {
@@ -1925,44 +1349,6 @@
           "isSticky",
           "createdAtMs",
           "editedAtMs"
-        ]
-      },
-      "ReportCommentEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ReportCommentResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "ModCaseListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ModCaseResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
         ]
       },
       "ModCaseResponse": {
@@ -2083,44 +1469,6 @@
           "updatedAtMs"
         ]
       },
-      "ModCaseEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ModCaseResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "ModCaseActorListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ModCaseActorResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
-        ]
-      },
       "ModCaseActorResponse": {
         "type": "object",
         "properties": {
@@ -2174,44 +1522,6 @@
           "addedByActorId",
           "addedAtMs",
           "note"
-        ]
-      },
-      "ModCaseActorEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ModCaseActorResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "ChatMessageListEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ChatMessageResponse"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "count": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "meta"
         ]
       },
       "ChatMessageResponse": {
@@ -2295,17 +1605,6 @@
           "occurredAtMs",
           "persistenceState"
         ]
-      },
-      "ChatMessageEnvelope": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ChatMessageResponse"
-          }
-        },
-        "required": [
-          "data"
-        ]
       }
     },
     "parameters": {}
@@ -2343,7 +1642,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthUserEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AuthUserResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -2399,7 +1706,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthTokenEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AuthTokenResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -2460,7 +1775,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthTokenEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AuthTokenResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -2572,7 +1895,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GroupListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GroupResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -2677,7 +2024,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RankListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RankResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -2760,7 +2131,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BadgeListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BadgeResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -2839,7 +2234,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ActorEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ActorResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -2918,7 +2321,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ActorEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ActorResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -3037,7 +2448,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ActorEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ActorResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -3142,7 +2561,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerSummaryListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PlayerSummaryResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -3255,7 +2698,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -3338,7 +2789,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerFlagDefinitionListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PlayerFlagDefinitionResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -3435,7 +2910,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerFlagBitmaskEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerFlagBitmaskResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -3527,7 +3010,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerFlagBitmaskEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerFlagBitmaskResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -3606,7 +3097,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -3685,7 +3184,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -3797,7 +3304,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -3958,7 +3473,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerProfileEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerProfileResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -4078,7 +3601,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerProfileEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerProfileResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -4157,7 +3688,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerBadgeAssignmentListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PlayerBadgeAssignmentResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -4261,7 +3816,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerBadgeAssignmentEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerBadgeAssignmentResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -4340,7 +3903,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerNicknameListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PlayerNicknameResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -4451,7 +4038,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerNicknameEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerNicknameResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -4570,7 +4165,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerRankAssignmentEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerRankAssignmentResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -4820,7 +4423,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerNicknameEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerNicknameResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -4889,7 +4500,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServerListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ServerResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -5016,7 +4651,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServerEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ServerResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -5145,7 +4788,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServerEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ServerResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -5269,7 +4920,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LockdownEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LockdownResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -5384,7 +5043,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LockdownEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LockdownResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -5461,7 +5128,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LockdownEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LockdownResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -5636,7 +5311,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlayerSessionEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlayerSessionResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -5754,7 +5437,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServerHeartbeatEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ServerHeartbeatResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -5880,7 +5571,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccessEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AccessResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -5957,7 +5656,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccessEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AccessResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -6178,7 +5885,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServerEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ServerResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -6255,7 +5970,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServerEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ServerResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -6394,7 +6117,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LockdownEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LockdownResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -6475,7 +6206,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServerEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ServerResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -6655,7 +6394,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PermissionNodeListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PermissionNodeResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -6765,7 +6528,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PermissionNodeEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PermissionNodeResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -6844,7 +6615,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PermissionNodeEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PermissionNodeResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -6923,7 +6702,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PermissionRuleListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PermissionRuleResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -7010,7 +6813,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PermissionRuleEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PermissionRuleResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -7118,7 +6929,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PermissionRuleEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PermissionRuleResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -7283,7 +7102,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PunishmentListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PunishmentResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -7409,7 +7252,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PunishmentEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PunishmentResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -7488,7 +7339,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PunishmentEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PunishmentResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -7587,7 +7446,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PunishmentEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PunishmentResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -7702,7 +7569,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReportEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ReportResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -7866,7 +7741,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReportListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ReportResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -7945,7 +7844,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReportEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ReportResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -8086,7 +7993,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReportEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ReportResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -8165,7 +8080,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReportCommentListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ReportCommentResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -8273,7 +8212,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReportCommentEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ReportCommentResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -8422,7 +8369,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ModCaseListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ModCaseResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -8590,7 +8561,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ModCaseEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ModCaseResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -8669,7 +8648,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ModCaseEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ModCaseResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -8821,7 +8808,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ModCaseEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ModCaseResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -8900,7 +8895,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ModCaseActorListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ModCaseActorResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -9017,7 +9036,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ModCaseActorEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ModCaseActorResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -9184,7 +9211,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChatMessageListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ChatMessageResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }
@@ -9323,7 +9374,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChatMessageEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ChatMessageResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -9478,7 +9537,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChatMessageListEnvelope"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ChatMessageResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             }

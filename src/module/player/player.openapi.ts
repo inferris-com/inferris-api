@@ -8,7 +8,6 @@ import {
   standardErrorResponses,
   successResponse,
 } from "../../openapi/openapi.helpers.js";
-import { listEnvelopeSchema, successEnvelopeSchema } from "../../openapi/envelope.schemas.js";
 import {
   playerBadgeAssignmentResponseSchema,
   playerFlagBitmaskResponseSchema,
@@ -37,44 +36,6 @@ import {
   updatePlayerProfileBodySchema,
 } from "./player.schemas.js";
 
-const playerSummaryListEnvelopeSchema = listEnvelopeSchema(
-  "PlayerSummaryListEnvelope",
-  playerSummaryResponseSchema,
-);
-const playerFlagDefinitionListEnvelopeSchema = listEnvelopeSchema(
-  "PlayerFlagDefinitionListEnvelope",
-  playerFlagDefinitionResponseSchema,
-);
-const playerFlagBitmaskEnvelopeSchema = successEnvelopeSchema(
-  "PlayerFlagBitmaskEnvelope",
-  playerFlagBitmaskResponseSchema,
-);
-const playerEnvelopeSchema = successEnvelopeSchema("PlayerEnvelope", playerResponseSchema);
-const playerProfileEnvelopeSchema = successEnvelopeSchema(
-  "PlayerProfileEnvelope",
-  playerProfileResponseSchema,
-);
-const playerBadgeAssignmentEnvelopeSchema = successEnvelopeSchema(
-  "PlayerBadgeAssignmentEnvelope",
-  playerBadgeAssignmentResponseSchema,
-);
-const playerBadgeAssignmentListEnvelopeSchema = listEnvelopeSchema(
-  "PlayerBadgeAssignmentListEnvelope",
-  playerBadgeAssignmentResponseSchema,
-);
-const playerRankAssignmentEnvelopeSchema = successEnvelopeSchema(
-  "PlayerRankAssignmentEnvelope",
-  playerRankAssignmentResponseSchema,
-);
-const playerNicknameEnvelopeSchema = successEnvelopeSchema(
-  "PlayerNicknameEnvelope",
-  playerNicknameResponseSchema,
-);
-const playerNicknameListEnvelopeSchema = listEnvelopeSchema(
-  "PlayerNicknameListEnvelope",
-  playerNicknameResponseSchema,
-);
-
 export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
     method: "get",
@@ -84,7 +45,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     summary: "List players",
     operationId: "listPlayers",
     request: { query: listPlayersQuerySchema },
-    responses: { "200": listResponse(playerSummaryListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(playerSummaryResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -96,7 +57,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     operationId: "listPlayerFlagDefinitions",
     request: { query: listPlayerFlagDefinitionsQuerySchema },
     responses: {
-      "200": listResponse(playerFlagDefinitionListEnvelopeSchema),
+      "200": listResponse(playerFlagDefinitionResponseSchema),
       ...standardErrorResponses,
     },
   });
@@ -110,7 +71,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     operationId: "encodePlayerFlags",
     request: { query: encodePlayerFlagsQuerySchema },
     responses: {
-      "200": successResponse(playerFlagBitmaskEnvelopeSchema),
+      "200": successResponse(playerFlagBitmaskResponseSchema),
       ...standardErrorResponses,
     },
   });
@@ -124,7 +85,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     operationId: "decodePlayerFlags",
     request: { query: decodePlayerFlagsQuerySchema },
     responses: {
-      "200": successResponse(playerFlagBitmaskEnvelopeSchema),
+      "200": successResponse(playerFlagBitmaskResponseSchema),
       ...standardErrorResponses,
     },
   });
@@ -137,7 +98,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     summary: "Get a player by Mojang UUID",
     operationId: "getPlayerByMojangUuid",
     request: { params: playerMojangIdParamsSchema },
-    responses: { "200": successResponse(playerEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(playerResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -148,7 +109,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     summary: "Get a player",
     operationId: "getPlayer",
     request: { params: playerIdParamsSchema },
-    responses: { "200": successResponse(playerEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(playerResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -159,7 +120,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     summary: "Get a player profile",
     operationId: "getPlayerProfile",
     request: { params: playerIdParamsSchema },
-    responses: { "200": successResponse(playerProfileEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(playerProfileResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -171,7 +132,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     operationId: "listPlayerBadgeAssignments",
     request: { params: playerIdParamsSchema },
     responses: {
-      "200": listResponse(playerBadgeAssignmentListEnvelopeSchema),
+      "200": listResponse(playerBadgeAssignmentResponseSchema),
       ...standardErrorResponses,
     },
   });
@@ -184,7 +145,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     summary: "List player nickname history",
     operationId: "listPlayerNicknameHistory",
     request: { params: playerIdParamsSchema },
-    responses: { "200": listResponse(playerNicknameListEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": listResponse(playerNicknameResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -198,7 +159,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
       body: { required: true, content: { "application/json": jsonBody(createPlayerBodySchema) } },
     },
     responses: {
-      "201": successResponse(playerEnvelopeSchema, "Player created"),
+      "201": successResponse(playerResponseSchema, "Player created"),
       ...standardErrorResponses,
     },
   });
@@ -218,7 +179,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "201": successResponse(playerBadgeAssignmentEnvelopeSchema, "Badge assigned"),
+      "201": successResponse(playerBadgeAssignmentResponseSchema, "Badge assigned"),
       ...standardErrorResponses,
     },
   });
@@ -238,7 +199,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "201": successResponse(playerNicknameEnvelopeSchema, "Nickname assigned"),
+      "201": successResponse(playerNicknameResponseSchema, "Nickname assigned"),
       ...standardErrorResponses,
     },
   });
@@ -258,7 +219,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
       },
     },
     responses: {
-      "200": successResponse(playerRankAssignmentEnvelopeSchema),
+      "200": successResponse(playerRankAssignmentResponseSchema),
       ...standardErrorResponses,
     },
   });
@@ -274,7 +235,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
       params: playerIdParamsSchema,
       body: { required: true, content: { "application/json": jsonBody(updatePlayerBodySchema) } },
     },
-    responses: { "200": successResponse(playerEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(playerResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -291,7 +252,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
         content: { "application/json": jsonBody(updatePlayerProfileBodySchema) },
       },
     },
-    responses: { "200": successResponse(playerProfileEnvelopeSchema), ...standardErrorResponses },
+    responses: { "200": successResponse(playerProfileResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -336,7 +297,7 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     operationId: "revokeActivePlayerNickname",
     request: { params: playerIdParamsSchema },
     responses: {
-      "200": successResponse(playerNicknameEnvelopeSchema, "Nickname revoked"),
+      "200": successResponse(playerNicknameResponseSchema, "Nickname revoked"),
       ...standardErrorResponses,
     },
   });
