@@ -1173,6 +1173,84 @@ components:
         - "isFlagged"
         - "occurredAtMs"
         - "persistenceState"
+    WatchlistEntryResponse:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          minimum: 0
+        subjectActorId:
+          type: "string"
+          format: "uuid"
+        subjectPlayerId:
+          type:
+            - "string"
+            - "null"
+          format: "uuid"
+        subjectUsername:
+          type:
+            - "string"
+            - "null"
+        addedByActorId:
+          type: "string"
+          format: "uuid"
+        reason:
+          type:
+            - "string"
+            - "null"
+        severity:
+          type:
+            - "string"
+            - "null"
+          enum:
+            - "low"
+            - "medium"
+            - "high"
+            - "critical"
+            - null
+        alertOnJoin:
+          type: "boolean"
+        alertOnChat:
+          type: "boolean"
+        alertNote:
+          type:
+            - "string"
+            - "null"
+        expiresAtMs:
+          type:
+            - "string"
+            - "null"
+        clearedByActorId:
+          type:
+            - "string"
+            - "null"
+          format: "uuid"
+        clearedAtMs:
+          type:
+            - "string"
+            - "null"
+        addedAtMs:
+          type: "string"
+        updatedAtMs:
+          type:
+            - "string"
+            - "null"
+      required:
+        - "id"
+        - "subjectActorId"
+        - "subjectPlayerId"
+        - "subjectUsername"
+        - "addedByActorId"
+        - "reason"
+        - "severity"
+        - "alertOnJoin"
+        - "alertOnChat"
+        - "alertNote"
+        - "expiresAtMs"
+        - "clearedByActorId"
+        - "clearedAtMs"
+        - "addedAtMs"
+        - "updatedAtMs"
   parameters:
     {}
 paths:
@@ -6235,6 +6313,319 @@ paths:
                 required:
                   - "data"
                   - "meta"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/watchlist":
+    get:
+      tags:
+        - "Watchlist"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "List watchlist entries"
+      operationId: "listWatchlistEntries"
+      parameters:
+        - schema:
+            type: "integer"
+            minimum: 1
+            maximum: 100
+            default: 25
+          required: false
+          name: "limit"
+          in: "query"
+        - schema:
+            type:
+              - "integer"
+              - "null"
+            minimum: 0
+            default: 0
+          required: false
+          name: "offset"
+          in: "query"
+        - schema:
+            type: "string"
+            enum:
+              - "true"
+              - "false"
+          required: false
+          name: "active"
+          in: "query"
+        - schema:
+            type: "string"
+          required: false
+          name: "subjectActorId"
+          in: "query"
+        - schema:
+            type: "string"
+          required: false
+          name: "subjectPlayerId"
+          in: "query"
+        - schema:
+            type: "string"
+            enum:
+              - "low"
+              - "medium"
+              - "high"
+              - "critical"
+          required: false
+          name: "severity"
+          in: "query"
+      responses:
+        "200":
+          description: "Successful list response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/WatchlistEntryResponse"
+                  meta:
+                    type: "object"
+                    properties:
+                      count:
+                        type: "integer"
+                        minimum: 0
+                    required:
+                      - "count"
+                required:
+                  - "data"
+                  - "meta"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+    post:
+      tags:
+        - "Watchlist"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Add a watchlist entry"
+      operationId: "addWatchlistEntry"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                subjectActorId:
+                  type: "string"
+                subjectPlayerId:
+                  type: "string"
+                reason:
+                  type:
+                    - "string"
+                    - "null"
+                  maxLength: 4000
+                severity:
+                  type:
+                    - "string"
+                    - "null"
+                  enum:
+                    - "low"
+                    - "medium"
+                    - "high"
+                    - "critical"
+                    - null
+                alertOnJoin:
+                  type: "boolean"
+                  default: true
+                alertOnChat:
+                  type: "boolean"
+                  default: false
+                alertNote:
+                  type:
+                    - "string"
+                    - "null"
+                  maxLength: 4000
+                expiresAtMs:
+                  type: "string"
+                  pattern: "^-?\\d+$"
+              additionalProperties: false
+      responses:
+        "201":
+          description: "Watchlist entry added"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/WatchlistEntryResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/watchlist/active":
+    get:
+      tags:
+        - "Watchlist"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Get an active watchlist entry"
+      operationId: "getActiveWatchlistEntry"
+      parameters:
+        - schema:
+            type: "string"
+          required: false
+          name: "subjectActorId"
+          in: "query"
+        - schema:
+            type: "string"
+          required: false
+          name: "subjectPlayerId"
+          in: "query"
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/WatchlistEntryResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/watchlist/clear":
+    post:
+      tags:
+        - "Watchlist"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Clear a watchlist entry"
+      operationId: "clearWatchlistEntry"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                subjectActorId:
+                  type: "string"
+                subjectPlayerId:
+                  type: "string"
+                reason:
+                  type:
+                    - "string"
+                    - "null"
+                  maxLength: 4000
+              additionalProperties: false
+      responses:
+        "200":
+          description: "Watchlist entry cleared"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/WatchlistEntryResponse"
+                required:
+                  - "data"
         "400":
           description: "Bad request"
           content:

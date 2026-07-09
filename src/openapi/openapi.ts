@@ -10,6 +10,7 @@ import { registerPlayerOpenApi } from "../module/player/player.openapi.js";
 import { registerPunishmentOpenApi } from "../module/punishment/punishment.openapi.js";
 import { registerReportOpenApi } from "../module/report/report.openapi.js";
 import { registerServerOpenApi } from "../module/server/server.openapi.js";
+import { registerWatchlistOpenApi } from "../module/watchlist/watchlist.openapi.js";
 
 const registry = new OpenAPIRegistry();
 
@@ -53,6 +54,7 @@ registerPunishmentOpenApi(registry);
 registerReportOpenApi(registry);
 registerModCaseOpenApi(registry);
 registerChatMessageOpenApi(registry);
+registerWatchlistOpenApi(registry);
 
 const generator = new OpenApiGeneratorV31(registry.definitions);
 
