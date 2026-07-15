@@ -85,7 +85,7 @@ export class AuthRepository {
       platform: row.platform,
       keyHash: row.key_hash,
       ownerActorId: row.owner_actor_id,
-      scopes: parseScopes(row.permissions),
+      scopes: parseApiScopes(row.permissions),
       isSuperKey: row.is_super_key,
     };
   }
@@ -223,12 +223,22 @@ export class AuthRepository {
   }
 }
 
-function parseScopes(value: Json): ApiScope[] {
+export function parseApiScopes(value: Json): ApiScope[] {
   if (!Array.isArray(value)) {
     return [];
   }
 
-  return value.filter((scope): scope is ApiScope => typeof scope === "string");
+  return value.flatMap((scope) => {
+    if (isApiScope(scope)) {
+      return [scope];
+    }
+
+    return parseApiScopes(scope);
+  });
+}
+
+function isApiScope(value: Json): value is ApiScope {
+  return typeof value === "string";
 }
 
 function permissionMatches(policyKey: string, requestedKey: string): boolean {

@@ -11,6 +11,7 @@ export type ApiScope =
   | "actors:write"
   | "players:read"
   | "players:write"
+  | "players:bypass-sensitive-fields"
   | "servers:read"
   | "servers:write"
   | "permissions:read"

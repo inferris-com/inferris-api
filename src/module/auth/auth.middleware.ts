@@ -157,6 +157,58 @@ export function getRequestActorId(req: Request): string | null {
   return req.auth?.actorId ?? null;
 }
 
+export function protectFields(fields: string[]): RequestHandler {
+  return (req, res, next) => {
+    const auth = req.auth;
+
+    const hasAccess =
+      (auth?.privileged?.role !== undefined && auth.privileged.role !== "none") ||
+      auth?.apiKey?.scopes?.includes("players:bypass-sensitive-fields") === true ||
+      auth?.apiKey?.isSuperKey === true;
+
+    if (hasAccess) {
+      next();
+      return;
+    }
+
+    const protectedFields = new Set(fields);
+
+    const sanitize = (value: unknown): void => {
+      if (value === null || typeof value !== "object") {
+        return;
+      }
+
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          sanitize(item);
+        }
+
+        return;
+      }
+
+      const object = value as Record<string, unknown>;
+
+      for (const [key, child] of Object.entries(object)) {
+        if (protectedFields.has(key)) {
+          object[key] = null;
+          continue;
+        }
+
+        sanitize(child);
+      }
+    };
+
+    const originalJson = res.json.bind(res);
+
+    res.json = ((body: unknown) => {
+      sanitize(body);
+      return originalJson(body);
+    }) as typeof res.json;
+
+    next();
+  };
+}
+
 function isPolicyAllowed(req: Request, policy: RoutePolicy): boolean {
   const hasApiPolicy = policy.apiScopes && policy.apiScopes.length > 0;
   const hasArgusPolicy = Boolean(policy.argusRole);
