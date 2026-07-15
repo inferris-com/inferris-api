@@ -20,7 +20,24 @@ const ids = {
     write_only: dummyId4,
     read_write: dummyId5,
     moderator: dummyId6,
-    admin: dummyId7
+    admin: dummyId7,
+  },
+
+  actors: {
+    system: dummyId,
+    seed: "20000000-0000-0000-0000-000000000002",
+    dummy: "00000000-0000-0000-0000-000000000003",
+    moderatorDummy: "00000000-0000-0000-0000-000000000004",
+    adminDummy: "00000000-0000-0000-0000-000000000005",
+    developerDummy: "00000000-0000-0000-0000-000000000006",
+    refrizor: "7d16b15d-bb22-4a6d-80db-6213b3d75007",
+  },
+
+  players: {
+    dummy: "00000000-0000-0000-0000-000000000003",
+    moderatorDummy: "00000000-0000-0000-0000-000000000004",
+    adminDummy: "00000000-0000-0000-0000-000000000005",
+    refrizor: "7d16b15d-bb22-4a6d-80db-6213b3d75007",
   },
 
   badges: {
@@ -66,31 +83,118 @@ const ids = {
     reportsRead: "10000000-0000-0000-0000-000000000015",
     catalogRead: "10000000-0000-0000-0000-000000000016",
   },
-
-  actors: {
-    system: dummyId,
-    seed: "20000000-0000-0000-0000-000000000002",
-    dummy: "00000000-0000-0000-0000-000000000003",
-    moderatorDummy: "00000000-0000-0000-0000-000000000004",
-    adminDummy: "00000000-0000-0000-0000-000000000005",
-    refrizor: "7d16b15d-bb22-4a6d-80db-6213b3d75007",
-  },
-
-  players: {
-    dummy: "00000000-0000-0000-0000-000000000003",
-    moderatorDummy: "00000000-0000-0000-0000-000000000004",
-    adminDummy: "00000000-0000-0000-0000-000000000005",
-    refrizor: "7d16b15d-bb22-4a6d-80db-6213b3d75007",
-  },
 } as const;
 
 const keyScopes = {
   dev_super: ["*"],
-  read_only: ["actors:read", "players:read", "servers:read", "permissions:read", "chat:read", "moderation:read", "minecraft:permission-check"],
-  write_only: ["actors:write", "players:write", "servers:write", "permissions:write", "chat:write", "moderation:write", "minecraft:permission-check"],
-  read_write: ["actors:read", "players:read", "servers:read", "permissions:read", "chat:read", "moderation:read", "minecraft:permission-check",
-    "actors:write", "players:write", "servers:write", "permissions:write", "chat:write", "moderation:write", "minecraft:permission-check"],
-  moderator: ["actors:read", "players: read", "servers:read", "chat:read", "moderation:read", "moderation:write", "minecraft:permission-check"]
+  read_only: [
+    "actors:read",
+    "players:read",
+    "servers:read",
+    "permissions:read",
+    "chat:read",
+    "moderation:read",
+    "minecraft:permission-check",
+  ],
+  write_only: [
+    "actors:write",
+    "players:write",
+    "servers:write",
+    "permissions:write",
+    "chat:write",
+    "moderation:write",
+    "minecraft:permission-check",
+  ],
+  read_write: [
+    "actors:read",
+    "players:read",
+    "servers:read",
+    "permissions:read",
+    "chat:read",
+    "moderation:read",
+    "minecraft:permission-check",
+    "actors:write",
+    "players:write",
+    "servers:write",
+    "permissions:write",
+    "chat:write",
+    "moderation:write",
+    "minecraft:permission-check",
+  ],
+  moderator: [
+    "actors:read",
+    "players:read",
+    "servers:read",
+    "chat:read",
+    "moderation:read",
+    "moderation:write",
+    "minecraft:permission-check",
+  ],
+} as const;
+
+const actors = {
+  system: {
+    id: ids.actors.system,
+    name: "System",
+    type: "system",
+  },
+  seed: {
+    id: ids.actors.seed,
+    name: "Seed Script",
+    type: "application",
+  },
+  dummy: {
+    id: ids.actors.dummy,
+    name: "Dummy User",
+    type: "user",
+  },
+  moderatorDummy: {
+    id: ids.actors.moderatorDummy,
+    name: "Moderator Dummy",
+    type: "user",
+  },
+  adminDummy: {
+    id: ids.actors.adminDummy,
+    name: "Admin Dummy",
+    type: "user",
+  },
+  developerDummy: {
+    id: ids.actors.developerDummy,
+    name: "Developer (Smoketest)",
+    type: "user",
+  },
+  refrizor: {
+    id: ids.actors.refrizor,
+    name: "Refrizor",
+    type: "user",
+  },
+};
+
+const privilegedSubjects = {
+  refrizor: {
+    actor_id: ids.actors.refrizor,
+    status: "active",
+    role: "superadmin",
+    title: "Administrator",
+  },
+  developer: {
+    actor_id: ids.actors.developerDummy,
+    status: "active",
+    role: "superadmin",
+    title: "Developer",
+  },
+  moderatorDummy: {
+    actor_id: ids.actors.moderatorDummy,
+    status: "active",
+    role: "moderator",
+    title: "Moderator",
+  },
+  adminDummy: {
+    actor_id: ids.actors.adminDummy,
+    status: "active",
+    role: "administrator",
+    title: "Admin",
+  },
 } as const;
 
 const seed = {
@@ -255,22 +359,118 @@ const seed = {
           category: "administration",
           is_active: true,
         },
-        { id: ids.permissions.punishBan, key: "moderation.punish.ban", description: "Allows issuing bans.", category: "moderation", is_active: true },
-        { id: ids.permissions.punishMute, key: "moderation.punish.mute", description: "Allows issuing mutes.", category: "moderation", is_active: true },
-        { id: ids.permissions.punishWarn, key: "moderation.punish.warn", description: "Allows issuing warnings.", category: "moderation", is_active: true },
-        { id: ids.permissions.punishKick, key: "moderation.punish.kick", description: "Allows issuing kicks.", category: "moderation", is_active: true },
-        { id: ids.permissions.punishRevoke, key: "moderation.punish.revoke", description: "Allows revoking active punishments.", category: "moderation", is_active: true },
-        { id: ids.permissions.infractionRead, key: "moderation.infraction.read", description: "Allows reading infractions.", category: "moderation", is_active: true },
-        { id: ids.permissions.rankSet, key: "players.rank.set", description: "Allows changing player ranks.", category: "administration", is_active: true },
-        { id: ids.permissions.profileRead, key: "players.profile.read", description: "Allows reading player profiles.", category: "command", is_active: true },
-        { id: ids.permissions.staffLookup, key: "players.lookup.staff", description: "Allows staff player lookup.", category: "moderation", is_active: true },
-        { id: ids.permissions.badgeAward, key: "players.badge.award", description: "Allows awarding badges.", category: "administration", is_active: true },
-        { id: ids.permissions.badgeRevoke, key: "players.badge.revoke", description: "Allows revoking badges.", category: "administration", is_active: true },
-        { id: ids.permissions.watchlistRead, key: "players.watchlist.read", description: "Allows reading the player watchlist.", category: "moderation", is_active: true },
-        { id: ids.permissions.watchlistWrite, key: "players.watchlist.write", description: "Allows updating the player watchlist.", category: "moderation", is_active: true },
-        { id: ids.permissions.reportsCreate, key: "reports.create", description: "Allows creating player reports.", category: "command", is_active: true },
-        { id: ids.permissions.reportsRead, key: "reports.read", description: "Allows reading player reports.", category: "moderation", is_active: true },
-        { id: ids.permissions.catalogRead, key: "catalog.read", description: "Allows reading internal catalog metadata.", category: "command", is_active: true },
+        {
+          id: ids.permissions.punishBan,
+          key: "moderation.punish.ban",
+          description: "Allows issuing bans.",
+          category: "moderation",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.punishMute,
+          key: "moderation.punish.mute",
+          description: "Allows issuing mutes.",
+          category: "moderation",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.punishWarn,
+          key: "moderation.punish.warn",
+          description: "Allows issuing warnings.",
+          category: "moderation",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.punishKick,
+          key: "moderation.punish.kick",
+          description: "Allows issuing kicks.",
+          category: "moderation",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.punishRevoke,
+          key: "moderation.punish.revoke",
+          description: "Allows revoking active punishments.",
+          category: "moderation",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.infractionRead,
+          key: "moderation.infraction.read",
+          description: "Allows reading infractions.",
+          category: "moderation",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.rankSet,
+          key: "players.rank.set",
+          description: "Allows changing player ranks.",
+          category: "administration",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.profileRead,
+          key: "players.profile.read",
+          description: "Allows reading player profiles.",
+          category: "command",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.staffLookup,
+          key: "players.lookup.staff",
+          description: "Allows staff player lookup.",
+          category: "moderation",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.badgeAward,
+          key: "players.badge.award",
+          description: "Allows awarding badges.",
+          category: "administration",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.badgeRevoke,
+          key: "players.badge.revoke",
+          description: "Allows revoking badges.",
+          category: "administration",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.watchlistRead,
+          key: "players.watchlist.read",
+          description: "Allows reading the player watchlist.",
+          category: "moderation",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.watchlistWrite,
+          key: "players.watchlist.write",
+          description: "Allows updating the player watchlist.",
+          category: "moderation",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.reportsCreate,
+          key: "reports.create",
+          description: "Allows creating player reports.",
+          category: "command",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.reportsRead,
+          key: "reports.read",
+          description: "Allows reading player reports.",
+          category: "moderation",
+          is_active: true,
+        },
+        {
+          id: ids.permissions.catalogRead,
+          key: "catalog.read",
+          description: "Allows reading internal catalog metadata.",
+          category: "command",
+          is_active: true,
+        },
       ])
       .execute();
 
@@ -314,36 +514,13 @@ const seed = {
     await db
       .insertInto("actors")
       .values([
-        {
-          id: ids.actors.system,
-          name: "System",
-          type: "system",
-        },
-        {
-          id: ids.actors.seed,
-          name: "Seed Script",
-          type: "application",
-        },
-        {
-          id: ids.actors.dummy,
-          name: "Dummy User",
-          type: "user",
-        },
-        {
-          id: ids.actors.moderatorDummy,
-          name: "Moderator Dummy",
-          type: "user",
-        },
-        {
-          id: ids.actors.adminDummy,
-          name: "Admin Dummy",
-          type: "user",
-        },
-        {
-          id: ids.actors.refrizor,
-          name: "Refrizor",
-          type: "user",
-        },
+        actors.seed,
+        actors.system,
+        actors.dummy,
+        actors.moderatorDummy,
+        actors.adminDummy,
+        actors.developerDummy,
+        actors.refrizor,
       ])
       .execute();
 
@@ -382,7 +559,7 @@ const seed = {
           key_hash: hashApiKeySecret("dev"),
           principal_type: "server_api_key",
           platform: "minecraft",
-          permissions: sql`CAST(${JSON.stringify([keyScopes.read_only])} AS jsonb)`,
+          permissions: sql`CAST(${JSON.stringify(keyScopes.read_only)} AS jsonb)`,
           owner_actor_id: ids.actors.seed,
           created_by_actor_id: ids.actors.seed,
           can_bypass_rate_limit: true,
@@ -741,8 +918,8 @@ const seed = {
         {
           player_id: ids.players.refrizor,
           badge_id: ids.badges.dev,
-          source: "Seeding"
-        }
+          source: "Seeding",
+        },
       ])
       .execute();
 
@@ -1040,22 +1217,13 @@ const seed = {
 
     await db
       .insertInto("privileged_subjects")
-      .values([
-        {
-          actor_id: ids.actors.refrizor,
-          status: "active",
-          role: "superadmin",
-          title: "Administrator",
-          enrolled_by_actor_id: ids.actors.seed,
-        },
-        {
-          actor_id: ids.actors.moderatorDummy,
-          status: "active",
-          role: "moderator",
-          title: "Moderator",
-          enrolled_by_actor_id: ids.actors.seed,
-        },
-      ])
+      .values(
+        [
+          privilegedSubjects.moderatorDummy,
+          privilegedSubjects.adminDummy,
+          privilegedSubjects.developer,
+          privilegedSubjects.refrizor,
+        ])
       .execute();
 
     await db
@@ -1065,6 +1233,8 @@ const seed = {
           actor_id: ids.actors.refrizor,
           username: "Refrizor",
           email: "azzy@inferris.com",
+          password_hash:
+            "$argon2id$v=19$m=65536,t=3,p=4$cIiPtXejD1STgPzcTRZSSA$alT/uE2pvOJ+ct42nlVEjoIc2E4EJ99pIzENZpfW3VQ", // dev
           role: "admin",
           account_state: "active",
         },
@@ -1072,17 +1242,31 @@ const seed = {
           actor_id: ids.actors.moderatorDummy,
           username: "Mod Dummy",
           email: "moddummy@inferris.com",
+          password_hash:
+            "$argon2id$v=19$m=65536,t=3,p=4$cIiPtXejD1STgPzcTRZSSA$alT/uE2pvOJ+ct42nlVEjoIc2E4EJ99pIzENZpfW3VQ", // p:dev
           role: "moderator",
           account_state: "active",
         },
         {
-          actor_id: ids.actors.moderatorDummy,
+          actor_id: ids.actors.adminDummy,
           username: "Admin Dummy",
           email: "admindummy@inferris.com",
+          password_hash:
+            "$argon2id$v=19$m=65536,t=3,p=4$cIiPtXejD1STgPzcTRZSSA$alT/uE2pvOJ+ct42nlVEjoIc2E4EJ99pIzENZpfW3VQ", // p:dev
           role: "admin",
           account_state: "active",
-        }
-      ]).execute();
+        },
+        {
+          actor_id: ids.actors.developerDummy,
+          username: "Developer",
+          email: "dev@inferris.com",
+          password_hash:
+            "$argon2id$v=19$m=65536,t=3,p=4$cIiPtXejD1STgPzcTRZSSA$alT/uE2pvOJ+ct42nlVEjoIc2E4EJ99pIzENZpfW3VQ", // p:dev
+          role: "admin",
+          account_state: "active",
+        },
+      ])
+      .execute();
 
     await db
       .insertInto("chat_messages")
