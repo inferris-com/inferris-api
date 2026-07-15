@@ -13,6 +13,16 @@ export class ActorNotFoundError extends NotFoundError {
   }
 }
 
+export class ActorsNotFoundError extends NotFoundError {
+
+  constructor() {
+    super({
+      code: "ACTORS_NOT_FOUND",
+      message: "Actors not found.",
+    });
+  }
+}
+
 export class ActorAlreadyExistsError extends ConflictError {
   readonly actorId: string;
 

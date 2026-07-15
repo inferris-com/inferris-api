@@ -5,10 +5,15 @@ import {
   jsonBody,
   standardErrorResponses,
   successResponse,
+  listResponse,
 } from "../../openapi/openapi.helpers.js";
 import { playerIdParamsSchema } from "../player/player.schemas.js";
 import { actorResponseSchema } from "./actor.response.types.js";
-import { actorIdParamsSchema, updateActorBodySchema } from "./actor.schemas.js";
+import {
+  actorIdParamsSchema,
+  listActorsQuerySchema,
+  updateActorBodySchema,
+} from "./actor.schemas.js";
 
 export function registerActorOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
@@ -20,6 +25,17 @@ export function registerActorOpenApi(registry: OpenAPIRegistry) {
     operationId: "getActorByPlayerId",
     request: { params: playerIdParamsSchema },
     responses: { "200": successResponse(actorResponseSchema), ...standardErrorResponses },
+  });
+
+  registry.registerPath({
+    method: "get",
+    path: "/actors",
+    tags: ["Actors"],
+    security: userOrServiceSecurity,
+    summary: "List actors",
+    operationId: "listActors",
+    request: { query: listActorsQuerySchema },
+    responses: { "200": listResponse(actorResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({

@@ -3,10 +3,12 @@ import { type RequestHandler, Router } from "express";
 import {
   type ActorIdParams,
   actorIdParamsSchema,
+  type ListActorsQuery,
+  listActorsQuerySchema,
   type UpdateActorBody,
   updateActorBodySchema,
 } from "./actor.schemas.js";
-import type { ApiSuccess } from "../../shared/http/api-response.types.js";
+import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
 import type { ActorResponse } from "./actor.response.types.js";
 import { validateRequest } from "../../middleware/validation.js";
 import { type PlayerIdParams, playerIdParamsSchema } from "../player/player.schemas.js";
@@ -15,6 +17,15 @@ import type { AuthRepository } from "../auth/auth.repository.js";
 
 export function createActorRouter(service: ActorService, authRepository: AuthRepository): Router {
   const router = Router();
+
+  const getActors: RequestHandler = async (req, res) => {
+    const actors = await service.listActors(req.query as unknown as ListActorsQuery);
+    const body: ApiListSuccess<ActorResponse> = {
+      data: actors.data,
+      meta: { count: actors.meta.count },
+    };
+    res.json(body);
+  };
 
   const getActorById: RequestHandler<ActorIdParams> = async (req, res) => {
     const actor = await service.findActorById(req.params.actorId);
@@ -49,6 +60,12 @@ export function createActorRouter(service: ActorService, authRepository: AuthRep
     readActors,
     validateRequest({ params: playerIdParamsSchema }),
     getActorByPlayerId,
+  );
+  router.get(
+    "/",
+    readActors,
+    validateRequest({ query: listActorsQuerySchema }) as unknown as RequestHandler,
+    getActors,
   );
   router.get(
     "/:actorId",

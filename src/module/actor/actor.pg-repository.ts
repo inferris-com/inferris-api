@@ -1,11 +1,37 @@
 import type { Kysely, Selectable } from "kysely";
 import type { Actors, ActorType, DB } from "../../db/types.js";
-import type { UpdateActorBody } from "./actor.schemas.js";
+import type { ListActorsQuery, UpdateActorBody } from "./actor.schemas.js";
 import type { DeleteResult } from "../../shared/results.types.js";
 import { isForeignKeyViolation } from "../../shared/db/pg-error.utils.js";
+import type { PaginatedResult } from "../../shared/pagination.schemas.js";
 
 export class ActorPgRepository {
   constructor(private readonly db: Kysely<DB>) {}
+
+  async listActors({ limit, offset, name, type }: ListActorsQuery): Promise<PaginatedResult<Selectable<Actors>> | null> {
+    return await this.db.transaction().execute(async (trx) => {
+      const actors = await trx
+        .selectFrom("actors")
+        .selectAll()
+        .$if(name !== undefined, (qb) => qb.where("actors.name", "=", name ?? ""))
+        .$if(type !== undefined, (qb) => qb.where("actors.type", "=", type ?? "unspecified"))
+        .limit(limit)
+        .offset(offset)
+        .orderBy("actors.created_at_ms", "asc")
+        .execute();
+
+      if (actors.length === 0){
+        return null;
+      }
+
+      return {
+        rows: actors,
+        total: actors.length,
+        limit: limit,
+        offset: offset
+      };
+    });
+  }
 
   async findActorById(id: string) {
     return await this.db.transaction().execute(async (trx) => {
