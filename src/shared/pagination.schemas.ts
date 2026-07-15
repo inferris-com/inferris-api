@@ -13,3 +13,10 @@ export type PaginatedResult<T> = {
   limit: number;
   offset: number;
 };
+
+export type PaginatedResponse = {
+  count: number;
+  total: number;
+  limit: number;
+  offset: number;
+};
