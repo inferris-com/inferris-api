@@ -65,6 +65,29 @@ describe("player routes", () => {
     expect(dependencies.services.player.getPlayerByMojangId).toHaveBeenCalledWith(mojangId);
   });
 
+  test("GET /players/:playerId allows read-only API keys", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.player.getPlayer.mockResolvedValue({
+      id: ids.player,
+      username: "Refrizor",
+      orbs: 100,
+    });
+
+    const response = await request
+      .get(`/players/${ids.player}`)
+      .set("Authorization", "ApiKey read-only-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      data: {
+        id: ids.player,
+        username: "Refrizor",
+        orbs: null,
+      },
+    });
+    expect(dependencies.services.player.getPlayer).toHaveBeenCalledWith(ids.player);
+  });
+
   test("PUT /players/:playerId/ranks/:groupKey/:rankKey injects assigning actor", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.player.updateRankAssignment.mockResolvedValue({

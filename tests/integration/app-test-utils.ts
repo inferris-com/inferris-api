@@ -157,6 +157,18 @@ const serverApiKeyAuth: AuthContext = {
   },
 };
 
+const readOnlyApiKeyAuth: AuthContext = {
+  principalType: "server_api_key",
+  principalId: "read-only-key-1",
+  actorId: null,
+  platform: "minecraft",
+  apiKey: {
+    id: "read-only-key-1",
+    scopes: ["players:read"],
+    isSuperKey: false,
+  },
+};
+
 const serviceActorApiKeyAuth: AuthContext = {
   principalType: "service_actor_api_key",
   principalId: "service-actor-key-1",
@@ -204,6 +216,12 @@ function testAuthenticate(): RequestHandler {
 
     if (authorization === "ApiKey server-token") {
       req.auth = structuredClone(serverApiKeyAuth);
+      next();
+      return;
+    }
+
+    if (authorization === "ApiKey read-only-token") {
+      req.auth = structuredClone(readOnlyApiKeyAuth);
       next();
       return;
     }

@@ -6,9 +6,19 @@ import {
   requireActor,
   requireMinecraftPermission,
 } from "../../../src/module/auth/auth.middleware.js";
-import type { AuthRepository } from "../../../src/module/auth/auth.repository.js";
+import {
+  parseApiScopes,
+  type AuthRepository,
+} from "../../../src/module/auth/auth.repository.js";
 
 describe("auth middleware", () => {
+  test("parseApiScopes accepts legacy nested scope arrays", () => {
+    expect(parseApiScopes([["players:read"], "servers:read"])).toEqual([
+      "players:read",
+      "servers:read",
+    ]);
+  });
+
   test("authorize treats Argus role and privileged role policies as alternate authorities", async () => {
     const insertAuditLog = jest.fn<(...args: unknown[]) => Promise<unknown>>();
     const repo = { insertAuditLog } as unknown as AuthRepository;
