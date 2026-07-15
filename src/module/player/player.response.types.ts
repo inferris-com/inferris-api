@@ -66,7 +66,7 @@ export const playerResponseSchema = z
     mojangId: z.string().uuid(),
     actorId: z.string().uuid(),
     username: z.string(),
-    activeNickname: playerNicknameSummaryResponseSchema.nullable(),
+    activeNickname: playerNicknameSummaryResponseSchema.optional(),
     flags: z.string(),
     orbs: z.string(),
     chatChannel: z.string(),

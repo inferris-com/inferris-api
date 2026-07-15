@@ -1,4 +1,4 @@
-import { int8ToStringOrNull, int8ToStringOrDefault, int8ToString } from "../../shared/db/int8.js";
+import { int8ToString, int8ToStringOrDefault, int8ToStringOrNull } from "../../shared/db/int8.js";
 import type {
   PlayerBadgeRow,
   PlayerDetailsRecord,
@@ -42,12 +42,14 @@ export function toPlayerResponse(input: PlayerDetailsRecord): PlayerResponse {
     mojangId: player.mojang_id,
     actorId: player.actor_id,
     username: player.username,
-    activeNickname: player.active_nickname
+    ...(player.active_nickname
       ? {
-          nickname: player.active_nickname,
-          coverRankKey: player.active_nickname_cover_rank_key,
+          activeNickname: {
+            nickname: player.active_nickname,
+            coverRankKey: player.active_nickname_cover_rank_key,
+          },
         }
-      : null,
+      : {}),
     flags: int8ToStringOrDefault(player.flags, "0"),
     orbs: int8ToStringOrDefault(player.orbs, "0"),
     chatChannel: player.active_channel_key,

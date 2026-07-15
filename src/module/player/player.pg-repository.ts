@@ -720,8 +720,14 @@ export class PlayerPgRepository implements PlayerRepository {
         .executeTakeFirst(),
       executor
         .selectFrom("player_ranks")
+        .innerJoin(
+          "groups",
+          "groups.key",
+          "player_ranks.group_key",
+        )
         .select(["group_key", "rank_key"])
         .where("player_id", "=", id)
+        .orderBy("groups.priority", "desc")
         .orderBy("group_key", "asc")
         .orderBy("rank_key", "asc")
         .execute(),
