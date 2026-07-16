@@ -2,6 +2,7 @@ import type { Express } from "express";
 
 import { createAccountRouter } from "../module/account/account.route.js";
 import { createActorRouter } from "../module/actor/actor.route.js";
+import { createArgusAlertRouter } from "../module/argus-alert/argus-alert.route.js";
 import { createArgusUserRouter } from "../module/argus-user/argus-user.route.js";
 import { createAuthRouter } from "../module/auth/auth.route.js";
 import { createAuditLogRouter } from "../module/audit-log/audit-log.route.js";
@@ -40,6 +41,11 @@ export function registerAppRoutes(app: Express, dependencies: AppDependencies): 
     "/argus-users",
     authenticateRequest,
     createArgusUserRouter(services.argusUser, authRepository),
+  );
+  app.use(
+    "/argus-alerts",
+    authenticateRequest,
+    createArgusAlertRouter(services.argusAlert, authRepository),
   );
   app.use(
     "/audit-logs",

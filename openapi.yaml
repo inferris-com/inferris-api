@@ -298,6 +298,35 @@ components:
         - "playerId"
         - "createdAtMs"
         - "lastUpdatedAtMs"
+    ArgusAlertResponse:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+        title:
+          type: "string"
+        description:
+          type:
+            - "string"
+            - "null"
+        priority:
+          type: "integer"
+        cssClass:
+          type:
+            - "string"
+            - "null"
+        isActive:
+          type: "boolean"
+        createdAtMs:
+          type: "string"
+      required:
+        - "id"
+        - "title"
+        - "description"
+        - "priority"
+        - "cssClass"
+        - "isActive"
+        - "createdAtMs"
     ArgusUserResponse:
       type: "object"
       properties:
@@ -2309,6 +2338,358 @@ paths:
                 properties:
                   data:
                     "$ref": "#/components/schemas/ActorResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/argus-alerts":
+    get:
+      tags:
+        - "Argus Alerts"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "List site-wide Argus alerts"
+      operationId: "listArgusAlerts"
+      parameters:
+        - schema:
+            type: "integer"
+            minimum: 1
+            maximum: 100
+            default: 25
+          required: false
+          name: "limit"
+          in: "query"
+        - schema:
+            type:
+              - "integer"
+              - "null"
+            minimum: 0
+            default: 0
+          required: false
+          name: "offset"
+          in: "query"
+        - schema:
+            type: "string"
+            enum:
+              - "true"
+              - "false"
+          required: false
+          name: "isActive"
+          in: "query"
+      responses:
+        "200":
+          description: "Successful list response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ArgusAlertResponse"
+                  meta:
+                    type: "object"
+                    properties:
+                      count:
+                        type: "integer"
+                        minimum: 0
+                    required:
+                      - "count"
+                required:
+                  - "data"
+                  - "meta"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+    post:
+      tags:
+        - "Argus Alerts"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Create a site-wide Argus alert"
+      operationId: "createArgusAlert"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                title:
+                  type: "string"
+                  minLength: 1
+                  maxLength: 120
+                description:
+                  type:
+                    - "string"
+                    - "null"
+                  maxLength: 4000
+                priority:
+                  type: "integer"
+                  minimum: 0
+                  maximum: 1000
+                  default: 0
+                cssClass:
+                  type:
+                    - "string"
+                    - "null"
+                  minLength: 1
+                  maxLength: 120
+                isActive:
+                  type: "boolean"
+                  default: true
+              required:
+                - "title"
+              additionalProperties: false
+      responses:
+        "201":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/ArgusAlertResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/argus-alerts/{alertId}":
+    get:
+      tags:
+        - "Argus Alerts"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Get a site-wide Argus alert"
+      operationId: "getArgusAlert"
+      parameters:
+        - schema:
+            type: "integer"
+            exclusiveMinimum: 0
+          required: true
+          name: "alertId"
+          in: "path"
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/ArgusAlertResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+    patch:
+      tags:
+        - "Argus Alerts"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Update a site-wide Argus alert"
+      operationId: "updateArgusAlert"
+      parameters:
+        - schema:
+            type: "integer"
+            exclusiveMinimum: 0
+          required: true
+          name: "alertId"
+          in: "path"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                title:
+                  type: "string"
+                  minLength: 1
+                  maxLength: 120
+                description:
+                  type:
+                    - "string"
+                    - "null"
+                  maxLength: 4000
+                priority:
+                  type: "integer"
+                  minimum: 0
+                  maximum: 1000
+                cssClass:
+                  type:
+                    - "string"
+                    - "null"
+                  minLength: 1
+                  maxLength: 120
+                isActive:
+                  type: "boolean"
+              additionalProperties: false
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/ArgusAlertResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+    delete:
+      tags:
+        - "Argus Alerts"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Deactivate a site-wide Argus alert"
+      operationId: "deactivateArgusAlert"
+      parameters:
+        - schema:
+            type: "integer"
+            exclusiveMinimum: 0
+          required: true
+          name: "alertId"
+          in: "path"
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/ArgusAlertResponse"
                 required:
                   - "data"
         "400":

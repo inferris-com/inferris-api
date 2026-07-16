@@ -31,6 +31,13 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
   services: {
     actor: Record<string, never>;
     account: Record<string, never>;
+    argusAlert: {
+      listAlerts: AsyncMock;
+      getAlert: AsyncMock;
+      createAlert: AsyncMock;
+      updateAlert: AsyncMock;
+      deactivateAlert: AsyncMock;
+    };
     argusUser: {
       listUsers: AsyncMock;
       getUser: AsyncMock;
@@ -304,6 +311,13 @@ export function createTestDependencies(): TestDependencies {
     services: {
       actor: {},
       account: {},
+      argusAlert: {
+        listAlerts: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getAlert: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createAlert: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updateAlert: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        deactivateAlert: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
       argusUser: {
         listUsers: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getUser: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
