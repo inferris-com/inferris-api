@@ -1,4 +1,4 @@
-import { sql, type Kysely } from "kysely";
+import { type Kysely, sql } from "kysely";
 
 import type { DB } from "../../db/types.js";
 
@@ -21,6 +21,7 @@ export class AccountPgRepository {
         "argus_users.role",
         "argus_users.actor_id",
         "argus_users.account_state",
+        "argus_users.account_security_lock",
         "argus_users.created_at_ms",
         "argus_users.updated_at_ms",
         "actors.name as actor_name",
@@ -52,6 +53,21 @@ export class AccountPgRepository {
       })
       .where("id", "=", id)
       .executeTakeFirstOrThrow();
+  }
+
+  async clearChangePasswordSecurityLock(id: string, passwordHash: string): Promise<boolean> {
+    const result = await this.db
+      .updateTable("argus_users")
+      .set({
+        password_hash: passwordHash,
+        account_security_lock: null,
+        updated_at_ms: sql`get_unix_ms()`,
+      })
+      .where("id", "=", id)
+      .where("account_security_lock", "=", "change_password")
+      .executeTakeFirst();
+
+    return Number(result.numUpdatedRows) > 0;
   }
 
   async listUnreadNotifications(accountId: string) {

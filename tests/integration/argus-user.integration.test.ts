@@ -13,6 +13,7 @@ describe("argus user routes", () => {
         role: "moderator",
         actorId: null,
         accountState: "active",
+        accountSecurityLock: null,
         createdAtMs: "1000",
         updatedAtMs: null,
       },

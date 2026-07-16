@@ -1,21 +1,17 @@
 import z from "zod";
 
 import { paginationQuerySchema } from "../../shared/pagination.schemas.js";
-
-const accountStateSchema = z.enum([
-  "active",
-  "suspended",
-  "disabled",
-  "verify_email",
-  "reset_password",
-]);
+import {
+  argusAccountRoleSchema,
+  argusAccountStateSchema,
+} from "../argus-account/argus-account.schemas.js";
 
 export const argusUserParamsSchema = z.object({ userId: z.string().uuid() }).strict();
 
 export const listArgusUsersQuerySchema = paginationQuerySchema
   .extend({
-    role: z.enum(["moderator", "admin"]).optional(),
-    accountState: accountStateSchema.optional(),
+    role: argusAccountRoleSchema.optional(),
+    accountState: argusAccountStateSchema.optional(),
   })
   .strict();
 
@@ -31,9 +27,9 @@ export const createArgusUserBodySchema = z
     username: z.string().trim().min(1).max(100),
     email: z.string().email().max(100),
     password: z.string().min(12).max(256).optional(),
-    role: z.enum(["moderator", "admin"]).default("moderator"),
+    role: argusAccountRoleSchema.default("moderator"),
     actorId: z.string().uuid().nullable().optional(),
-    accountState: accountStateSchema.default("active"),
+    accountState: argusAccountStateSchema.default("active"),
   })
   .strict();
 

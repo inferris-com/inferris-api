@@ -1,16 +1,17 @@
-import type { ArgusAccountRole, UserPrivilegeRole } from "../../db/types.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
+import type { ArgusAccountRole, UserPrivilegeRole } from "../../db/types.js";
+import {
+  argusAccountIdentityResponseSchema,
+  argusAccountSecurityLockSchema,
+  argusAccountStateSchema,
+} from "../argus-account/argus-account.schemas.js";
 
 extendZodWithOpenApi(z);
 
 export const authUserResponseSchema = z
   .object({
-    id: z.string().uuid(),
-    username: z.string(),
-    email: z.string().email(),
-    role: z.enum(["admin", "moderator"]),
-    actorId: z.string().uuid().nullable(),
+    ...argusAccountIdentityResponseSchema.shape,
     privilegedRole: z
       .enum(["administrator", "collaborator", "moderator", "none", "superadmin"])
       .nullable(),
@@ -35,3 +36,5 @@ export type AuthUserResponse = z.infer<typeof authUserResponseSchema> & {
 export type AuthTokenResponse = Omit<z.infer<typeof authTokenResponseSchema>, "user"> & {
   user: AuthUserResponse;
 };
+
+export { argusAccountSecurityLockSchema, argusAccountStateSchema };

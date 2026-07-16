@@ -9,7 +9,9 @@ export type ActorType = "application" | "system" | "unspecified" | "user";
 
 export type ArgusAccountRole = "admin" | "moderator";
 
-export type ArgusAccountStatus = "active" | "disabled" | "reset_password" | "suspended" | "verify_email";
+export type ArgusAccountSecurityLock = "change_password" | "reset_password";
+
+export type ArgusAccountStatus = "active" | "disabled" | "suspended" | "verify_email";
 
 export type BugReportStatus = "closed" | "confirmed" | "duplicate" | "in_progress" | "invalid" | "open" | "resolved" | "reviewing";
 
@@ -194,6 +196,7 @@ export interface ArgusSessions {
 }
 
 export interface ArgusUsers {
+  account_security_lock: ArgusAccountSecurityLock | null;
   account_state: Generated<ArgusAccountStatus>;
   actor_id: string | null;
   created_at_ms: Generated<Int8>;

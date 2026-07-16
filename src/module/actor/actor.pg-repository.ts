@@ -8,7 +8,12 @@ import type { PaginatedResult } from "../../shared/pagination.schemas.js";
 export class ActorPgRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
-  async listActors({ limit, offset, name, type }: ListActorsQuery): Promise<PaginatedResult<Selectable<Actors>> | null> {
+  async listActors({
+    limit,
+    offset,
+    name,
+    type,
+  }: ListActorsQuery): Promise<PaginatedResult<Selectable<Actors>> | null> {
     return await this.db.transaction().execute(async (trx) => {
       const actors = await trx
         .selectFrom("actors")
@@ -20,7 +25,7 @@ export class ActorPgRepository {
         .orderBy("actors.created_at_ms", "asc")
         .execute();
 
-      if (actors.length === 0){
+      if (actors.length === 0) {
         return null;
       }
 
@@ -28,7 +33,7 @@ export class ActorPgRepository {
         rows: actors,
         total: actors.length,
         limit: limit,
-        offset: offset
+        offset: offset,
       };
     });
   }
@@ -59,15 +64,13 @@ export class ActorPgRepository {
 
   async findActorById(id: string) {
     return await this.db.transaction().execute(async (trx) => {
-      const actor = await trx
+      return await trx
         .selectFrom("actors")
-        .selectAll()
-        .where("id", "=", id)
+        .leftJoin("players", "players.actor_id", "actors.id")
+        .selectAll("actors")
+        .select("players.id as player_id")
+        .where("actors.id", "=", id)
         .executeTakeFirst();
-
-      if (!actor) return null;
-
-      return actor;
     });
   }
 

@@ -41,6 +41,7 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
     account: {
       getAccount: AsyncMock;
       changePassword: AsyncMock;
+      changePasswordSecurityLock: AsyncMock;
       listSessions: AsyncMock;
       revokeSession: AsyncMock;
       listNotifications: AsyncMock;
@@ -358,6 +359,7 @@ export function createTestDependencies(): TestDependencies {
       account: {
         getAccount: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         changePassword: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        changePasswordSecurityLock: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         listSessions: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         revokeSession: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         listNotifications: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
@@ -398,8 +400,11 @@ export function createTestDependencies(): TestDependencies {
         getCurrentUser: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue({
           id: "argus-admin",
           username: "Admin",
+          email: "admin@example.com",
           role: "admin",
           actorId: ids.actor,
+          accountState: "active",
+          accountSecurityLock: null,
           privilegedRole: "superadmin",
         }),
       },

@@ -13,7 +13,7 @@ import {
   verifyAccessToken,
   verifyPassword,
 } from "./auth.crypto.js";
-import type { AuthRepository } from "./auth.repository.js";
+import type { ArgusAuthRecord, AuthRepository } from "./auth.repository.js";
 import type { AuthTokenResponse, AuthUserResponse } from "./auth.response-types.js";
 import type { LoginBody } from "./auth.schemas.js";
 import type { AuthContext } from "./auth.types.js";
@@ -31,6 +31,8 @@ type ArgusSessionState = RefreshSession & {
   userAgent: string | null;
   ipAddress: string | null;
 };
+
+type AuthUserRecord = Omit<ArgusAuthRecord, "passwordHash">;
 
 export type ArgusSessionResponse = {
   id: string;
@@ -307,13 +309,11 @@ export class AuthService {
     return true;
   }
 
-  private async issueTokenResponse(user: {
-    id: string;
-    username: string;
-    email: string;
-    role: "moderator" | "admin";
-    actorId: string | null;
-  }, sessionMeta: SessionMeta, existingSessionId?: string): Promise<AuthTokenResponse> {
+  private async issueTokenResponse(
+    user: AuthUserRecord,
+    sessionMeta: SessionMeta,
+    existingSessionId?: string,
+  ): Promise<AuthTokenResponse> {
     const refreshToken = createRefreshToken();
     const now = Date.now();
     const sessionId = existingSessionId ?? randomUUID();
@@ -375,13 +375,7 @@ export class AuthService {
     };
   }
 
-  private async toAuthUserResponse(user: {
-    id: string;
-    username: string;
-    email: string;
-    role: "moderator" | "admin";
-    actorId: string | null;
-  }): Promise<AuthUserResponse> {
+  private async toAuthUserResponse(user: AuthUserRecord): Promise<AuthUserResponse> {
     const privileged = await this.repo.findActivePrivilegedSubject(user.actorId);
 
     return {
@@ -390,6 +384,8 @@ export class AuthService {
       email: user.email,
       role: user.role,
       actorId: user.actorId,
+      accountState: user.accountState,
+      accountSecurityLock: user.accountSecurityLock,
       privilegedRole: privileged?.role ?? null,
     };
   }

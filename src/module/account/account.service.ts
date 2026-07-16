@@ -39,7 +39,10 @@ export class AccountService {
     return toAccountResponse(account, await this.getPasswordSecurityCue(argusUserId));
   }
 
-  async changePassword(auth: AuthContext, input: ChangePasswordBody): Promise<PasswordChangeResponse> {
+  async changePassword(
+    auth: AuthContext,
+    input: ChangePasswordBody,
+  ): Promise<PasswordChangeResponse> {
     const argusUserId = requireArgusUserId(auth);
     const current = await this.repo.findPasswordAuthById(argusUserId);
 
@@ -53,6 +56,43 @@ export class AccountService {
     const passwordSecurity = await this.checkPasswordSecurity(input.newPassword);
 
     await this.repo.updatePassword(argusUserId, await hashPassword(input.newPassword));
+
+    if (passwordSecurity) {
+      await this.setPasswordSecurityCue(argusUserId, passwordSecurity);
+    } else {
+      await this.redis.del(passwordSecurityKey(argusUserId));
+    }
+
+    return { passwordSecurity };
+  }
+
+  async changePasswordSecurityLock(
+    auth: AuthContext,
+    input: ChangePasswordBody,
+  ): Promise<PasswordChangeResponse> {
+    const argusUserId = requireArgusUserId(auth);
+    const current = await this.repo.findPasswordAuthById(argusUserId);
+
+    if (!current || !(await verifyPassword(current.password_hash, input.currentPassword))) {
+      throw new UnauthorizedError({
+        code: "INVALID_CURRENT_PASSWORD",
+        message: "Current password is invalid",
+      });
+    }
+
+    const passwordSecurity = await this.checkPasswordSecurity(input.newPassword);
+
+    const passwordChanged = await this.repo.clearChangePasswordSecurityLock(
+      argusUserId,
+      await hashPassword(input.newPassword),
+    );
+
+    if (!passwordChanged) {
+      throw new NotFoundError({
+        code: "SECURITY_LOCK_NOT_FOUND",
+        message: "No change-password security lock is active for this account.",
+      });
+    }
 
     if (passwordSecurity) {
       await this.setPasswordSecurityCue(argusUserId, passwordSecurity);
@@ -89,13 +129,15 @@ export class AccountService {
       this.getPasswordSecurityCue(argusUserId),
     ]);
 
-    const notifications: AccountNotificationResponse[] = accountNotifications.map((notification) => ({
-      id: notification.id,
-      type: "notification" as const,
-      title: notification.title,
-      description: notification.description,
-      priority: notification.priority,
-    }));
+    const notifications: AccountNotificationResponse[] = accountNotifications.map(
+      (notification) => ({
+        id: notification.id,
+        type: "notification" as const,
+        title: notification.title,
+        description: notification.description,
+        priority: notification.priority,
+      }),
+    );
 
     if (passwordSecurity?.breached) {
       notifications.unshift({

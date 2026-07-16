@@ -39,6 +39,17 @@ export function createAccountRouter(service: AccountService): Router {
     res.json(body);
   };
 
+  const changePasswordSecurityLock: RequestHandler<
+    Record<string, never>,
+    unknown,
+    ChangePasswordBody
+  > = async (req, res) => {
+    const auth = requireAuth(req);
+    const result = await service.changePasswordSecurityLock(auth, req.body);
+    const body: ApiSuccess<PasswordChangeResponse> = { data: result };
+    res.json(body);
+  };
+
   const listSessions: RequestHandler = async (req, res) => {
     const auth = requireAuth(req);
     const sessions = await service.listSessions(auth);
@@ -76,6 +87,11 @@ export function createAccountRouter(service: AccountService): Router {
     "/password",
     validateRequest({ body: changePasswordBodySchema }),
     changePassword,
+  );
+  router.post(
+    "/security-lock/change-password",
+    validateRequest({ body: changePasswordBodySchema }),
+    changePasswordSecurityLock,
   );
   router.get("/sessions", listSessions);
   router.delete(

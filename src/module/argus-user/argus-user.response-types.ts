@@ -1,17 +1,17 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
-import type { ArgusAccountRole, ArgusAccountStatus } from "../../db/types.js";
+import type {
+  ArgusAccountRole,
+  ArgusAccountSecurityLock,
+  ArgusAccountStatus,
+} from "../../db/types.js";
+import { argusAccountIdentityResponseSchema } from "../argus-account/argus-account.schemas.js";
 
 extendZodWithOpenApi(z);
 
 export const argusUserResponseSchema = z
   .object({
-    id: z.string().uuid(),
-    username: z.string(),
-    email: z.string().email(),
-    role: z.enum(["moderator", "admin"]),
-    actorId: z.string().uuid().nullable(),
-    accountState: z.enum(["active", "suspended", "disabled", "verify_email", "reset_password"]),
+    ...argusAccountIdentityResponseSchema.shape,
     createdAtMs: z.string(),
     updatedAtMs: z.string().nullable(),
   })
@@ -24,6 +24,7 @@ export type ArgusUserResponse = {
   role: ArgusAccountRole;
   actorId: string | null;
   accountState: ArgusAccountStatus;
+  accountSecurityLock: ArgusAccountSecurityLock | null;
   createdAtMs: string;
   updatedAtMs: string | null;
 };

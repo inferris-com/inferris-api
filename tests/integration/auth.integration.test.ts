@@ -27,8 +27,11 @@ describe("auth routes", () => {
       data: {
         id: "argus-admin",
         username: "Admin",
+        email: "admin@example.com",
         role: "admin",
         actorId: ids.actor,
+        accountState: "active",
+        accountSecurityLock: null,
         privilegedRole: "superadmin",
       },
     });

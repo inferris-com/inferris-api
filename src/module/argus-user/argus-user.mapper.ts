@@ -11,6 +11,7 @@ export function toArgusUserResponse(row: Selectable<ArgusUsers>) {
     role: row.role,
     actorId: row.actor_id,
     accountState: row.account_state,
+    accountSecurityLock: row.account_security_lock,
     createdAtMs: row.created_at_ms,
     updatedAtMs: row.updated_at_ms,
   };

@@ -2,7 +2,9 @@ import { sql } from "kysely";
 
 import type { DbExecutor } from "../../db/index.js";
 import type {
+  ArgusAccountSecurityLock,
   ArgusAccountRole,
+  ArgusAccountStatus,
   Json,
   Platform,
   PrincipalType,
@@ -27,6 +29,8 @@ export type ArgusAuthRecord = {
   passwordHash: string | null;
   role: ArgusAccountRole;
   actorId: string | null;
+  accountState: ArgusAccountStatus;
+  accountSecurityLock: ArgusAccountSecurityLock | null;
 };
 
 export type PrivilegedRecord = {
@@ -120,7 +124,16 @@ export class AuthRepository {
   async findArgusUserByUsernameOrEmail(usernameOrEmail: string): Promise<ArgusAuthRecord | null> {
     const row = await this.db
       .selectFrom("argus_users")
-      .select(["id", "username", "email", "password_hash", "role", "actor_id"])
+      .select([
+        "id",
+        "username",
+        "email",
+        "password_hash",
+        "role",
+        "actor_id",
+        "account_state",
+        "account_security_lock",
+      ])
       .where("account_state", "=", "active")
       .where((eb) =>
         eb.or([
@@ -138,6 +151,8 @@ export class AuthRepository {
           passwordHash: row.password_hash,
           role: row.role,
           actorId: row.actor_id,
+          accountState: row.account_state,
+          accountSecurityLock: row.account_security_lock,
         }
       : null;
   }
@@ -145,7 +160,15 @@ export class AuthRepository {
   async findActiveArgusUserById(id: string): Promise<Omit<ArgusAuthRecord, "passwordHash"> | null> {
     const row = await this.db
       .selectFrom("argus_users")
-      .select(["id", "username", "email", "role", "actor_id"])
+      .select([
+        "id",
+        "username",
+        "email",
+        "role",
+        "actor_id",
+        "account_state",
+        "account_security_lock",
+      ])
       .where("id", "=", id)
       .where("account_state", "=", "active")
       .executeTakeFirst();
@@ -157,6 +180,8 @@ export class AuthRepository {
           email: row.email,
           role: row.role,
           actorId: row.actor_id,
+          accountState: row.account_state,
+          accountSecurityLock: row.account_security_lock,
         }
       : null;
   }

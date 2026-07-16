@@ -30,6 +30,7 @@ const types = [
   "server_type",
   "friend_request_status",
   "chat_channel",
+  "argus_account_security_lock",
   "argus_account_status",
   "argus_account_role",
 ] as const;
@@ -90,7 +91,11 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     'active',
     'suspended',
     'disabled',
-    'verify_email',
+    'verify_email'
+    );
+
+  CREATE TYPE argus_account_security_lock AS ENUM (
+    'change_password',
     'reset_password'
     );
 
@@ -483,6 +488,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     role          argus_account_role   NOT NULL,
     actor_id      UUID                 NULL REFERENCES actors (id) ON DELETE SET NULL,
     account_state argus_account_status NOT NULL DEFAULT 'active',
+    account_security_lock argus_account_security_lock NULL DEFAULT NULL,
 
     created_at_ms BIGINT               NOT NULL DEFAULT get_unix_ms(),
     updated_at_ms BIGINT               NULL

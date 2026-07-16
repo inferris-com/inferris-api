@@ -44,6 +44,20 @@ export function registerAccountOpenApi(registry: OpenAPIRegistry) {
   });
 
   registry.registerPath({
+    method: "post",
+    path: "/account/security-lock/change-password",
+    tags: ["Account"],
+    security: userSecurity,
+    summary:
+      "Change the current Argus account password and clear an active change-password security lock",
+    operationId: "changeAccountPasswordSecurityLock",
+    request: {
+      body: { required: true, content: { "application/json": jsonBody(changePasswordBodySchema) } },
+    },
+    responses: { "200": successResponse(passwordChangeResponseSchema), ...standardErrorResponses },
+  });
+
+  registry.registerPath({
     method: "get",
     path: "/account/sessions",
     tags: ["Account"],

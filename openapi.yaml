@@ -33,13 +33,28 @@ components:
         role:
           type: "string"
           enum:
-            - "admin"
             - "moderator"
+            - "admin"
         actorId:
           type:
             - "string"
             - "null"
           format: "uuid"
+        accountState:
+          type: "string"
+          enum:
+            - "active"
+            - "suspended"
+            - "disabled"
+            - "verify_email"
+        accountSecurityLock:
+          type:
+            - "string"
+            - "null"
+          enum:
+            - "change_password"
+            - "reset_password"
+            - null
         privilegedRole:
           type:
             - "string"
@@ -57,6 +72,8 @@ components:
         - "email"
         - "role"
         - "actorId"
+        - "accountState"
+        - "accountSecurityLock"
         - "privilegedRole"
     ApiErrorEnvelope:
       type: "object"
@@ -118,6 +135,21 @@ components:
             - "string"
             - "null"
           format: "uuid"
+        accountState:
+          type: "string"
+          enum:
+            - "active"
+            - "suspended"
+            - "disabled"
+            - "verify_email"
+        accountSecurityLock:
+          type:
+            - "string"
+            - "null"
+          enum:
+            - "change_password"
+            - "reset_password"
+            - null
         linkedActor:
           type:
             - "object"
@@ -163,14 +195,6 @@ components:
             - "role"
             - "title"
             - "status"
-        accountState:
-          type: "string"
-          enum:
-            - "active"
-            - "suspended"
-            - "disabled"
-            - "verify_email"
-            - "reset_password"
         passwordSecurity:
           "$ref": "#/components/schemas/PasswordSecurityCue"
         createdAtMs:
@@ -185,9 +209,10 @@ components:
         - "email"
         - "role"
         - "actorId"
+        - "accountState"
+        - "accountSecurityLock"
         - "linkedActor"
         - "privileged"
-        - "accountState"
         - "passwordSecurity"
         - "createdAtMs"
         - "updatedAtMs"
@@ -520,7 +545,14 @@ components:
             - "suspended"
             - "disabled"
             - "verify_email"
+        accountSecurityLock:
+          type:
+            - "string"
+            - "null"
+          enum:
+            - "change_password"
             - "reset_password"
+            - null
         createdAtMs:
           type: "string"
         updatedAtMs:
@@ -534,6 +566,7 @@ components:
         - "role"
         - "actorId"
         - "accountState"
+        - "accountSecurityLock"
         - "createdAtMs"
         - "updatedAtMs"
     AuditLogResponse:
@@ -2204,6 +2237,70 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/account/security-lock/change-password":
+    post:
+      tags:
+        - "Account"
+      security:
+        - bearerAuth:
+            []
+      summary: "Change the current Argus account password and clear an active change-password security lock"
+      operationId: "changeAccountPasswordSecurityLock"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                currentPassword:
+                  type: "string"
+                  minLength: 1
+                  maxLength: 256
+                newPassword:
+                  type: "string"
+                  minLength: 12
+                  maxLength: 256
+              required:
+                - "currentPassword"
+                - "newPassword"
+              additionalProperties: false
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/PasswordChangeResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
   "/account/sessions":
     get:
       tags:
@@ -3807,7 +3904,6 @@ paths:
               - "suspended"
               - "disabled"
               - "verify_email"
-              - "reset_password"
           required: false
           name: "accountState"
           in: "query"
@@ -3905,7 +4001,6 @@ paths:
                     - "suspended"
                     - "disabled"
                     - "verify_email"
-                    - "reset_password"
                   default: "active"
               required:
                 - "username"
@@ -4051,7 +4146,6 @@ paths:
                     - "suspended"
                     - "disabled"
                     - "verify_email"
-                    - "reset_password"
                   default: "active"
               additionalProperties: false
       responses:

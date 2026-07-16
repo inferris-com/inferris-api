@@ -1,3 +1,10 @@
+import type {
+  ActorType,
+  ArgusAccountRole,
+  ArgusAccountSecurityLock,
+  ArgusAccountStatus,
+  UserPrivilegeRole,
+} from "../../db/types.js";
 import type { PasswordSecurityCue } from "./account.response-types.js";
 
 export function toAccountResponse(
@@ -5,15 +12,16 @@ export function toAccountResponse(
     id: string;
     username: string;
     email: string;
-    role: "moderator" | "admin";
+    role: ArgusAccountRole;
     actor_id: string | null;
-    account_state: "active" | "suspended" | "disabled" | "verify_email" | "reset_password";
+    account_state: ArgusAccountStatus;
+    account_security_lock: ArgusAccountSecurityLock | null;
     created_at_ms: string;
     updated_at_ms: string | null;
     actor_name: string | null;
-    actor_type: string | null;
+    actor_type: ActorType | null;
     privileged_id: string | null;
-    privileged_role: "none" | "collaborator" | "moderator" | "administrator" | "superadmin" | null;
+    privileged_role: UserPrivilegeRole | null;
     privileged_title: string | null;
     privileged_status: string | null;
   },
@@ -41,6 +49,7 @@ export function toAccountResponse(
         }
       : null,
     accountState: row.account_state,
+    accountSecurityLock: row.account_security_lock,
     passwordSecurity,
     createdAtMs: row.created_at_ms,
     updatedAtMs: row.updated_at_ms,

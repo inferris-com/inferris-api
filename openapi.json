@@ -45,8 +45,8 @@
           "role": {
             "type": "string",
             "enum": [
-              "admin",
-              "moderator"
+              "moderator",
+              "admin"
             ]
           },
           "actorId": {
@@ -55,6 +55,26 @@
               "null"
             ],
             "format": "uuid"
+          },
+          "accountState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "disabled",
+              "verify_email"
+            ]
+          },
+          "accountSecurityLock": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "change_password",
+              "reset_password",
+              null
+            ]
           },
           "privilegedRole": {
             "type": [
@@ -77,6 +97,8 @@
           "email",
           "role",
           "actorId",
+          "accountState",
+          "accountSecurityLock",
           "privilegedRole"
         ]
       },
@@ -163,6 +185,26 @@
             ],
             "format": "uuid"
           },
+          "accountState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "disabled",
+              "verify_email"
+            ]
+          },
+          "accountSecurityLock": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "change_password",
+              "reset_password",
+              null
+            ]
+          },
           "linkedActor": {
             "type": [
               "object",
@@ -226,16 +268,6 @@
               "status"
             ]
           },
-          "accountState": {
-            "type": "string",
-            "enum": [
-              "active",
-              "suspended",
-              "disabled",
-              "verify_email",
-              "reset_password"
-            ]
-          },
           "passwordSecurity": {
             "$ref": "#/components/schemas/PasswordSecurityCue"
           },
@@ -255,9 +287,10 @@
           "email",
           "role",
           "actorId",
+          "accountState",
+          "accountSecurityLock",
           "linkedActor",
           "privileged",
-          "accountState",
           "passwordSecurity",
           "createdAtMs",
           "updatedAtMs"
@@ -719,8 +752,18 @@
               "active",
               "suspended",
               "disabled",
-              "verify_email",
-              "reset_password"
+              "verify_email"
+            ]
+          },
+          "accountSecurityLock": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "change_password",
+              "reset_password",
+              null
             ]
           },
           "createdAtMs": {
@@ -740,6 +783,7 @@
           "role",
           "actorId",
           "accountState",
+          "accountSecurityLock",
           "createdAtMs",
           "updatedAtMs"
         ]
@@ -2990,6 +3034,107 @@
         ],
         "summary": "Change the current Argus account password",
         "operationId": "changeAccountPassword",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 12,
+                    "maxLength": 256
+                  }
+                },
+                "required": [
+                  "currentPassword",
+                  "newPassword"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PasswordChangeResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/security-lock/change-password": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Change the current Argus account password and clear an active change-password security lock",
+        "operationId": "changeAccountPasswordSecurityLock",
         "requestBody": {
           "required": true,
           "content": {
@@ -5622,8 +5767,7 @@
                 "active",
                 "suspended",
                 "disabled",
-                "verify_email",
-                "reset_password"
+                "verify_email"
               ]
             },
             "required": false,
@@ -5765,8 +5909,7 @@
                       "active",
                       "suspended",
                       "disabled",
-                      "verify_email",
-                      "reset_password"
+                      "verify_email"
                     ],
                     "default": "active"
                   }
@@ -5992,8 +6135,7 @@
                       "active",
                       "suspended",
                       "disabled",
-                      "verify_email",
-                      "reset_password"
+                      "verify_email"
                     ],
                     "default": "active"
                   }
