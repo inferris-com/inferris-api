@@ -82,7 +82,7 @@ describe("player routes", () => {
       data: {
         id: ids.player,
         username: "Refrizor",
-        orbs: null,
+        orbs: 100,
       },
     });
     expect(dependencies.services.player.getPlayer).toHaveBeenCalledWith(ids.player);

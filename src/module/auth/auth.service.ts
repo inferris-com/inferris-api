@@ -1,5 +1,6 @@
 import { config } from "../../config.js";
 import { UnauthorizedError } from "../../error/app-error.js";
+import { randomUUID } from "node:crypto";
 import type { RedisClient } from "../../redis/index.js";
 import {
   compareHashes,
@@ -19,7 +20,28 @@ import type { AuthContext } from "./auth.types.js";
 
 type RefreshSession = {
   argusUserId: string;
+  sessionId: string;
   createdAtMs: number;
+};
+
+type ArgusSessionState = RefreshSession & {
+  refreshTokenHash: string;
+  lastSeenAtMs: number;
+  userAgent: string | null;
+  ipAddress: string | null;
+};
+
+export type ArgusSessionResponse = {
+  id: string;
+  createdAtMs: number;
+  lastSeenAtMs: number;
+  userAgent: string | null;
+  ipAddress: string | null;
+};
+
+export type SessionMeta = {
+  userAgent?: string | null;
+  ipAddress?: string | null;
 };
 
 export type MinecraftSessionState = {
@@ -146,7 +168,7 @@ export class AuthService {
     }
   }
 
-  async login(input: LoginBody): Promise<AuthTokenResponse> {
+  async login(input: LoginBody, sessionMeta: SessionMeta = {}): Promise<AuthTokenResponse> {
     const user = await this.repo.findArgusUserByUsernameOrEmail(input.usernameOrEmail);
 
     if (!user) {
@@ -159,10 +181,10 @@ export class AuthService {
       throw invalidCredentials();
     }
 
-    return this.issueTokenResponse(user);
+    return this.issueTokenResponse(user, sessionMeta);
   }
 
-  async refresh(refreshToken: string): Promise<AuthTokenResponse> {
+  async refresh(refreshToken: string, sessionMeta: SessionMeta = {}): Promise<AuthTokenResponse> {
     const sessionKey = refreshKey(hashRefreshToken(refreshToken));
     const rawSession = await this.redis.get(sessionKey);
 
@@ -179,11 +201,25 @@ export class AuthService {
       throw invalidCredentials();
     }
 
-    return this.issueTokenResponse(user);
+    return this.issueTokenResponse(user, sessionMeta, session.sessionId);
   }
 
   async logout(refreshToken: string): Promise<void> {
-    await this.redis.del(refreshKey(hashRefreshToken(refreshToken)));
+    const sessionKey = refreshKey(hashRefreshToken(refreshToken));
+    const rawSession = await this.redis.get(sessionKey);
+
+    await this.redis.del(sessionKey);
+
+    if (!rawSession) {
+      return;
+    }
+
+    const session = JSON.parse(rawSession) as Partial<RefreshSession>;
+
+    if (session.argusUserId && session.sessionId) {
+      await this.redis.del(argusSessionKey(session.sessionId));
+      await this.redis.sRem(argusUserSessionsKey(session.argusUserId), session.sessionId);
+    }
   }
 
   async getCurrentUser(auth: AuthContext): Promise<AuthUserResponse> {
@@ -203,27 +239,102 @@ export class AuthService {
     return this.toAuthUserResponse(user);
   }
 
+  async listArgusSessions(argusUserId: string): Promise<ArgusSessionResponse[]> {
+    const sessionIds = await this.redis.sMembers(argusUserSessionsKey(argusUserId));
+    const sessions = await Promise.all(
+      sessionIds.map(async (sessionId) => {
+        const raw = await this.redis.get(argusSessionKey(sessionId));
+
+        if (!raw) {
+          await this.redis.sRem(argusUserSessionsKey(argusUserId), sessionId);
+          return null;
+        }
+
+        const session = JSON.parse(raw) as ArgusSessionState;
+
+        return {
+          id: session.sessionId,
+          createdAtMs: session.createdAtMs,
+          lastSeenAtMs: session.lastSeenAtMs,
+          userAgent: session.userAgent,
+          ipAddress: session.ipAddress,
+        };
+      }),
+    );
+
+    return sessions
+      .filter((session): session is ArgusSessionResponse => session !== null)
+      .sort((left, right) => right.lastSeenAtMs - left.lastSeenAtMs);
+  }
+
+  async revokeArgusSession(argusUserId: string, sessionId: string): Promise<boolean> {
+    const raw = await this.redis.get(argusSessionKey(sessionId));
+
+    if (!raw) {
+      await this.redis.sRem(argusUserSessionsKey(argusUserId), sessionId);
+      return false;
+    }
+
+    const session = JSON.parse(raw) as ArgusSessionState;
+
+    if (session.argusUserId !== argusUserId) {
+      return false;
+    }
+
+    await Promise.all([
+      this.redis.del(argusSessionKey(sessionId)),
+      this.redis.del(refreshKey(session.refreshTokenHash)),
+      this.redis.sRem(argusUserSessionsKey(argusUserId), sessionId),
+    ]);
+
+    return true;
+  }
+
   private async issueTokenResponse(user: {
     id: string;
     username: string;
+    email: string;
     role: "moderator" | "admin";
     actorId: string | null;
-  }): Promise<AuthTokenResponse> {
+  }, sessionMeta: SessionMeta, existingSessionId?: string): Promise<AuthTokenResponse> {
     const accessToken = await signAccessToken({
       sub: user.id,
       actorId: user.actorId,
       role: user.role,
     });
     const refreshToken = createRefreshToken();
+    const now = Date.now();
+    const sessionId = existingSessionId ?? randomUUID();
 
     const session: RefreshSession = {
       argusUserId: user.id,
-      createdAtMs: Date.now(),
+      sessionId,
+      createdAtMs: now,
+    };
+
+    const existingSessionRaw = existingSessionId
+      ? await this.redis.get(argusSessionKey(existingSessionId))
+      : null;
+    const existingSession = existingSessionRaw
+      ? (JSON.parse(existingSessionRaw) as ArgusSessionState)
+      : null;
+    const sessionState: ArgusSessionState = {
+      ...session,
+      createdAtMs: existingSession?.createdAtMs ?? now,
+      refreshTokenHash: refreshToken.tokenHash,
+      lastSeenAtMs: now,
+      userAgent: sessionMeta.userAgent ?? existingSession?.userAgent ?? null,
+      ipAddress: sessionMeta.ipAddress ?? existingSession?.ipAddress ?? null,
     };
 
     await this.redis.set(refreshKey(refreshToken.tokenHash), JSON.stringify(session), {
       EX: config.auth.refreshTokenTtlSeconds,
     });
+    await this.redis.set(argusSessionKey(sessionId), JSON.stringify(sessionState), {
+      EX: config.auth.refreshTokenTtlSeconds,
+    });
+    await this.redis.sAdd(argusUserSessionsKey(user.id), sessionId);
+    await this.redis.expire(argusUserSessionsKey(user.id), config.auth.refreshTokenTtlSeconds);
 
     const authUser = await this.toAuthUserResponse(user);
 
@@ -239,6 +350,7 @@ export class AuthService {
   private async toAuthUserResponse(user: {
     id: string;
     username: string;
+    email: string;
     role: "moderator" | "admin";
     actorId: string | null;
   }): Promise<AuthUserResponse> {
@@ -247,6 +359,7 @@ export class AuthService {
     return {
       id: user.id,
       username: user.username,
+      email: user.email,
       role: user.role,
       actorId: user.actorId,
       privilegedRole: privileged?.role ?? null,
@@ -256,6 +369,14 @@ export class AuthService {
 
 function refreshKey(refreshTokenHash: string): string {
   return `auth:refresh:${refreshTokenHash}`;
+}
+
+export function argusSessionKey(sessionId: string): string {
+  return `auth:argus-session:${sessionId}`;
+}
+
+export function argusUserSessionsKey(argusUserId: string): string {
+  return `auth:argus-user-sessions:${argusUserId}`;
 }
 
 export function minecraftSessionTokenKey(tokenHash: string): string {

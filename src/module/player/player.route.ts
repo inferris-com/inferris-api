@@ -77,7 +77,6 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
     argusRole: "admin",
     privilegedRole: "administrator",
   });
-
   const listPlayers: RequestHandler = async (req, res) => {
     const players = await service.listPlayers(req.query as unknown as ListPlayersQuery);
     const body: ApiListSuccess<PlayerSummaryResponse> = {

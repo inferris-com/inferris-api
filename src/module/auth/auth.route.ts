@@ -22,14 +22,14 @@ export function createAuthRouter(
   const router = Router();
 
   const login: RequestHandler<ParamsDictionary, unknown, LoginBody> = async (req, res) => {
-    const result = await service.login(req.body);
+    const result = await service.login(req.body, sessionMeta(req));
     const body: ApiSuccess<AuthTokenResponse> = { data: result };
 
     res.status(201).json(body);
   };
 
   const refresh: RequestHandler<ParamsDictionary, unknown, RefreshBody> = async (req, res) => {
-    const result = await service.refresh(req.body.refreshToken);
+    const result = await service.refresh(req.body.refreshToken, sessionMeta(req));
     const body: ApiSuccess<AuthTokenResponse> = { data: result };
 
     res.json(body);
@@ -60,4 +60,11 @@ export function createAuthRouter(
   router.get("/me", authenticateRequest, me);
 
   return router;
+}
+
+function sessionMeta(req: Parameters<RequestHandler>[0]) {
+  return {
+    userAgent: req.header("user-agent") ?? null,
+    ipAddress: req.ip ?? null,
+  };
 }

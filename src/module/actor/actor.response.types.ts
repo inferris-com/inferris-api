@@ -1,6 +1,5 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
-import type { PaginatedResponse } from "../../shared/pagination.schemas.js";
 
 extendZodWithOpenApi(z);
 

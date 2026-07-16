@@ -30,11 +30,30 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
   };
   services: {
     actor: Record<string, never>;
+    account: Record<string, never>;
+    argusUser: {
+      listUsers: AsyncMock;
+      getUser: AsyncMock;
+      createUser: AsyncMock;
+      updateUser: AsyncMock;
+      disableUser: AsyncMock;
+    };
     auth: {
       login: AsyncMock;
       refresh: AsyncMock;
       logout: AsyncMock;
       getCurrentUser: AsyncMock;
+    };
+    auditLog: {
+      listAuditLogs: AsyncMock;
+      getAuditLog: AsyncMock;
+    };
+    badge: {
+      listBadges: AsyncMock;
+      getBadge: AsyncMock;
+      createBadge: AsyncMock;
+      updateBadge: AsyncMock;
+      deleteBadge: AsyncMock;
     };
     chatMessage: {
       listMessages: AsyncMock;
@@ -48,6 +67,13 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       updateModCase: AsyncMock;
       listActors: AsyncMock;
       createActor: AsyncMock;
+    };
+    group: {
+      listGroups: AsyncMock;
+      getGroup: AsyncMock;
+      createGroup: AsyncMock;
+      updateGroup: AsyncMock;
+      deleteGroup: AsyncMock;
     };
     permission: {
       findPermissionByKey: AsyncMock;
@@ -76,11 +102,23 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       deleteBadgeAssignment: AsyncMock;
       revokeActiveNickname: AsyncMock;
     };
+    playerSession: {
+      listSessions: AsyncMock;
+      listLiveSessions: AsyncMock;
+      getSession: AsyncMock;
+    };
     punishment: {
       listPunishments: AsyncMock;
       getPunishment: AsyncMock;
       createPunishment: AsyncMock;
       revokePunishment: AsyncMock;
+    };
+    rank: {
+      listRanks: AsyncMock;
+      getRank: AsyncMock;
+      createRank: AsyncMock;
+      updateRank: AsyncMock;
+      deleteRank: AsyncMock;
     };
     report: {
       listReports: AsyncMock;
@@ -109,6 +147,14 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       deleteServer: AsyncMock;
       deletePolicy: AsyncMock;
       deleteLockdown: AsyncMock;
+    };
+    staffPrivilege: {
+      listPrivileges: AsyncMock;
+      listPrivilegesByActorId: AsyncMock;
+      getPrivilege: AsyncMock;
+      createPrivilege: AsyncMock;
+      updatePrivilege: AsyncMock;
+      revokePrivilege: AsyncMock;
     };
     watchlist: {
       listEntries: AsyncMock;
@@ -257,6 +303,14 @@ export function createTestDependencies(): TestDependencies {
     authenticateRequest: testAuthenticate(),
     services: {
       actor: {},
+      account: {},
+      argusUser: {
+        listUsers: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getUser: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createUser: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updateUser: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        disableUser: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
       auth: {
         login: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         refresh: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
@@ -268,6 +322,17 @@ export function createTestDependencies(): TestDependencies {
           actorId: ids.actor,
           privilegedRole: "superadmin",
         }),
+      },
+      auditLog: {
+        listAuditLogs: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getAuditLog: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
+      badge: {
+        listBadges: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getBadge: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createBadge: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updateBadge: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        deleteBadge: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
       chatMessage: {
         listMessages: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
@@ -281,6 +346,13 @@ export function createTestDependencies(): TestDependencies {
         updateModCase: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         listActors: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createActor: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
+      group: {
+        listGroups: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getGroup: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createGroup: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updateGroup: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        deleteGroup: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
       permission: {
         findPermissionByKey: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
@@ -309,11 +381,23 @@ export function createTestDependencies(): TestDependencies {
         deleteBadgeAssignment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         revokeActiveNickname: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
+      playerSession: {
+        listSessions: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        listLiveSessions: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getSession: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
       punishment: {
         listPunishments: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getPunishment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createPunishment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         revokePunishment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
+      rank: {
+        listRanks: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getRank: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createRank: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updateRank: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        deleteRank: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
       report: {
         listReports: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
@@ -342,6 +426,14 @@ export function createTestDependencies(): TestDependencies {
         deleteServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deletePolicy: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deleteLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
+      staffPrivilege: {
+        listPrivileges: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        listPrivilegesByActorId: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getPrivilege: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createPrivilege: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updatePrivilege: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        revokePrivilege: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
       watchlist: {
         listEntries: jest.fn<(...args: unknown[]) => Promise<unknown>>(),

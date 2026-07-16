@@ -8,6 +8,7 @@ export const authUserResponseSchema = z
   .object({
     id: z.string().uuid(),
     username: z.string(),
+    email: z.string().email(),
     role: z.enum(["admin", "moderator"]),
     actorId: z.string().uuid().nullable(),
     privilegedRole: z

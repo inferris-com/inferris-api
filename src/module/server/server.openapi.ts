@@ -82,7 +82,7 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
     method: "post",
     path: "/servers/{serverId}/player-sessions",
-    tags: ["Servers"],
+    tags: ["Player Sessions"],
     security: userOrServiceSecurity,
     summary: "Start a Minecraft player session",
     operationId: "startMinecraftPlayerSession",
@@ -224,14 +224,15 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
       "/servers/{serverId}/player-sessions/{mojangId}",
       "End a Minecraft player session",
       "endMinecraftPlayerSession",
+      "Player Sessions",
     ],
-    ["/servers/{serverId}/lockdown", "Delete a server lockdown", "deleteServerLockdown"],
-    ["/servers/{serverId}/access", "Delete a server access policy", "deleteServerAccessPolicy"],
+    ["/servers/{serverId}/lockdown", "Delete a server lockdown", "deleteServerLockdown", "Servers"],
+    ["/servers/{serverId}/access", "Delete a server access policy", "deleteServerAccessPolicy", "Servers"],
   ] as const) {
     registry.registerPath({
       method: "delete",
       path,
-      tags: ["Servers"],
+      tags: [operationId === "endMinecraftPlayerSession" ? "Player Sessions" : "Servers"],
       security: userOrServiceSecurity,
       summary,
       operationId,

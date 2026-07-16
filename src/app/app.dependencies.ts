@@ -1,11 +1,19 @@
 import type { RequestHandler } from "express";
 
 import { db as defaultDb, type DbExecutor } from "../db/index.js";
+import { AccountPgRepository } from "../module/account/account.pg-repository.js";
+import { AccountService } from "../module/account/account.service.js";
 import { ActorPgRepository } from "../module/actor/actor.pg-repository.js";
 import { ActorService } from "../module/actor/actor.service.js";
+import { ArgusUserPgRepository } from "../module/argus-user/argus-user.pg-repository.js";
+import { ArgusUserService } from "../module/argus-user/argus-user.service.js";
 import { authenticate } from "../module/auth/auth.middleware.js";
 import { AuthRepository } from "../module/auth/auth.repository.js";
 import { AuthService } from "../module/auth/auth.service.js";
+import { AuditLogPgRepository } from "../module/audit-log/audit-log.pg-repository.js";
+import { AuditLogService } from "../module/audit-log/audit-log.service.js";
+import { BadgePgRepository } from "../module/badge/badge.pg-repository.js";
+import { BadgeService } from "../module/badge/badge.service.js";
 import { CatalogPgRepository } from "../module/catalog/catalog.pg-repository.js";
 import { CatalogService } from "../module/catalog/catalog.service.js";
 import { ChatMessageFlushWorker } from "../module/chat-message/chat-message.flush-worker.js";
@@ -17,16 +25,24 @@ import { ModCasePublisher } from "../module/mod-case/mod-case.publisher.js";
 import { ModCaseService } from "../module/mod-case/mod-case.service.js";
 import { PermissionPgRepository } from "../module/permission/permission.pg-repository.js";
 import { PermissionService } from "../module/permission/permission.service.js";
+import { PlayerSessionPgRepository } from "../module/player-session/player-session.pg-repository.js";
+import { PlayerSessionService } from "../module/player-session/player-session.service.js";
 import { PlayerPgRepository } from "../module/player/player.pg-repository.js";
 import { PlayerService } from "../module/player/player.service.js";
+import { GroupPgRepository } from "../module/group/group.pg-repository.js";
+import { GroupService } from "../module/group/group.service.js";
 import { PunishmentPgRepository } from "../module/punishment/punishment.pg-repository.js";
 import { PunishmentPublisher } from "../module/punishment/punishment.publisher.js";
 import { PunishmentService } from "../module/punishment/punishment.service.js";
+import { RankPgRepository } from "../module/rank/rank.pg-repository.js";
+import { RankService } from "../module/rank/rank.service.js";
 import { ReportPgRepository } from "../module/report/report.pg-repository.js";
 import { ReportPublisher } from "../module/report/report.publisher.js";
 import { ReportService } from "../module/report/report.service.js";
 import { ServerPgRepository } from "../module/server/server.pg-repository.js";
 import { ServerService } from "../module/server/server.service.js";
+import { StaffPrivilegePgRepository } from "../module/staff-privilege/staff-privilege.pg-repository.js";
+import { StaffPrivilegeService } from "../module/staff-privilege/staff-privilege.service.js";
 import { WatchlistPgRepository } from "../module/watchlist/watchlist.pg-repository.js";
 import { WatchlistService } from "../module/watchlist/watchlist.service.js";
 import { redis as defaultRedis, type RedisClient } from "../redis/index.js";
@@ -40,15 +56,23 @@ export type AppDependencies = {
   authenticateRequest: RequestHandler;
   services: {
     actor: ActorService;
+    account: AccountService;
+    argusUser: ArgusUserService;
     auth: AuthService;
+    auditLog: AuditLogService;
+    badge: BadgeService;
     catalog: CatalogService;
     chatMessage: ChatMessageService;
     modCase: ModCaseService;
+    group: GroupService;
     permission: PermissionService;
     player: PlayerService;
+    playerSession: PlayerSessionService;
     punishment: PunishmentService;
+    rank: RankService;
     report: ReportService;
     server: ServerService;
+    staffPrivilege: StaffPrivilegeService;
     watchlist: WatchlistService;
   };
   workers: {
@@ -68,16 +92,24 @@ export function createAppDependencies({
   chatMessageWorkerRedisClient = redisClient,
 }: CreateAppDependenciesOptions = {}): AppDependencies {
   const actorRepository = new ActorPgRepository(database);
+  const accountRepository = new AccountPgRepository(database);
+  const argusUserRepository = new ArgusUserPgRepository(database);
   const authRepository = new AuthRepository(database);
+  const auditLogRepository = new AuditLogPgRepository(database);
+  const badgeRepository = new BadgePgRepository(database);
   const catalogRepository = new CatalogPgRepository(database);
   const chatMessageRepository = new ChatMessagePgRepository(database);
   const chatMessageBuffer = new ChatMessageRedisBuffer(redisClient);
   const modCaseRepository = new ModCasePgRepository(database);
+  const groupRepository = new GroupPgRepository(database);
   const permissionRepository = new PermissionPgRepository(database);
   const playerRepository = new PlayerPgRepository(database);
+  const playerSessionRepository = new PlayerSessionPgRepository(database);
   const punishmentRepository = new PunishmentPgRepository(database);
+  const rankRepository = new RankPgRepository(database);
   const reportRepository = new ReportPgRepository(database);
   const serverRepository = new ServerPgRepository(database);
+  const staffPrivilegeRepository = new StaffPrivilegePgRepository(database);
   const watchlistRepository = new WatchlistPgRepository(database);
 
   const authService = new AuthService(authRepository, redisClient);
@@ -88,15 +120,23 @@ export function createAppDependencies({
     authenticateRequest: authenticate(authService),
     services: {
       actor: new ActorService(actorRepository),
+      account: new AccountService(accountRepository, authService, redisClient),
+      argusUser: new ArgusUserService(argusUserRepository),
       auth: authService,
+      auditLog: new AuditLogService(auditLogRepository),
+      badge: new BadgeService(badgeRepository),
       catalog: new CatalogService(catalogRepository),
       chatMessage: new ChatMessageService(chatMessageRepository, chatMessageBuffer),
       modCase: new ModCaseService(modCaseRepository, new ModCasePublisher(redisClient)),
+      group: new GroupService(groupRepository),
       permission: new PermissionService(permissionRepository),
       player: playerService,
+      playerSession: new PlayerSessionService(playerSessionRepository),
       punishment: new PunishmentService(punishmentRepository, new PunishmentPublisher(redisClient)),
+      rank: new RankService(rankRepository),
       report: new ReportService(reportRepository, new ReportPublisher(redisClient)),
       server: new ServerService(serverRepository, redisClient, playerService),
+      staffPrivilege: new StaffPrivilegeService(staffPrivilegeRepository),
       watchlist: new WatchlistService(watchlistRepository),
     },
     workers: {
