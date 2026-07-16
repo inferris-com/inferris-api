@@ -3,6 +3,7 @@ import type { ParamsDictionary } from "express-serve-static-core";
 
 import { validateRequest } from "../../middleware/validation.js";
 import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
+import { argusRoleRank, privilegedRoleRank } from "../auth/auth.types.js";
 import {
   auditMutation,
   authorize,
@@ -18,8 +19,14 @@ import {
   createReportCommentBodySchema,
   type ListReportsQuery,
   listReportsQuerySchema,
+  type ReportCodeParams,
+  reportCodeParamsSchema,
+  type ReportCommentIdParams,
   type ReportIdParams,
+  reportCommentIdParamsSchema,
   reportIdParamsSchema,
+  type UpdateReportCommentBody,
+  updateReportCommentBodySchema,
   type UpdateReportBody,
   updateReportBodySchema,
 } from "./report.schemas.js";
@@ -49,6 +56,13 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
 
   const getReport: RequestHandler<ReportIdParams> = async (req, res) => {
     const report = await service.getReport(req.params.reportId);
+    const body: ApiSuccess<ReportResponse> = { data: report };
+
+    res.json(body);
+  };
+
+  const getReportByCode: RequestHandler<ReportCodeParams> = async (req, res) => {
+    const report = await service.getReportByCode(req.params.code);
     const body: ApiSuccess<ReportResponse> = { data: report };
 
     res.json(body);
@@ -96,10 +110,40 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
       req.params.reportId,
       req.body,
       getRequestActorId(req) ?? "",
+      req.auth?.argus?.userId,
     );
     const body: ApiSuccess<ReportCommentResponse> = { data: comment };
 
     res.status(201).json(body);
+  };
+
+  const updateComment: RequestHandler<
+    ReportCommentIdParams,
+    unknown,
+    UpdateReportCommentBody
+  > = async (req, res) => {
+    const comment = await service.updateComment(
+      req.params.reportId,
+      req.params.commentId,
+      req.body,
+      getRequestActorId(req) ?? "",
+      canManageOtherReportComments(req),
+    );
+    const body: ApiSuccess<ReportCommentResponse> = { data: comment };
+
+    res.json(body);
+  };
+
+  const deleteComment: RequestHandler<ReportCommentIdParams> = async (req, res) => {
+    await service.deleteComment(
+      req.params.reportId,
+      req.params.commentId,
+      getRequestActorId(req) ?? "",
+      req.auth?.argus?.userId,
+      canManageOtherReportComments(req),
+    );
+
+    res.status(204).send();
   };
 
   router.post(
@@ -114,6 +158,12 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
     readReports,
     validateRequest({ query: listReportsQuerySchema }) as unknown as RequestHandler,
     listReports,
+  );
+  router.get(
+    "/code/:code",
+    readReports,
+    validateRequest({ params: reportCodeParamsSchema }),
+    getReportByCode,
   );
   router.get(
     "/:reportId",
@@ -143,6 +193,34 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
     validateRequest({ params: reportIdParamsSchema, body: createReportCommentBodySchema }),
     createComment,
   );
+  router.patch(
+    "/:reportId/comments/:commentId",
+    manageReports,
+    requireActor(),
+    auditMutation(authRepository, "reports.comments.update"),
+    validateRequest({ params: reportCommentIdParamsSchema, body: updateReportCommentBodySchema }),
+    updateComment,
+  );
+  router.delete(
+    "/:reportId/comments/:commentId",
+    manageReports,
+    requireActor(),
+    auditMutation(authRepository, "reports.comments.delete"),
+    validateRequest({ params: reportCommentIdParamsSchema }),
+    deleteComment,
+  );
 
   return router;
+}
+
+function canManageOtherReportComments(req: Parameters<RequestHandler>[0]): boolean {
+  const argusRole = req.auth?.argus?.role;
+  const privilegedRole = req.auth?.privileged?.role;
+
+  return (
+    (argusRole !== undefined && argusRoleRank[argusRole] >= argusRoleRank.admin) ||
+    (privilegedRole !== undefined &&
+      privilegedRoleRank[privilegedRole] >= privilegedRoleRank.administrator) ||
+    req.auth?.apiKey?.isSuperKey === true
+  );
 }

@@ -51,6 +51,19 @@ export const accountNotificationResponseSchema = z
   })
   .openapi("AccountNotificationResponse");
 
+export const argusSessionResponseSchema = z
+  .object({
+    id: z.string().uuid(),
+    createdAtMs: z.number().int(),
+    lastSeenAtMs: z.number().int(),
+    expiresAtMs: z.number().int(),
+    revokedAtMs: z.number().int().nullable(),
+    isCurrent: z.boolean(),
+    ipAddress: z.string().nullable(),
+    userAgent: z.string().nullable(),
+  })
+  .openapi("ArgusSessionResponse");
+
 export const passwordChangeResponseSchema = z
   .object({
     passwordSecurity: passwordSecurityCueSchema.nullable(),
@@ -93,6 +106,8 @@ export type AccountNotificationResponse = {
   description: string | null;
   priority: number;
 };
+
+export type ArgusSessionResponse = z.infer<typeof argusSessionResponseSchema>;
 
 export type PasswordChangeResponse = {
   passwordSecurity: PasswordSecurityCue | null;

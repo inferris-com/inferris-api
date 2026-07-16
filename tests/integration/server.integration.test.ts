@@ -162,6 +162,80 @@ describe("server and lockdown routes", () => {
     });
   });
 
+  test("POST /servers/:serverId/heartbeat accepts typed metrics", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.server.heartbeat.mockResolvedValue({
+      refreshedMojangIds: [],
+      missingMojangIds: [],
+    });
+
+    const response = await request
+      .post(`/servers/${ids.server}/heartbeat`)
+      .set("Authorization", "ApiKey server-token")
+      .send({
+        status: "online",
+        port: 25565,
+        version: "1.21.8",
+        onlineMojangIds: [],
+        metrics: {
+          onlinePlayerCount: 12,
+          maxPlayers: 100,
+          tps1m: 19.98,
+          msptAvg: 22.4,
+          heapUsedBytes: 268435456,
+          heapMaxBytes: 1073741824,
+          loadedChunks: 1200,
+          loadedWorlds: 3,
+        },
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        refreshedMojangIds: [],
+        missingMojangIds: [],
+      },
+    });
+    expect(dependencies.services.server.heartbeat).toHaveBeenCalledWith(ids.server, {
+      status: "online",
+      port: 25565,
+      version: "1.21.8",
+      onlineMojangIds: [],
+      metrics: {
+        onlinePlayerCount: 12,
+        maxPlayers: 100,
+        tps1m: 19.98,
+        msptAvg: 22.4,
+        heapUsedBytes: 268435456,
+        heapMaxBytes: 1073741824,
+        loadedChunks: 1200,
+        loadedWorlds: 3,
+      },
+    });
+  });
+
+  test("POST /servers/:serverId/heartbeat rejects invalid metrics", async () => {
+    const { dependencies, request } = createTestApp();
+
+    const response = await request
+      .post(`/servers/${ids.server}/heartbeat`)
+      .set("Authorization", "ApiKey server-token")
+      .send({
+        onlineMojangIds: [],
+        metrics: {
+          tps1m: -1,
+        },
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({
+      error: {
+        code: "VALIDATION_ERROR",
+      },
+    });
+    expect(dependencies.services.server.heartbeat).not.toHaveBeenCalled();
+  });
+
   test("POST /servers/:serverId/lockdown rejects body-supplied issuing actor", async () => {
     const { dependencies, request } = createTestApp();
 

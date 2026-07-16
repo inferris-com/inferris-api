@@ -29,8 +29,21 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
     actorHasMinecraftPermission: AsyncMock;
   };
   services: {
-    actor: Record<string, never>;
-    account: Record<string, never>;
+    actor: {
+      listActors: AsyncMock;
+      searchActors: AsyncMock;
+      findActorById: AsyncMock;
+      findActorByPlayerId: AsyncMock;
+      updateActorById: AsyncMock;
+    };
+    account: {
+      getAccount: AsyncMock;
+      changePassword: AsyncMock;
+      listSessions: AsyncMock;
+      revokeSession: AsyncMock;
+      listNotifications: AsyncMock;
+      markNotificationRead: AsyncMock;
+    };
     argusAlert: {
       listAlerts: AsyncMock;
       getAlert: AsyncMock;
@@ -67,6 +80,10 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       createMessage: AsyncMock;
       createBatch: AsyncMock;
     };
+    metrics: {
+      getOverview: AsyncMock;
+      getServerMetrics: AsyncMock;
+    };
     modCase: {
       listModCases: AsyncMock;
       getModCase: AsyncMock;
@@ -90,6 +107,7 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
     };
     player: {
       listPlayers: AsyncMock;
+      searchPlayers: AsyncMock;
       listFlagDefinitions: AsyncMock;
       encodeFlags: AsyncMock;
       decodeFlags: AsyncMock;
@@ -131,14 +149,18 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
     report: {
       listReports: AsyncMock;
       getReport: AsyncMock;
+      getReportByCode: AsyncMock;
       createReport: AsyncMock;
       updateReport: AsyncMock;
       listComments: AsyncMock;
       createComment: AsyncMock;
+      updateComment: AsyncMock;
+      deleteComment: AsyncMock;
     };
     server: {
       listServers: AsyncMock;
       registerServer: AsyncMock;
+      expireInactiveServers: AsyncMock;
       createServer: AsyncMock;
       createLockdown: AsyncMock;
       getServer: AsyncMock;
@@ -178,7 +200,7 @@ const adminAuth: AuthContext = {
   principalId: "argus-admin",
   actorId: ids.actor,
   platform: "argus",
-  argus: { userId: "argus-admin", role: "admin" },
+  argus: { userId: "argus-admin", role: "admin", sessionId: ids.chatMessage },
   privileged: { id: "privileged-admin", role: "superadmin" },
 };
 
@@ -310,8 +332,21 @@ export function createTestDependencies(): TestDependencies {
     },
     authenticateRequest: testAuthenticate(),
     services: {
-      actor: {},
-      account: {},
+      actor: {
+        listActors: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        searchActors: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        findActorById: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        findActorByPlayerId: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updateActorById: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
+      account: {
+        getAccount: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        changePassword: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        listSessions: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        revokeSession: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        listNotifications: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        markNotificationRead: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
       argusAlert: {
         listAlerts: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getAlert: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
@@ -354,6 +389,10 @@ export function createTestDependencies(): TestDependencies {
         createMessage: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createBatch: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
+      metrics: {
+        getOverview: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getServerMetrics: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
       modCase: {
         listModCases: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getModCase: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
@@ -377,6 +416,7 @@ export function createTestDependencies(): TestDependencies {
       },
       player: {
         listPlayers: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        searchPlayers: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         listFlagDefinitions: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         encodeFlags: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         decodeFlags: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
@@ -418,14 +458,18 @@ export function createTestDependencies(): TestDependencies {
       report: {
         listReports: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getReport: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getReportByCode: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createReport: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         updateReport: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         listComments: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createComment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updateComment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        deleteComment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
       server: {
         listServers: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         registerServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        expireInactiveServers: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),

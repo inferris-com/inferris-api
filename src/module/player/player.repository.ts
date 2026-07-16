@@ -17,6 +17,14 @@ export type PlayerSummaryRecord = Pick<
   active_nickname_cover_rank_key: string | null;
 };
 
+export type PlayerSearchRecord = Pick<
+  Selectable<Players>,
+  "id" | "mojang_id" | "actor_id" | "username" | "deleted_at_ms"
+> & {
+  active_nickname: string | null;
+  active_nickname_cover_rank_key: string | null;
+};
+
 export type PlayerRecord = Pick<
   Selectable<Players>,
   | "id"

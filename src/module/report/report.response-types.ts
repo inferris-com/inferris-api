@@ -7,6 +7,7 @@ extendZodWithOpenApi(z);
 export const reportResponseSchema = z
   .object({
     id: z.string().uuid(),
+    code: z.string().regex(/^[A-Z0-9]{8,12}$/),
     reporterActorId: z.string().uuid(),
     subjectActorId: z.string().uuid(),
     selectedReason: z.string(),
@@ -41,11 +42,16 @@ export const reportCommentResponseSchema = z
     id: z.string().uuid(),
     reportId: z.string().uuid(),
     authorActorId: z.string().uuid(),
+    authorArgusUserId: z.string().uuid().nullable(),
     parentCommentId: z.string().uuid().nullable(),
-    commentText: z.string(),
+    commentText: z.string().nullable(),
     isSticky: z.boolean(),
+    isDeleted: z.boolean(),
     createdAtMs: z.string(),
     editedAtMs: z.string().nullable(),
+    deletedAtMs: z.string().nullable(),
+    deletedByActorId: z.string().uuid().nullable(),
+    deletedByArgusUserId: z.string().uuid().nullable(),
   })
   .openapi("ReportCommentResponse");
 

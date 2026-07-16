@@ -37,6 +37,7 @@ export const createChatMessageBatchBodySchema = z
 export const listChatMessagesQuerySchema = z
   .object({
     limit: z.coerce.number().int().min(1).max(500).default(100),
+    cursor: z.string().trim().min(1).max(1000).optional(),
     beforeMs: z.string().optional(),
     afterMs: z.string().optional(),
     channelKey: z.string().min(1).max(30).optional(),
@@ -47,6 +48,10 @@ export const listChatMessagesQuerySchema = z
     includePending: boolQuerySchema.default(true),
   })
   .strict()
+  .refine((query) => query.cursor === undefined || query.beforeMs === undefined, {
+    message: "Use either cursor or beforeMs, not both.",
+    path: ["cursor"],
+  })
   .refine(
     (query) =>
       query.beforeMs === undefined ||

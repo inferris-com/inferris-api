@@ -1,4 +1,4 @@
-import { type Kysely, type Selectable, sql } from "kysely";
+import { type Kysely, type Selectable, sql, type Transaction } from "kysely";
 
 import type {
   DB,
@@ -14,6 +14,7 @@ import type {
   CreateServerBody,
   ReplaceServerAccessBody,
   ServerHeartbeatBody,
+  ServerHeartbeatMetrics,
   UpdateLockdownBody,
   UpdateServerBody,
 } from "./server.schemas.js";
@@ -212,6 +213,8 @@ export class ServerPgRepository {
         return null;
       }
 
+      await recordHeartbeatObservation(trx, serverId, input);
+
       if (input.onlineMojangIds.length === 0) {
         return [];
       }
@@ -237,6 +240,49 @@ export class ServerPgRepository {
         serverId: row.serverId,
         sessionEventId: row.sessionEventId,
       }));
+    });
+  }
+
+  async expireInactiveServers(inactiveBeforeMs: string): Promise<number> {
+    return this.db.transaction().execute(async (trx) => {
+      const servers = await trx
+        .selectFrom("servers")
+        .select("id")
+        .where("status", "=", "online")
+        .where(
+          sql`coalesce(last_heartbeat_at_ms, last_started_at_ms, created_at_ms)`,
+          "<=",
+          inactiveBeforeMs,
+        )
+        .execute();
+      const serverIds = servers.map((server) => server.id);
+
+      if (serverIds.length === 0) {
+        return 0;
+      }
+
+      await trx
+        .updateTable("player_session_events")
+        .set({
+          disconnected_at_ms: sql`get_unix_ms()`,
+          disconnect_reason: "server_inactive",
+          updated_at_ms: sql`get_unix_ms()`,
+        })
+        .where("server_id", "in", serverIds)
+        .where("disconnected_at_ms", "is", null)
+        .execute();
+
+      const result = await trx
+        .updateTable("servers")
+        .set({
+          status: "offline",
+          last_updated_at_ms: sql`get_unix_ms()`,
+        })
+        .where("id", "in", serverIds)
+        .where("status", "=", "online")
+        .executeTakeFirst();
+
+      return Number(result.numUpdatedRows);
     });
   }
 
@@ -655,4 +701,121 @@ export class ServerPgRepository {
       return { status: "deleted" };
     });
   }
+}
+
+async function recordHeartbeatObservation(
+  db: Kysely<DB> | Transaction<DB>,
+  serverId: string,
+  input: ServerHeartbeatBody,
+): Promise<void> {
+  const metrics = input.metrics ?? {};
+  const observedAtMs = Date.now().toString();
+  const onlinePlayerCount = metrics.onlinePlayerCount ?? input.onlineMojangIds.length;
+  const extra = JSON.stringify(metrics.extra ?? {});
+  const inserted = await sql<{ id: string }>`
+    INSERT INTO server_heartbeat_observations (
+      server_id,
+      observed_at_ms,
+      online_player_count,
+      max_players,
+      tps_1m,
+      tps_5m,
+      tps_15m,
+      mspt_avg,
+      mspt_p95,
+      heap_used_bytes,
+      heap_max_bytes,
+      loaded_chunks,
+      loaded_worlds,
+      backend_server_count,
+      extra
+    )
+    VALUES (
+      ${serverId}::uuid,
+      ${observedAtMs}::bigint,
+      ${onlinePlayerCount},
+      ${nullableMetric(metrics.maxPlayers)},
+      ${nullableMetric(metrics.tps1m)},
+      ${nullableMetric(metrics.tps5m)},
+      ${nullableMetric(metrics.tps15m)},
+      ${nullableMetric(metrics.msptAvg)},
+      ${nullableMetric(metrics.msptP95)},
+      ${nullableMetric(metrics.heapUsedBytes)},
+      ${nullableMetric(metrics.heapMaxBytes)},
+      ${nullableMetric(metrics.loadedChunks)},
+      ${nullableMetric(metrics.loadedWorlds)},
+      ${nullableMetric(metrics.backendServerCount)},
+      ${extra}::jsonb
+    )
+    RETURNING id
+  `.execute(db);
+  const observationId = inserted.rows[0]?.id;
+
+  if (!observationId) {
+    return;
+  }
+
+  await sql`
+    INSERT INTO server_latest_metrics (
+      server_id,
+      observation_id,
+      observed_at_ms,
+      online_player_count,
+      max_players,
+      tps_1m,
+      tps_5m,
+      tps_15m,
+      mspt_avg,
+      mspt_p95,
+      heap_used_bytes,
+      heap_max_bytes,
+      loaded_chunks,
+      loaded_worlds,
+      backend_server_count,
+      extra,
+      updated_at_ms
+    )
+    VALUES (
+      ${serverId}::uuid,
+      ${observationId}::uuid,
+      ${observedAtMs}::bigint,
+      ${onlinePlayerCount},
+      ${nullableMetric(metrics.maxPlayers)},
+      ${nullableMetric(metrics.tps1m)},
+      ${nullableMetric(metrics.tps5m)},
+      ${nullableMetric(metrics.tps15m)},
+      ${nullableMetric(metrics.msptAvg)},
+      ${nullableMetric(metrics.msptP95)},
+      ${nullableMetric(metrics.heapUsedBytes)},
+      ${nullableMetric(metrics.heapMaxBytes)},
+      ${nullableMetric(metrics.loadedChunks)},
+      ${nullableMetric(metrics.loadedWorlds)},
+      ${nullableMetric(metrics.backendServerCount)},
+      ${extra}::jsonb,
+      get_unix_ms()
+    )
+    ON CONFLICT (server_id) DO UPDATE SET
+      observation_id = EXCLUDED.observation_id,
+      observed_at_ms = EXCLUDED.observed_at_ms,
+      online_player_count = EXCLUDED.online_player_count,
+      max_players = EXCLUDED.max_players,
+      tps_1m = EXCLUDED.tps_1m,
+      tps_5m = EXCLUDED.tps_5m,
+      tps_15m = EXCLUDED.tps_15m,
+      mspt_avg = EXCLUDED.mspt_avg,
+      mspt_p95 = EXCLUDED.mspt_p95,
+      heap_used_bytes = EXCLUDED.heap_used_bytes,
+      heap_max_bytes = EXCLUDED.heap_max_bytes,
+      loaded_chunks = EXCLUDED.loaded_chunks,
+      loaded_worlds = EXCLUDED.loaded_worlds,
+      backend_server_count = EXCLUDED.backend_server_count,
+      extra = EXCLUDED.extra,
+      updated_at_ms = EXCLUDED.updated_at_ms
+  `.execute(db);
+}
+
+function nullableMetric(
+  value: ServerHeartbeatMetrics[keyof ServerHeartbeatMetrics],
+): number | null {
+  return typeof value === "number" ? value : null;
 }

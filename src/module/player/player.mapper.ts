@@ -5,6 +5,7 @@ import type {
   PlayerNicknameRecord,
   PlayerProfileRow,
   PlayerRankRow,
+  PlayerSearchRecord,
   PlayerSummaryRecord,
 } from "./player.repository.js";
 import type {
@@ -13,6 +14,7 @@ import type {
   PlayerProfileResponse,
   PlayerRankAssignmentResponse,
   PlayerResponse,
+  PlayerSearchResultResponse,
   PlayerSummaryResponse,
 } from "./player.response.types.js";
 
@@ -31,6 +33,22 @@ export function toPlayerSummaryResponse(row: PlayerSummaryRecord): PlayerSummary
     flags: int8ToStringOrDefault(row.flags, "0"),
     orbs: int8ToStringOrDefault(row.orbs, "0"),
     chatChannel: row.active_channel_key,
+  };
+}
+
+export function toPlayerSearchResultResponse(row: PlayerSearchRecord): PlayerSearchResultResponse {
+  return {
+    id: row.id,
+    mojangId: row.mojang_id,
+    actorId: row.actor_id,
+    username: row.username,
+    activeNickname: row.active_nickname
+      ? {
+          nickname: row.active_nickname,
+          coverRankKey: row.active_nickname_cover_rank_key,
+        }
+      : null,
+    deletedAtMs: int8ToStringOrNull(row.deleted_at_ms),
   };
 }
 

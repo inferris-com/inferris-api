@@ -22,6 +22,8 @@ import { ChatMessageFlushWorker } from "../module/chat-message/chat-message.flus
 import { ChatMessagePgRepository } from "../module/chat-message/chat-message.pg-repository.js";
 import { ChatMessageRedisBuffer } from "../module/chat-message/chat-message.redis-buffer.js";
 import { ChatMessageService } from "../module/chat-message/chat-message.service.js";
+import { MetricsPgRepository } from "../module/metrics/metrics.pg-repository.js";
+import { MetricsService } from "../module/metrics/metrics.service.js";
 import { ModCasePgRepository } from "../module/mod-case/mod-case.pg-repository.js";
 import { ModCasePublisher } from "../module/mod-case/mod-case.publisher.js";
 import { ModCaseService } from "../module/mod-case/mod-case.service.js";
@@ -66,6 +68,7 @@ export type AppDependencies = {
     badge: BadgeService;
     catalog: CatalogService;
     chatMessage: ChatMessageService;
+    metrics: MetricsService;
     modCase: ModCaseService;
     group: GroupService;
     permission: PermissionService;
@@ -104,6 +107,7 @@ export function createAppDependencies({
   const catalogRepository = new CatalogPgRepository(database);
   const chatMessageRepository = new ChatMessagePgRepository(database);
   const chatMessageBuffer = new ChatMessageRedisBuffer(redisClient);
+  const metricsRepository = new MetricsPgRepository(database);
   const modCaseRepository = new ModCasePgRepository(database);
   const groupRepository = new GroupPgRepository(database);
   const permissionRepository = new PermissionPgRepository(database);
@@ -132,6 +136,7 @@ export function createAppDependencies({
       badge: new BadgeService(badgeRepository),
       catalog: new CatalogService(catalogRepository),
       chatMessage: new ChatMessageService(chatMessageRepository, chatMessageBuffer),
+      metrics: new MetricsService(metricsRepository),
       modCase: new ModCaseService(modCaseRepository, new ModCasePublisher(redisClient)),
       group: new GroupService(groupRepository),
       permission: new PermissionService(permissionRepository),

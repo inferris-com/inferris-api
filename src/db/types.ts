@@ -49,6 +49,8 @@ export type ModerationLinkType = "appeals" | "appellant_of" | "attached_to" | "b
 
 export type ModerationResourceType = "actor" | "appeal" | "bug_report" | "chat_message" | "external_url" | "file" | "infraction" | "mod_case" | "punishment" | "report" | "report_comment" | "server" | "watchlist_entry";
 
+export type Numeric = ColumnType<string, number | string, number | string>;
+
 export type PermissionCategory = "administration" | "command" | "development" | "feature" | "general" | "moderation";
 
 export type PermissionEffect = "allow" | "deny";
@@ -148,6 +150,19 @@ export interface ArgusNotifications {
   priority: Generated<number>;
   read_at_ms: Int8 | null;
   title: string;
+}
+
+export interface ArgusSessions {
+  argus_user_id: string;
+  created_at_ms: Generated<Int8>;
+  expires_at_ms: Int8;
+  id: string;
+  ip_address: string | null;
+  last_seen_at_ms: Int8;
+  revoked_at_ms: Int8 | null;
+  revoked_by_actor_id: string | null;
+  revoked_by_argus_user_id: string | null;
+  user_agent: string | null;
 }
 
 export interface ArgusUsers {
@@ -293,13 +308,16 @@ export interface ModCaseActors {
 
 export interface ModCases {
   assigned_to_actor_id: string | null;
+  assigned_to_argus_user_id: string | null;
   closed_at_ms: Int8 | null;
   closed_by_actor_id: string | null;
+  closed_by_argus_user_id: string | null;
   description: string | null;
   id: Generated<string>;
   is_sticky: Generated<boolean>;
   opened_at_ms: Generated<Int8>;
   opened_by_actor_id: string;
+  opened_by_argus_user_id: string | null;
   origin_server_id: string | null;
   resolution: ModCaseResolution | null;
   severity: Severity | null;
@@ -573,8 +591,12 @@ export interface Redemptions {
 
 export interface ReportComments {
   author_actor_id: string;
+  author_argus_user_id: string | null;
   comment_text: string;
   created_at_ms: Generated<Int8>;
+  deleted_at_ms: Int8 | null;
+  deleted_by_actor_id: string | null;
+  deleted_by_argus_user_id: string | null;
   edited_at_ms: Int8 | null;
   id: Generated<string>;
   is_sticky: Generated<boolean>;
@@ -586,6 +608,7 @@ export interface Reports {
   assigned_to_actor_id: string | null;
   closed_at_ms: Int8 | null;
   closed_by_actor_id: string | null;
+  code: string;
   created_at_ms: Generated<Int8>;
   id: Generated<string>;
   origin_server_id: string | null;
@@ -610,6 +633,45 @@ export interface ServerAccessPolicies {
   required_rank_key: string | null;
   server_id: string;
   updated_at_ms: Int8 | null;
+}
+
+export interface ServerHeartbeatObservations {
+  backend_server_count: number | null;
+  extra: Generated<Json>;
+  heap_max_bytes: Int8 | null;
+  heap_used_bytes: Int8 | null;
+  id: Generated<string>;
+  loaded_chunks: number | null;
+  loaded_worlds: number | null;
+  max_players: number | null;
+  mspt_avg: Numeric | null;
+  mspt_p95: Numeric | null;
+  observed_at_ms: Generated<Int8>;
+  online_player_count: number | null;
+  server_id: string;
+  tps_15m: Numeric | null;
+  tps_1m: Numeric | null;
+  tps_5m: Numeric | null;
+}
+
+export interface ServerLatestMetrics {
+  backend_server_count: number | null;
+  extra: Generated<Json>;
+  heap_max_bytes: Int8 | null;
+  heap_used_bytes: Int8 | null;
+  loaded_chunks: number | null;
+  loaded_worlds: number | null;
+  max_players: number | null;
+  mspt_avg: Numeric | null;
+  mspt_p95: Numeric | null;
+  observation_id: string;
+  observed_at_ms: Int8;
+  online_player_count: number | null;
+  server_id: string;
+  tps_15m: Numeric | null;
+  tps_1m: Numeric | null;
+  tps_5m: Numeric | null;
+  updated_at_ms: Generated<Int8>;
 }
 
 export interface Servers {
@@ -658,6 +720,7 @@ export interface DB {
   argus_alerts: ArgusAlerts;
   argus_email_verifications: ArgusEmailVerifications;
   argus_notifications: ArgusNotifications;
+  argus_sessions: ArgusSessions;
   argus_users: ArgusUsers;
   audit_logs: AuditLogs;
   badges: Badges;
@@ -697,6 +760,8 @@ export interface DB {
   report_comments: ReportComments;
   reports: Reports;
   server_access_policies: ServerAccessPolicies;
+  server_heartbeat_observations: ServerHeartbeatObservations;
+  server_latest_metrics: ServerLatestMetrics;
   servers: Servers;
   shop_offerings: ShopOfferings;
   virtual_transactions: VirtualTransactions;

@@ -11,10 +11,12 @@ import type {
 
 export type CreateModCaseInput = CreateModCaseBody & {
   openedByActorId: string;
+  openedByArgusUserId?: string | null;
 };
 
 export type UpdateModCaseInput = UpdateModCaseBody & {
   closedByActorId?: string | null;
+  closedByArgusUserId?: string | null;
 };
 
 export type CreateModCaseActorInput = CreateModCaseActorBody & {
@@ -72,6 +74,8 @@ export class ModCasePgRepository {
   }
 
   async createModCase(input: CreateModCaseInput): Promise<Selectable<ModCases>> {
+    const assignedToArgusUserId = await this.findArgusUserIdByActorId(input.assignedToActorId);
+
     return this.db.transaction().execute(async (trx) => {
       const modCase = await trx
         .insertInto("mod_cases")
@@ -79,7 +83,9 @@ export class ModCasePgRepository {
           title: input.title,
           description: input.description ?? null,
           opened_by_actor_id: input.openedByActorId,
+          opened_by_argus_user_id: input.openedByArgusUserId ?? null,
           assigned_to_actor_id: input.assignedToActorId ?? null,
+          assigned_to_argus_user_id: assignedToArgusUserId,
           origin_server_id: input.originServerId ?? null,
           severity: input.severity ?? null,
           is_sticky: input.isSticky,
@@ -122,6 +128,11 @@ export class ModCasePgRepository {
   }
 
   async updateModCase(id: string, input: UpdateModCaseInput): Promise<Selectable<ModCases> | null> {
+    const assignedToArgusUserId =
+      input.assignedToActorId === undefined
+        ? undefined
+        : await this.findArgusUserIdByActorId(input.assignedToActorId);
+
     return (
       (await this.db
         .updateTable("mod_cases")
@@ -129,11 +140,13 @@ export class ModCasePgRepository {
           title: input.title,
           description: input.description,
           assigned_to_actor_id: input.assignedToActorId,
+          assigned_to_argus_user_id: assignedToArgusUserId,
           status: input.status,
           severity: input.severity,
           resolution: input.resolution,
           is_sticky: input.isSticky,
           closed_by_actor_id: input.closedByActorId,
+          closed_by_argus_user_id: input.closedByArgusUserId,
           closed_at_ms: input.closedByActorId === undefined ? undefined : sql`get_unix_ms()`,
           updated_at_ms: sql`get_unix_ms()`,
         })
@@ -164,5 +177,22 @@ export class ModCasePgRepository {
       })
       .returningAll()
       .executeTakeFirstOrThrow();
+  }
+
+  private async findArgusUserIdByActorId(
+    actorId: string | null | undefined,
+  ): Promise<string | null> {
+    if (!actorId) {
+      return null;
+    }
+
+    const row = await this.db
+      .selectFrom("argus_users")
+      .select("id")
+      .where("actor_id", "=", actorId)
+      .orderBy("created_at_ms", "desc")
+      .executeTakeFirst();
+
+    return row?.id ?? null;
   }
 }

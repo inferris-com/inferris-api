@@ -1,6 +1,6 @@
-import type { Kysely, Selectable } from "kysely";
+import { type Kysely, type Selectable, sql } from "kysely";
 import type { Actors, ActorType, DB } from "../../db/types.js";
-import type { ListActorsQuery, UpdateActorBody } from "./actor.schemas.js";
+import type { ListActorsQuery, SearchActorsQuery, UpdateActorBody } from "./actor.schemas.js";
 import type { DeleteResult } from "../../shared/results.types.js";
 import { isForeignKeyViolation } from "../../shared/db/pg-error.utils.js";
 import type { PaginatedResult } from "../../shared/pagination.schemas.js";
@@ -31,6 +31,30 @@ export class ActorPgRepository {
         offset: offset
       };
     });
+  }
+
+  async searchActors({ q, limit }: SearchActorsQuery) {
+    const pattern = `%${q}%`;
+    const prefixPattern = `${q}%`;
+
+    return this.db
+      .selectFrom("actors")
+      .leftJoin("players", "players.actor_id", "actors.id")
+      .selectAll("actors")
+      .select("players.id as player_id")
+      .where("actors.name", "ilike", pattern)
+      .orderBy(
+        sql<number>`case
+          when lower(actors.name) = lower(${q}) then 0
+          when actors.name ilike ${prefixPattern} then 1
+          else 2
+        end`,
+        "asc",
+      )
+      .orderBy("actors.name", "asc")
+      .orderBy("actors.id", "asc")
+      .limit(limit)
+      .execute();
   }
 
   async findActorById(id: string) {

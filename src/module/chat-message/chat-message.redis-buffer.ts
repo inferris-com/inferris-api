@@ -91,7 +91,12 @@ export class ChatMessageRedisBuffer {
 
   async listPendingMessages(filters: ChatMessageListFilters): Promise<ChatMessageRecord[]> {
     const key = narrowestIndex(filters);
-    const before = filters.beforeMs === undefined ? "+inf" : `(${filters.beforeMs}`;
+    const before =
+      filters.cursor !== undefined
+        ? filters.cursor.occurredAtMs
+        : filters.beforeMs === undefined
+          ? "+inf"
+          : `(${filters.beforeMs}`;
     const after = filters.afterMs === undefined ? "-inf" : String(filters.afterMs);
     const candidateLimit = String(Math.min(Math.max(filters.limit * 10, filters.limit), 2000));
     const ids = parseStringArray(
@@ -238,6 +243,22 @@ function matchesFilters(message: ChatMessageRecord, filters: ChatMessageListFilt
     (filters.channelKey === undefined || message.channelKey === filters.channelKey) &&
     (filters.originServerId === undefined || message.originServerId === filters.originServerId) &&
     (filters.actorId === undefined || message.actorId === filters.actorId) &&
-    (filters.playerId === undefined || message.playerId === filters.playerId)
+    (filters.playerId === undefined || message.playerId === filters.playerId) &&
+    (filters.verdict === undefined || message.verdict === filters.verdict) &&
+    (filters.cursor === undefined || isAfterCursor(message, filters.cursor))
   );
+}
+
+function isAfterCursor(
+  message: ChatMessageRecord,
+  cursor: NonNullable<ChatMessageListFilters["cursor"]>,
+): boolean {
+  const occurredDiff = BigInt(cursor.occurredAtMs) - BigInt(message.occurredAtMs);
+
+  if (occurredDiff !== 0n) {
+    return occurredDiff > 0n;
+  }
+
+  const tieBreaker = message.ingestStreamId ?? message.id;
+  return tieBreaker < cursor.tieBreaker;
 }

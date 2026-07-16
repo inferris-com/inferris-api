@@ -40,6 +40,33 @@ export type CurrentPlayerSessionRecord = {
   sessionEventId: string;
 };
 
+export type ArgusSessionRecord = {
+  id: string;
+  argusUserId: string;
+  createdAtMs: number;
+  lastSeenAtMs: number;
+  expiresAtMs: number;
+  revokedAtMs: number | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+};
+
+export type UpsertArgusSessionInput = {
+  id: string;
+  argusUserId: string;
+  nowMs: number;
+  expiresAtMs: number;
+  ipAddress: string | null;
+  userAgent: string | null;
+};
+
+export type RevokeArgusSessionInput = {
+  argusUserId: string;
+  sessionId: string;
+  revokedByActorId?: string | null;
+  revokedByArgusUserId?: string | null;
+};
+
 export type AuditInput = {
   actorId: string | null;
   subjectActorId?: string | null;
@@ -200,6 +227,74 @@ export class AuthRepository {
           sessionEventId: row.session_event_id,
         }
       : null;
+  }
+
+  async upsertArgusSession(input: UpsertArgusSessionInput): Promise<void> {
+    await this.db
+      .insertInto("argus_sessions")
+      .values({
+        id: input.id,
+        argus_user_id: input.argusUserId,
+        created_at_ms: input.nowMs,
+        last_seen_at_ms: input.nowMs,
+        expires_at_ms: input.expiresAtMs,
+        ip_address: input.ipAddress,
+        user_agent: input.userAgent,
+      })
+      .onConflict((oc) =>
+        oc.column("id").doUpdateSet({
+          last_seen_at_ms: input.nowMs,
+          expires_at_ms: input.expiresAtMs,
+          ip_address: input.ipAddress,
+          user_agent: input.userAgent,
+        }),
+      )
+      .execute();
+  }
+
+  async listArgusSessions(argusUserId: string): Promise<ArgusSessionRecord[]> {
+    const rows = await this.db
+      .selectFrom("argus_sessions")
+      .select([
+        "id",
+        "argus_user_id",
+        "created_at_ms",
+        "last_seen_at_ms",
+        "expires_at_ms",
+        "revoked_at_ms",
+        "ip_address",
+        "user_agent",
+      ])
+      .where("argus_user_id", "=", argusUserId)
+      .orderBy("last_seen_at_ms", "desc")
+      .execute();
+
+    return rows.map((row) => ({
+      id: row.id,
+      argusUserId: row.argus_user_id,
+      createdAtMs: Number(row.created_at_ms),
+      lastSeenAtMs: Number(row.last_seen_at_ms),
+      expiresAtMs: Number(row.expires_at_ms),
+      revokedAtMs: row.revoked_at_ms === null ? null : Number(row.revoked_at_ms),
+      ipAddress: row.ip_address,
+      userAgent: row.user_agent,
+    }));
+  }
+
+  async revokeArgusSession(input: RevokeArgusSessionInput): Promise<boolean> {
+    const result = await this.db
+      .updateTable("argus_sessions")
+      .set({
+        revoked_at_ms: sql`get_unix_ms()`,
+        revoked_by_actor_id: input.revokedByActorId ?? null,
+        revoked_by_argus_user_id: input.revokedByArgusUserId ?? null,
+      })
+      .where("id", "=", input.sessionId)
+      .where("argus_user_id", "=", input.argusUserId)
+      .where("revoked_at_ms", "is", null)
+      .executeTakeFirst();
+
+    return Number(result.numUpdatedRows) > 0;
   }
 
   async insertAuditLog(input: AuditInput): Promise<void> {

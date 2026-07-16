@@ -1,4 +1,4 @@
-import { NotFoundError, ValidationError } from "../../error/app-error.js";
+import { ForbiddenError, NotFoundError, ValidationError } from "../../error/app-error.js";
 
 export class ReportNotFoundError extends NotFoundError {
   constructor(reportId: string) {
@@ -16,6 +16,26 @@ export class ReportActorNotFoundError extends NotFoundError {
       code: "REPORT_ACTOR_NOT_FOUND",
       message: "Report actor not found.",
       details: { actorIdOrPlayerId },
+    });
+  }
+}
+
+export class ReportCommentNotFoundError extends NotFoundError {
+  constructor(commentId: string) {
+    super({
+      code: "REPORT_COMMENT_NOT_FOUND",
+      message: "Report comment not found.",
+      details: { commentId },
+    });
+  }
+}
+
+export class ReportCommentForbiddenError extends ForbiddenError {
+  constructor(commentId: string) {
+    super({
+      code: "REPORT_COMMENT_FORBIDDEN",
+      message: "You can only manage your own report comments.",
+      details: { commentId },
     });
   }
 }

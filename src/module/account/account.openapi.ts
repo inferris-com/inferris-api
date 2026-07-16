@@ -1,6 +1,4 @@
 import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
-import z from "zod";
-
 import {
   jsonBody,
   listResponse,
@@ -12,6 +10,7 @@ import {
 import {
   accountNotificationResponseSchema,
   accountResponseSchema,
+  argusSessionResponseSchema,
   passwordChangeResponseSchema,
 } from "./account.response-types.js";
 import {
@@ -19,16 +18,6 @@ import {
   accountSessionParamsSchema,
   changePasswordBodySchema,
 } from "./account.schemas.js";
-
-const argusSessionResponseSchema = z
-  .object({
-    id: z.string().uuid(),
-    createdAtMs: z.number().int(),
-    lastSeenAtMs: z.number().int(),
-    userAgent: z.string().nullable(),
-    ipAddress: z.string().nullable(),
-  })
-  .openapi("ArgusSessionResponse");
 
 export function registerAccountOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

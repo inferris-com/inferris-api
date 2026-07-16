@@ -12,6 +12,7 @@ import { actorResponseSchema } from "./actor.response.types.js";
 import {
   actorIdParamsSchema,
   listActorsQuerySchema,
+  searchActorsQuerySchema,
   updateActorBodySchema,
 } from "./actor.schemas.js";
 
@@ -35,6 +36,17 @@ export function registerActorOpenApi(registry: OpenAPIRegistry) {
     summary: "List actors",
     operationId: "listActors",
     request: { query: listActorsQuerySchema },
+    responses: { "200": listResponse(actorResponseSchema), ...standardErrorResponses },
+  });
+
+  registry.registerPath({
+    method: "get",
+    path: "/actors/search",
+    tags: ["Actors"],
+    security: userOrServiceSecurity,
+    summary: "Search actors by name",
+    operationId: "searchActors",
+    request: { query: searchActorsQuerySchema },
     responses: { "200": listResponse(actorResponseSchema), ...standardErrorResponses },
   });
 

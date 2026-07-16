@@ -7,6 +7,7 @@ import type { ReportCommentResponse, ReportResponse } from "./report.response-ty
 export function toReportResponse(row: Selectable<Reports>): ReportResponse {
   return {
     id: row.id,
+    code: row.code,
     reporterActorId: row.reporter_actor_id,
     subjectActorId: row.subject_actor_id,
     selectedReason: row.selected_reason,
@@ -27,14 +28,21 @@ export function toReportResponse(row: Selectable<Reports>): ReportResponse {
 }
 
 export function toReportCommentResponse(row: Selectable<ReportComments>): ReportCommentResponse {
+  const isDeleted = row.deleted_at_ms !== null;
+
   return {
     id: row.id,
     reportId: row.report_id,
     authorActorId: row.author_actor_id,
+    authorArgusUserId: row.author_argus_user_id,
     parentCommentId: row.parent_comment_id,
-    commentText: row.comment_text,
-    isSticky: row.is_sticky,
+    commentText: isDeleted ? null : row.comment_text,
+    isSticky: isDeleted ? false : row.is_sticky,
+    isDeleted,
     createdAtMs: int8ToString(row.created_at_ms),
     editedAtMs: int8ToStringOrNull(row.edited_at_ms),
+    deletedAtMs: int8ToStringOrNull(row.deleted_at_ms),
+    deletedByActorId: row.deleted_by_actor_id,
+    deletedByArgusUserId: row.deleted_by_argus_user_id,
   };
 }

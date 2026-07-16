@@ -11,6 +11,7 @@ export type AccessTokenPayload = {
   sub: string;
   actorId: string | null;
   role: ArgusAccountRole;
+  sessionId?: string;
   typ: "access";
 };
 
@@ -71,8 +72,15 @@ export async function hashPassword(password: string): Promise<string> {
   return argon2.hash(password);
 }
 
-export async function signAccessToken(payload: Omit<AccessTokenPayload, "typ">): Promise<string> {
-  return new SignJWT({ actorId: payload.actorId, role: payload.role, typ: "access" })
+export async function signAccessToken(
+  payload: Omit<AccessTokenPayload, "typ"> & { sessionId: string },
+): Promise<string> {
+  return new SignJWT({
+    actorId: payload.actorId,
+    role: payload.role,
+    sessionId: payload.sessionId,
+    typ: "access",
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
@@ -95,10 +103,15 @@ export async function verifyAccessToken(token: string): Promise<AccessTokenPaylo
     throw new Error("Invalid access token role");
   }
 
+  if (payload.sessionId !== undefined && typeof payload.sessionId !== "string") {
+    throw new Error("Invalid access token session");
+  }
+
   return {
     sub: payload.sub,
     actorId: payload.actorId,
     role: payload.role,
+    ...(payload.sessionId !== undefined ? { sessionId: payload.sessionId } : {}),
     typ: "access",
   };
 }

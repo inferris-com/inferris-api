@@ -164,6 +164,15 @@ export class ServerService {
     };
   }
 
+  async expireInactiveServers(): Promise<number> {
+    const inactiveBeforeMs = (
+      Date.now() -
+      config.minecraft.heartbeatStaleSeconds * 1000
+    ).toString();
+
+    return this.repo.expireInactiveServers(inactiveBeforeMs);
+  }
+
   async createServer(input: CreateServerBody): Promise<ServerResponse> {
     const result = await this.repo.createServer(input);
 

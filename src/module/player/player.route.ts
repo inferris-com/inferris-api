@@ -11,6 +11,7 @@ import type {
   PlayerProfileResponse,
   PlayerRankAssignmentResponse,
   PlayerResponse,
+  PlayerSearchResultResponse,
   PlayerSummaryResponse,
 } from "./player.response.types.js";
 import type { PlayerService } from "./player.service.js";
@@ -34,6 +35,8 @@ import {
   listPlayerFlagDefinitionsQuerySchema,
   replacePlayerRankAssignmentBodySchema,
   type ReplaceRankAssignmentBody,
+  type SearchPlayersQuery,
+  searchPlayersQuerySchema,
   type UpdatePlayerBody,
   updatePlayerProfileBodySchema,
   type UpdateProfileBody,
@@ -55,6 +58,7 @@ import {
   requireActor,
 } from "../auth/auth.middleware.js";
 import type { AuthRepository } from "../auth/auth.repository.js";
+import { ForbiddenError } from "../../error/app-error.js";
 
 export function createPlayerRouter(service: PlayerService, authRepository: AuthRepository): Router {
   const router = Router();
@@ -85,6 +89,47 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
     };
 
     res.json(body);
+  };
+
+  const searchPlayers: RequestHandler = async (req, res) => {
+    const players = await service.searchPlayers(req.query as unknown as SearchPlayersQuery);
+    const body: ApiListSuccess<PlayerSearchResultResponse> = {
+      data: players,
+      meta: { count: players.length },
+    };
+
+    res.json(body);
+  };
+
+  const requireSensitivePlayerSearchAccess: RequestHandler = (req, _res, next) => {
+    const query = req.query as unknown as SearchPlayersQuery;
+
+    if (!query.sensitive) {
+      next();
+      return;
+    }
+
+    const apiKey = req.auth?.apiKey;
+    const privilegedRole = req.auth?.privileged?.role;
+    const hasAccess =
+      req.auth?.argus?.role === "admin" ||
+      privilegedRole === "administrator" ||
+      privilegedRole === "superadmin" ||
+      apiKey?.isSuperKey === true ||
+      apiKey?.scopes.includes("*") === true ||
+      apiKey?.scopes.includes("players:bypass-sensitive-fields") === true;
+
+    if (!hasAccess) {
+      next(
+        new ForbiddenError({
+          code: "FORBIDDEN",
+          message: "Sensitive player search requires elevated read access.",
+        }),
+      );
+      return;
+    }
+
+    next();
   };
 
   const listFlagDefinitions: RequestHandler = async (req, res) => {
@@ -258,6 +303,13 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
     readPlayers,
     validateRequest({ query: listPlayersQuerySchema }) as unknown as RequestHandler,
     listPlayers,
+  );
+  router.get(
+    "/search",
+    readPlayers,
+    validateRequest({ query: searchPlayersQuerySchema }) as unknown as RequestHandler,
+    requireSensitivePlayerSearchAccess,
+    searchPlayers,
   );
   router.get(
     "/flags",

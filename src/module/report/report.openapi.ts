@@ -12,7 +12,10 @@ import {
   createReportBodySchema,
   createReportCommentBodySchema,
   listReportsQuerySchema,
+  reportCodeParamsSchema,
+  reportCommentIdParamsSchema,
   reportIdParamsSchema,
+  updateReportCommentBodySchema,
   updateReportBodySchema,
 } from "./report.schemas.js";
 
@@ -42,6 +45,17 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     operationId: "listReports",
     request: { query: listReportsQuerySchema },
     responses: { "200": listResponse(reportResponseSchema), ...standardErrorResponses },
+  });
+
+  registry.registerPath({
+    method: "get",
+    path: "/reports/code/{code}",
+    tags: ["Reports"],
+    security: userOrServiceSecurity,
+    summary: "Get a report by code",
+    operationId: "getReportByCode",
+    request: { params: reportCodeParamsSchema },
+    responses: { "200": successResponse(reportResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -98,5 +112,33 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
       "201": successResponse(reportCommentResponseSchema, "Report comment created"),
       ...standardErrorResponses,
     },
+  });
+
+  registry.registerPath({
+    method: "patch",
+    path: "/reports/{reportId}/comments/{commentId}",
+    tags: ["Reports"],
+    security: userOrServiceSecurity,
+    summary: "Update a report comment",
+    operationId: "updateReportComment",
+    request: {
+      params: reportCommentIdParamsSchema,
+      body: {
+        required: true,
+        content: { "application/json": jsonBody(updateReportCommentBodySchema) },
+      },
+    },
+    responses: { "200": successResponse(reportCommentResponseSchema), ...standardErrorResponses },
+  });
+
+  registry.registerPath({
+    method: "delete",
+    path: "/reports/{reportId}/comments/{commentId}",
+    tags: ["Reports"],
+    security: userOrServiceSecurity,
+    summary: "Delete a report comment",
+    operationId: "deleteReportComment",
+    request: { params: reportCommentIdParamsSchema },
+    responses: { "204": { description: "Report comment deleted" }, ...standardErrorResponses },
   });
 }

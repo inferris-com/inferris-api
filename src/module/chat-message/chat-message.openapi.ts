@@ -7,7 +7,10 @@ import {
   standardErrorResponses,
   successResponse,
 } from "../../openapi/openapi.helpers.js";
-import { chatMessageResponseSchema } from "./chat-message.response-types.js";
+import {
+  chatMessageListResponseSchema,
+  chatMessageResponseSchema,
+} from "./chat-message.response-types.js";
 import {
   createChatMessageBatchBodySchema,
   createChatMessageBodySchema,
@@ -23,7 +26,15 @@ export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
     summary: "List chat messages",
     operationId: "listChatMessages",
     request: { query: listChatMessagesQuerySchema },
-    responses: { "200": listResponse(chatMessageResponseSchema), ...standardErrorResponses },
+    responses: {
+      "200": {
+        description: "Successful list response",
+        content: {
+          "application/json": jsonBody(chatMessageListResponseSchema),
+        },
+      },
+      ...standardErrorResponses,
+    },
   });
 
   registry.registerPath({

@@ -64,11 +64,15 @@ export class AccountService {
   }
 
   async listSessions(auth: AuthContext) {
-    return this.authService.listArgusSessions(requireArgusUserId(auth));
+    return this.authService.listArgusSessions(requireArgusUserId(auth), auth.argus?.sessionId);
   }
 
   async revokeSession(auth: AuthContext, sessionId: string): Promise<void> {
-    const revoked = await this.authService.revokeArgusSession(requireArgusUserId(auth), sessionId);
+    const revoked = await this.authService.revokeArgusSession(
+      requireArgusUserId(auth),
+      sessionId,
+      auth.actorId,
+    );
 
     if (!revoked) {
       throw new NotFoundError({

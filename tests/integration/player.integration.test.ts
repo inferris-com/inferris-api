@@ -25,6 +25,81 @@ describe("player routes", () => {
     });
   });
 
+  test("GET /players/search returns search envelopes and parsed query defaults", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.player.searchPlayers.mockResolvedValue([
+      {
+        id: ids.player,
+        mojangId: "30000000-0000-0000-0000-000000000007",
+        actorId: ids.actor,
+        username: "Developer",
+        activeNickname: null,
+        deletedAtMs: null,
+      },
+    ]);
+
+    const response = await request
+      .get("/players/search?q=dev")
+      .set("Authorization", "Bearer moderator-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: [
+        {
+          id: ids.player,
+          mojangId: "30000000-0000-0000-0000-000000000007",
+          actorId: ids.actor,
+          username: "Developer",
+          activeNickname: null,
+          deletedAtMs: null,
+        },
+      ],
+      meta: { count: 1 },
+    });
+    expect(dependencies.services.player.searchPlayers).toHaveBeenCalledWith({
+      q: "dev",
+      limit: 10,
+      sensitive: false,
+    });
+    expect(dependencies.services.player.getPlayer).not.toHaveBeenCalled();
+  });
+
+  test("GET /players/search rejects sensitive search without elevated read access", async () => {
+    const { dependencies, request } = createTestApp();
+
+    const response = await request
+      .get("/players/search?q=dev&sensitive=true")
+      .set("Authorization", "Bearer moderator-token");
+
+    expect(response.status).toBe(403);
+    expect(response.body).toMatchObject({
+      error: {
+        code: "FORBIDDEN",
+      },
+    });
+    expect(dependencies.services.player.searchPlayers).not.toHaveBeenCalled();
+  });
+
+  test("GET /players/search allows sensitive search for admins", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.player.searchPlayers.mockResolvedValue([]);
+
+    const response = await request
+      .get("/players/search?q=dev&sensitive=true")
+      .set("Authorization", "Bearer admin-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: [],
+      meta: { count: 0 },
+    });
+    expect(dependencies.services.player.searchPlayers).toHaveBeenCalledWith({
+      q: "dev",
+      limit: 10,
+      sensitive: true,
+    });
+  });
+
   test("POST /players validates body before calling the service", async () => {
     const { dependencies, request } = createTestApp();
 

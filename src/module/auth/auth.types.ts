@@ -40,6 +40,7 @@ export type AuthContext = {
   argus?: {
     userId: string;
     role: ArgusAccountRole;
+    sessionId?: string;
   };
   minecraftSession?: {
     playerId: string;

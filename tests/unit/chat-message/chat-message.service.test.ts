@@ -1,6 +1,11 @@
-import { expect, test } from "@jest/globals";
+import { expect, jest, test } from "@jest/globals";
 
-import { mergeChatMessages } from "../../../src/module/chat-message/chat-message.service.js";
+import {
+  ChatMessageService,
+  mergeChatMessages,
+} from "../../../src/module/chat-message/chat-message.service.js";
+import type { ChatMessagePgRepository } from "../../../src/module/chat-message/chat-message.pg-repository.js";
+import type { ChatMessageRedisBuffer } from "../../../src/module/chat-message/chat-message.redis-buffer.js";
 import type { ChatMessageRecord } from "../../../src/module/chat-message/chat-message.types.js";
 
 function message(
@@ -14,6 +19,9 @@ function message(
     originServerId: input.originServerId ?? "00000000-0000-0000-0000-000000000002",
     channelKey: input.channelKey ?? "global",
     message: input.message ?? "hello",
+    verdict: input.verdict ?? "allow",
+    moderationReason: input.moderationReason ?? null,
+    moderationMetadata: input.moderationMetadata ?? {},
     isFlagged: input.isFlagged ?? false,
     occurredAtMs: input.occurredAtMs ?? "1000",
     persistenceState: input.persistenceState ?? "persisted",
@@ -52,4 +60,59 @@ test("mergeChatMessages deduplicates by message id and respects limit", () => {
   );
 
   expect(merged.map((row) => row.id)).toEqual(["a"]);
+});
+
+test("listMessages returns a stable next cursor for full pages", async () => {
+  const row = message({
+    id: "00000000-0000-0000-0000-000000000001",
+    occurredAtMs: "1200",
+    ingestStreamId: "2-0",
+  });
+  const repo = {
+    listMessages: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue([row]),
+  } as unknown as ChatMessagePgRepository;
+  const buffer = {
+    listPendingMessages: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+  } as unknown as ChatMessageRedisBuffer;
+  const service = new ChatMessageService(repo, buffer);
+
+  const result = await service.listMessages({ limit: 1, includePending: false });
+
+  expect(result.meta.nextCursor).toEqual(expect.any(String));
+});
+
+test("listMessages decodes stable cursors into repository filters", async () => {
+  const row = message({
+    id: "00000000-0000-0000-0000-000000000001",
+    occurredAtMs: "1200",
+    ingestStreamId: "2-0",
+  });
+  const listMessages = jest
+    .fn<(...args: unknown[]) => Promise<unknown>>()
+    .mockResolvedValueOnce([row])
+    .mockResolvedValueOnce([]);
+  const repo = {
+    listMessages,
+  } as unknown as ChatMessagePgRepository;
+  const buffer = {
+    listPendingMessages: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+  } as unknown as ChatMessageRedisBuffer;
+  const service = new ChatMessageService(repo, buffer);
+
+  const firstPage = await service.listMessages({ limit: 1, includePending: false });
+  await service.listMessages({
+    limit: 1,
+    includePending: false,
+    cursor: firstPage.meta.nextCursor ?? "",
+  });
+
+  expect(listMessages).toHaveBeenLastCalledWith({
+    limit: 1,
+    cursor: {
+      occurredAtMs: "1200",
+      ingestStreamId: "2-0",
+      id: "00000000-0000-0000-0000-000000000001",
+      tieBreaker: "2-0",
+    },
+  });
 });

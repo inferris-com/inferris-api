@@ -10,6 +10,7 @@ import { createBadgeRouter } from "../module/badge/badge.route.js";
 import { createCatalogRouter } from "../module/catalog/catalog.route.js";
 import { createChatMessageRouter } from "../module/chat-message/chat-message.route.js";
 import { createGroupRouter } from "../module/group/group.route.js";
+import { createMetricsRouter } from "../module/metrics/metrics.route.js";
 import { createModCaseRouter } from "../module/mod-case/mod-case.route.js";
 import { createPermissionRouter } from "../module/permission/permission.route.js";
 import { createPlayerSessionRouter } from "../module/player-session/player-session.route.js";
@@ -81,4 +82,5 @@ export function registerAppRoutes(app: Express, dependencies: AppDependencies): 
     authenticateRequest,
     createChatMessageRouter(services.chatMessage, authRepository),
   );
+  app.use("/metrics", authenticateRequest, createMetricsRouter(services.metrics, authRepository));
 }

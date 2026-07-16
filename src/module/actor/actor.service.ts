@@ -2,7 +2,7 @@ import type { ActorPgRepository } from "./actor.pg-repository.js";
 import { ActorNotFoundError, ActorsNotFoundError } from "./actor.errors.js";
 import type { ActorResponse } from "./actor.response.types.js";
 import { toActorResponse } from "./actor.mapper.js";
-import type { ListActorsQuery, UpdateActorBody } from "./actor.schemas.js";
+import type { ListActorsQuery, SearchActorsQuery, UpdateActorBody } from "./actor.schemas.js";
 
 export type ActorListResponse = {
   data: ActorResponse[];
@@ -33,6 +33,11 @@ export class ActorService {
         offset: actors.offset,
       },
     };
+  }
+
+  async searchActors(query: SearchActorsQuery): Promise<ActorResponse[]> {
+    const actors = await this.repo.searchActors(query);
+    return actors.map(toActorResponse);
   }
 
   async findActorById(id: string): Promise<ActorResponse> {

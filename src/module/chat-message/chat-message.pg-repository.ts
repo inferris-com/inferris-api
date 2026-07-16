@@ -91,12 +91,24 @@ export class ChatMessagePgRepository {
       .$if(filters.beforeMs !== undefined, (qb) =>
         qb.where("chat_messages.created_at_ms", "<", sql<string>`${filters.beforeMs ?? 0}::bigint`),
       )
+      .$if(filters.cursor !== undefined, (qb) =>
+        qb.where(
+          sql<boolean>`(
+            chat_messages.created_at_ms < ${filters.cursor?.occurredAtMs ?? "0"}::bigint
+            or (
+              chat_messages.created_at_ms = ${filters.cursor?.occurredAtMs ?? "0"}::bigint
+              and coalesce(chat_messages.ingest_stream_id, chat_messages.id::text) < ${
+                filters.cursor?.tieBreaker ?? ""
+              }
+            )
+          )`,
+        ),
+      )
       .$if(filters.afterMs !== undefined, (qb) =>
         qb.where("chat_messages.created_at_ms", ">=", sql<string>`${filters.afterMs ?? 0}::bigint`),
       )
       .orderBy("chat_messages.created_at_ms", "desc")
-      .orderBy("chat_messages.ingest_stream_id", "desc")
-      .orderBy("chat_messages.id", "desc")
+      .orderBy(sql<string>`coalesce(chat_messages.ingest_stream_id, chat_messages.id::text)`, "desc")
       .limit(filters.limit)
       .execute();
 

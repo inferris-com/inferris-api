@@ -58,7 +58,11 @@ export function createModCaseRouter(
     req,
     res,
   ) => {
-    const modCase = await service.createModCase(req.body, getRequestActorId(req) ?? "");
+    const modCase = await service.createModCase(
+      req.body,
+      getRequestActorId(req) ?? "",
+      req.auth?.argus?.userId,
+    );
     const body: ApiSuccess<ModCaseResponse> = { data: modCase };
 
     res.status(201).json(body);
@@ -72,6 +76,7 @@ export function createModCaseRouter(
       req.params.caseId,
       req.body,
       getRequestActorId(req) ?? "",
+      req.auth?.argus?.userId,
     );
     const body: ApiSuccess<ModCaseResponse> = { data: modCase };
 

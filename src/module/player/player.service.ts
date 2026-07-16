@@ -20,6 +20,7 @@ import {
   toPlayerProfileResponse,
   toPlayerRankAssignmentResponse,
   toPlayerResponse,
+  toPlayerSearchResultResponse,
   toPlayerSummaryResponse,
 } from "./player.mapper.js";
 import type { DeletePlayerOptions } from "./player.repository.js";
@@ -29,6 +30,7 @@ import type {
   PlayerProfileResponse,
   PlayerRankAssignmentResponse,
   PlayerResponse,
+  PlayerSearchResultResponse,
   PlayerSummaryResponse,
 } from "./player.response.types.js";
 import type {
@@ -40,6 +42,7 @@ import type {
   ListPlayersQuery,
   ListPlayerFlagDefinitionsQuery,
   ReplaceRankAssignmentInput,
+  SearchPlayersQuery,
   UpdatePlayerBody,
   UpdateProfileBody,
 } from "./player.schemas.js";
@@ -52,6 +55,11 @@ export class PlayerService {
   async listPlayers(query: ListPlayersQuery): Promise<PlayerSummaryResponse[]> {
     const players = await this.repository.listPlayers(query);
     return players.map(toPlayerSummaryResponse);
+  }
+
+  async searchPlayers(query: SearchPlayersQuery): Promise<PlayerSearchResultResponse[]> {
+    const players = await this.repository.searchPlayers(query);
+    return players.map(toPlayerSearchResultResponse);
   }
 
   async listFlagDefinitions(

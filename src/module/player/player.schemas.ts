@@ -44,6 +44,17 @@ export const listPlayersQuerySchema = z.object({
   username: z.string().trim().min(1).max(32).optional(),
 });
 
+export const searchPlayersQuerySchema = z
+  .object({
+    q: z.string().trim().min(1).max(32),
+    limit: z.coerce.number().int().min(1).max(25).default(10),
+    sensitive: z
+      .enum(["true", "false"])
+      .optional()
+      .transform((value) => value === "true"),
+  })
+  .strict();
+
 export const listPlayerFlagDefinitionsQuerySchema = z
   .object({
     includeInactive: includeInactiveQuerySchema,
@@ -151,6 +162,7 @@ export type PlayerRankAssignmentParams = z.infer<typeof playerRankAssignmentPara
 export type PlayerBadgeAssignmentParams = z.infer<typeof playerBadgeAssignmentParamsSchema>;
 
 export type ListPlayersQuery = z.infer<typeof listPlayersQuerySchema>;
+export type SearchPlayersQuery = z.infer<typeof searchPlayersQuerySchema>;
 export type ListPlayerFlagDefinitionsQuery = z.infer<typeof listPlayerFlagDefinitionsQuerySchema>;
 export type EncodePlayerFlagsQuery = z.infer<typeof encodePlayerFlagsQuerySchema>;
 export type DecodePlayerFlagsQuery = z.infer<typeof decodePlayerFlagsQuerySchema>;

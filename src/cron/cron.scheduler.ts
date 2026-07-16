@@ -37,6 +37,8 @@ function startJob(job: CronJob): CronJobHandle {
       });
   };
 
+  run();
+
   const interval = setInterval(run, job.intervalMs);
   interval.unref();
 

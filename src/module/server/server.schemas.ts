@@ -55,12 +55,34 @@ export const createPlayerSessionBodySchema = z
   })
   .strict();
 
+const nonNegativeIntSchema = z.int().min(0);
+const nonNegativeNumberSchema = z.number().finite().min(0);
+
+export const serverHeartbeatMetricsSchema = z
+  .object({
+    onlinePlayerCount: nonNegativeIntSchema.optional(),
+    maxPlayers: nonNegativeIntSchema.optional(),
+    tps1m: nonNegativeNumberSchema.optional(),
+    tps5m: nonNegativeNumberSchema.optional(),
+    tps15m: nonNegativeNumberSchema.optional(),
+    msptAvg: nonNegativeNumberSchema.optional(),
+    msptP95: nonNegativeNumberSchema.optional(),
+    heapUsedBytes: nonNegativeIntSchema.optional(),
+    heapMaxBytes: nonNegativeIntSchema.optional(),
+    loadedChunks: nonNegativeIntSchema.optional(),
+    loadedWorlds: nonNegativeIntSchema.optional(),
+    backendServerCount: nonNegativeIntSchema.optional(),
+    extra: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+
 export const serverHeartbeatBodySchema = z
   .object({
     status: serverStatusTypeSchema.optional(),
     port: z.int().min(1).max(65535).nullable().optional(),
     version: z.string().optional(),
     onlineMojangIds: z.array(z.string().min(1)).default([]),
+    metrics: serverHeartbeatMetricsSchema.optional(),
   })
   .strict();
 
@@ -126,6 +148,7 @@ export type CreateLockdownBody = z.infer<typeof createLockdownBodySchema>;
 export type CreatePlayerSessionBody = z.infer<typeof createPlayerSessionBodySchema>;
 export type AuthenticatedCreateLockdownBody = CreateLockdownBody & { issuedByActorId: string };
 export type CreateLockdownInput = ServerIdParamsSchema & AuthenticatedCreateLockdownBody;
+export type ServerHeartbeatMetrics = z.infer<typeof serverHeartbeatMetricsSchema>;
 export type ServerHeartbeatBody = z.infer<typeof serverHeartbeatBodySchema>;
 export type UpdateServerBody = z.infer<typeof updateServerBodySchema>;
 export type ReplaceServerAccessBody = z.infer<typeof replaceServerAccessBodySchema>;

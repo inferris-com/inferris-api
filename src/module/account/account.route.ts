@@ -3,7 +3,6 @@ import { type RequestHandler, Router } from "express";
 import { UnauthorizedError } from "../../error/app-error.js";
 import { validateRequest } from "../../middleware/validation.js";
 import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
-import type { ArgusSessionResponse } from "../auth/auth.service.js";
 import {
   accountNotificationParamsSchema,
   accountSessionParamsSchema,
@@ -16,6 +15,7 @@ import type { AccountService } from "./account.service.js";
 import type {
   AccountNotificationResponse,
   AccountResponse,
+  ArgusSessionResponse,
   PasswordChangeResponse,
 } from "./account.response-types.js";
 

@@ -22,4 +22,16 @@ export const chatMessageResponseSchema = z
   })
   .openapi("ChatMessageResponse");
 
+export const chatMessageListResponseSchema = z
+  .object({
+    data: z.array(chatMessageResponseSchema),
+    meta: z.object({
+      count: z.number().int(),
+      limit: z.number().int(),
+      includePending: z.boolean(),
+      nextCursor: z.string().nullable(),
+    }),
+  })
+  .openapi("ChatMessageListResponse");
+
 export type ChatMessageResponse = z.infer<typeof chatMessageResponseSchema>;

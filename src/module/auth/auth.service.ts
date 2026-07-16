@@ -27,6 +27,7 @@ type RefreshSession = {
 type ArgusSessionState = RefreshSession & {
   refreshTokenHash: string;
   lastSeenAtMs: number;
+  expiresAtMs: number;
   userAgent: string | null;
   ipAddress: string | null;
 };
@@ -35,6 +36,9 @@ export type ArgusSessionResponse = {
   id: string;
   createdAtMs: number;
   lastSeenAtMs: number;
+  expiresAtMs: number;
+  revokedAtMs: number | null;
+  isCurrent: boolean;
   userAgent: string | null;
   ipAddress: string | null;
 };
@@ -160,6 +164,7 @@ export class AuthService {
         argus: {
           userId: user.id,
           role: user.role,
+          ...(payload.sessionId !== undefined ? { sessionId: payload.sessionId } : {}),
         },
         ...(privileged ? { privileged } : {}),
       };
@@ -219,6 +224,11 @@ export class AuthService {
     if (session.argusUserId && session.sessionId) {
       await this.redis.del(argusSessionKey(session.sessionId));
       await this.redis.sRem(argusUserSessionsKey(session.argusUserId), session.sessionId);
+      await this.repo.revokeArgusSession({
+        argusUserId: session.argusUserId,
+        sessionId: session.sessionId,
+        revokedByArgusUserId: session.argusUserId,
+      });
     }
   }
 
@@ -239,51 +249,58 @@ export class AuthService {
     return this.toAuthUserResponse(user);
   }
 
-  async listArgusSessions(argusUserId: string): Promise<ArgusSessionResponse[]> {
-    const sessionIds = await this.redis.sMembers(argusUserSessionsKey(argusUserId));
-    const sessions = await Promise.all(
-      sessionIds.map(async (sessionId) => {
-        const raw = await this.redis.get(argusSessionKey(sessionId));
+  async listArgusSessions(
+    argusUserId: string,
+    currentSessionId?: string | null,
+  ): Promise<ArgusSessionResponse[]> {
+    const sessions = await this.repo.listArgusSessions(argusUserId);
 
-        if (!raw) {
-          await this.redis.sRem(argusUserSessionsKey(argusUserId), sessionId);
-          return null;
-        }
-
-        const session = JSON.parse(raw) as ArgusSessionState;
-
-        return {
-          id: session.sessionId,
-          createdAtMs: session.createdAtMs,
-          lastSeenAtMs: session.lastSeenAtMs,
-          userAgent: session.userAgent,
-          ipAddress: session.ipAddress,
-        };
-      }),
-    );
-
-    return sessions
-      .filter((session): session is ArgusSessionResponse => session !== null)
-      .sort((left, right) => right.lastSeenAtMs - left.lastSeenAtMs);
+    return sessions.map((session) => ({
+      id: session.id,
+      createdAtMs: session.createdAtMs,
+      lastSeenAtMs: session.lastSeenAtMs,
+      expiresAtMs: session.expiresAtMs,
+      revokedAtMs: session.revokedAtMs,
+      isCurrent: currentSessionId === session.id,
+      userAgent: session.userAgent,
+      ipAddress: session.ipAddress,
+    }));
   }
 
-  async revokeArgusSession(argusUserId: string, sessionId: string): Promise<boolean> {
+  async revokeArgusSession(
+    argusUserId: string,
+    sessionId: string,
+    revokedByActorId?: string | null,
+  ): Promise<boolean> {
     const raw = await this.redis.get(argusSessionKey(sessionId));
+    let redisSession: ArgusSessionState | null = null;
 
-    if (!raw) {
-      await this.redis.sRem(argusUserSessionsKey(argusUserId), sessionId);
+    if (raw) {
+      redisSession = JSON.parse(raw) as ArgusSessionState;
+    }
+
+    if (redisSession && redisSession.argusUserId !== argusUserId) {
       return false;
     }
 
-    const session = JSON.parse(raw) as ArgusSessionState;
+    const revoked = await this.repo.revokeArgusSession({
+      argusUserId,
+      sessionId,
+      revokedByArgusUserId: argusUserId,
+      ...(revokedByActorId !== undefined ? { revokedByActorId } : {}),
+    });
 
-    if (session.argusUserId !== argusUserId) {
+    if (!revoked) {
+      if (!raw) {
+        await this.redis.sRem(argusUserSessionsKey(argusUserId), sessionId);
+      }
+
       return false;
     }
 
     await Promise.all([
       this.redis.del(argusSessionKey(sessionId)),
-      this.redis.del(refreshKey(session.refreshTokenHash)),
+      ...(redisSession ? [this.redis.del(refreshKey(redisSession.refreshTokenHash))] : []),
       this.redis.sRem(argusUserSessionsKey(argusUserId), sessionId),
     ]);
 
@@ -297,14 +314,16 @@ export class AuthService {
     role: "moderator" | "admin";
     actorId: string | null;
   }, sessionMeta: SessionMeta, existingSessionId?: string): Promise<AuthTokenResponse> {
+    const refreshToken = createRefreshToken();
+    const now = Date.now();
+    const sessionId = existingSessionId ?? randomUUID();
+    const expiresAtMs = now + config.auth.refreshTokenTtlSeconds * 1000;
     const accessToken = await signAccessToken({
       sub: user.id,
       actorId: user.actorId,
       role: user.role,
+      sessionId,
     });
-    const refreshToken = createRefreshToken();
-    const now = Date.now();
-    const sessionId = existingSessionId ?? randomUUID();
 
     const session: RefreshSession = {
       argusUserId: user.id,
@@ -323,10 +342,19 @@ export class AuthService {
       createdAtMs: existingSession?.createdAtMs ?? now,
       refreshTokenHash: refreshToken.tokenHash,
       lastSeenAtMs: now,
+      expiresAtMs,
       userAgent: sessionMeta.userAgent ?? existingSession?.userAgent ?? null,
       ipAddress: sessionMeta.ipAddress ?? existingSession?.ipAddress ?? null,
     };
 
+    await this.repo.upsertArgusSession({
+      id: sessionId,
+      argusUserId: user.id,
+      nowMs: now,
+      expiresAtMs,
+      ipAddress: sessionState.ipAddress,
+      userAgent: sessionState.userAgent,
+    });
     await this.redis.set(refreshKey(refreshToken.tokenHash), JSON.stringify(session), {
       EX: config.auth.refreshTokenTtlSeconds,
     });

@@ -15,6 +15,13 @@ export type ChatMessageRecord = {
   persistenceState: "pending" | "persisted";
 };
 
+export type ChatMessageCursor = {
+  occurredAtMs: string;
+  ingestStreamId: string | null;
+  id: string;
+  tieBreaker: string;
+};
+
 export type BufferedChatMessage = {
   id: string;
   producerMessageId: string;
@@ -35,6 +42,7 @@ export type ChatMessageWriteInput = Omit<BufferedChatMessage, "ingestStreamId">;
 
 export type ChatMessageListFilters = {
   limit: number;
+  cursor?: ChatMessageCursor;
   beforeMs?: string;
   afterMs?: string;
   channelKey?: string;

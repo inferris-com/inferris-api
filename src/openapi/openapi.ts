@@ -9,6 +9,7 @@ import { registerAuditLogOpenApi } from "../module/audit-log/audit-log.openapi.j
 import { registerBadgeOpenApi } from "../module/badge/badge.openapi.js";
 import { registerChatMessageOpenApi } from "../module/chat-message/chat-message.openapi.js";
 import { registerGroupOpenApi } from "../module/group/group.openapi.js";
+import { registerMetricsOpenApi } from "../module/metrics/metrics.openapi.js";
 import { registerModCaseOpenApi } from "../module/mod-case/mod-case.openapi.js";
 import { registerPermissionOpenApi } from "../module/permission/permission.openapi.js";
 import { registerPlayerSessionOpenApi } from "../module/player-session/player-session.openapi.js";
@@ -71,6 +72,7 @@ registerReportOpenApi(registry);
 registerModCaseOpenApi(registry);
 registerChatMessageOpenApi(registry);
 registerWatchlistOpenApi(registry);
+registerMetricsOpenApi(registry);
 
 const generator = new OpenApiGeneratorV31(registry.definitions);
 

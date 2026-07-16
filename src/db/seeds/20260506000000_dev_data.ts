@@ -874,7 +874,7 @@ const seed = {
           mojang_id: "30000000-0000-0000-0000-000000000007",
           actor_id: ids.actors.refrizor,
           username: "Refrizor",
-          flags: 3,
+          flags: 36700163, // STAFF, VANISHED, ARGUS_ACCESS, COOL
           orbs: 500,
           active_channel_key: "global",
         },
@@ -918,6 +918,16 @@ const seed = {
         {
           player_id: ids.players.refrizor,
           badge_id: ids.badges.dev,
+          source: "Seeding",
+        },
+        {
+          player_id: ids.players.refrizor,
+          badge_id: ids.badges.bugHunter,
+          source: "Seeding",
+        },
+        {
+          player_id: ids.players.refrizor,
+          badge_id: ids.badges.tester,
           source: "Seeding",
         },
       ])
@@ -1044,6 +1054,12 @@ const seed = {
           description: "Player is a tester",
         },
         {
+          flag_key: "COOL",
+          bit_position: 25,
+          label: "Cool",
+          description: "This person is cool",
+        },
+        {
           flag_key: "COLLABORATOR",
           bit_position: 50,
           label: "Collaborator",
@@ -1067,6 +1083,7 @@ const seed = {
       .insertInto("reports")
       .values([
         {
+          code: "SEEDREP001",
           reporter_actor_id: ids.actors.refrizor,
           subject_actor_id: ids.actors.dummy,
           origin_server_id: ids.servers.lobby,
@@ -1075,6 +1092,7 @@ const seed = {
           severity: "low",
         },
         {
+          code: "SEEDREP002",
           reporter_actor_id: ids.actors.refrizor,
           subject_actor_id: ids.actors.dummy,
           origin_server_id: ids.servers.lobby,
@@ -1084,6 +1102,7 @@ const seed = {
         },
         {
           id: dummyId,
+          code: "SEEDREP003",
           reporter_actor_id: ids.actors.refrizor,
           subject_actor_id: ids.actors.dummy,
           origin_server_id: ids.servers.lobby,
@@ -1092,6 +1111,7 @@ const seed = {
           severity: "low",
         },
         {
+          code: "SEEDREP004",
           reporter_actor_id: ids.actors.refrizor,
           subject_actor_id: ids.actors.dummy,
           origin_server_id: ids.servers.lobby,
@@ -1100,6 +1120,7 @@ const seed = {
           severity: "low",
         },
         {
+          code: "SEEDREP005",
           reporter_actor_id: ids.actors.refrizor,
           subject_actor_id: ids.actors.dummy,
           origin_server_id: ids.servers.lobby,
@@ -1108,6 +1129,7 @@ const seed = {
           severity: "low",
         },
         {
+          code: "SEEDREP006",
           reporter_actor_id: ids.actors.refrizor,
           subject_actor_id: ids.actors.dummy,
           origin_server_id: ids.servers.lobby,
@@ -1204,6 +1226,21 @@ const seed = {
       .execute();
 
     await db
+      .insertInto("punishments")
+      .values([
+        {
+          code: "SEEDMUTE01",
+          issuer_actor_id: actors.moderatorDummy.id,
+          subject_actor_id: actors.dummy.id,
+          type: "mute",
+          ends_at_ms: Date.now() - 30 * 60 * 1000,
+          reason: "[Seed] [M] Get rekt",
+          server_origin_id: ids.servers.lobby,
+        },
+      ])
+      .execute();
+
+    await db
       .insertInto("player_nicknames")
       .values([
         {
@@ -1217,19 +1254,19 @@ const seed = {
 
     await db
       .insertInto("privileged_subjects")
-      .values(
-        [
-          privilegedSubjects.moderatorDummy,
-          privilegedSubjects.adminDummy,
-          privilegedSubjects.developer,
-          privilegedSubjects.refrizor,
-        ])
+      .values([
+        privilegedSubjects.moderatorDummy,
+        privilegedSubjects.adminDummy,
+        privilegedSubjects.developer,
+        privilegedSubjects.refrizor,
+      ])
       .execute();
 
     await db
       .insertInto("argus_users")
       .values([
         {
+          id: ids.actors.refrizor,
           actor_id: ids.actors.refrizor,
           username: "Refrizor",
           email: "azzy@inferris.com",
@@ -1269,27 +1306,692 @@ const seed = {
       .execute();
 
     await db
-      .insertInto("chat_messages")
+      .insertInto("argus_notifications")
       .values([
         {
-          id: dummyId,
-          actor_id: ids.actors.dummy,
-          producer_message_id: "seed-chat-1",
-          origin_server_id: ids.servers.lobby,
-          channel_key: "global",
-          message: "Hello World!",
-        },
-        {
-          id: dummyId2,
-          actor_id: ids.actors.moderatorDummy,
-          producer_message_id: "seed-chat-2",
-          origin_server_id: ids.servers.lobby,
-          channel_key: "staff",
-          message: "Hello Staff!",
+          account_id: actors.refrizor.id,
+          title: "Test",
+          description: "This is a test notification.",
+          priority: 1,
         },
       ])
       .execute();
+
+    await db
+      .insertInto("argus_alerts")
+      .values([
+        {
+          title: "Development mode",
+          description: "Argus is in development mode.",
+          css_class: "alert-maintenance",
+          priority: 1,
+        },
+      ])
+      .execute();
+
+    const globalChatConversations: Array<{
+      actor: keyof Pick<
+        typeof ids.actors,
+        "dummy" | "moderatorDummy" | "adminDummy" | "developerDummy"
+      >;
+      server: keyof typeof ids.servers;
+      channel?: string;
+      message: string;
+    }> = [
+      { actor: "dummy", server: "lobby", message: "This is a chat message in Global." },
+      {
+        actor: "moderatorDummy",
+        server: "lobby",
+        channel: "staff",
+        message: "This is a chat message in Staff.",
+      },
+      // Conversation 1: ordinary lobby chatter
+      { actor: "dummy", server: "lobby", message: "anyone know where the parkour starts" },
+      { actor: "moderatorDummy", server: "lobby", message: "Behind the fountain near spawn." },
+      { actor: "dummy", server: "lobby", message: "oh wow I walked past it three times" },
+      {
+        actor: "adminDummy",
+        server: "lobby",
+        message: "That means the fountain is working as intended.",
+      },
+      { actor: "dummy", server: "lobby", message: "the fountain has defeated me" },
+
+      // Conversation 2: minigame queue
+      {
+        actor: "developerDummy",
+        server: "lockdownMinigames",
+        message: "We need one more player for the next round.",
+      },
+      { actor: "dummy", server: "lobby", message: "what game" },
+      {
+        actor: "developerDummy",
+        server: "lockdownMinigames",
+        message: "Spleef, assuming nobody destroys the waiting room first.",
+      },
+      { actor: "adminDummy", server: "lockdownMinigames", message: "No promises." },
+      { actor: "dummy", server: "lockdownMinigames", message: "joining now" },
+
+      // Conversation 3: food discourse
+      { actor: "dummy", server: "lobby", message: "important question: pancakes or waffles" },
+      {
+        actor: "moderatorDummy",
+        server: "lobby",
+        message: "Waffles. Better structural integrity.",
+      },
+      {
+        actor: "developerDummy",
+        server: "lobby",
+        message: "Pancakes have lower implementation complexity.",
+      },
+      { actor: "adminDummy", server: "lobby", message: "French toast has entered the tournament." },
+      { actor: "dummy", server: "lobby", message: "this discussion is getting out of control" },
+
+      // Conversation 4: lost player
+      { actor: "dummy", server: "lobby", message: "I think I found a secret tunnel" },
+      { actor: "moderatorDummy", server: "lobby", message: "Are you underneath spawn again?" },
+      { actor: "dummy", server: "lobby", message: "possibly" },
+      { actor: "moderatorDummy", server: "lobby", message: "That is the maintenance corridor." },
+      {
+        actor: "dummy",
+        server: "lobby",
+        message: "then maintenance has excellent interior design",
+      },
+
+      // Conversation 5: server performance joke
+      {
+        actor: "developerDummy",
+        server: "velocity",
+        message: "The network has now gone twelve minutes without an incident.",
+      },
+      { actor: "adminDummy", server: "lobby", message: "Why would you say that out loud?" },
+      { actor: "dummy", server: "lobby", message: "you have doomed us all" },
+      { actor: "moderatorDummy", server: "lobby", message: "Resetting the sign to zero." },
+      { actor: "developerDummy", server: "velocity", message: "Understandable." },
+
+      // Conversation 6: building
+      { actor: "dummy", server: "lobby", message: "does this server have a creative area" },
+      {
+        actor: "adminDummy",
+        server: "lobby",
+        message: "Not publicly yet, but one is being planned.",
+      },
+      { actor: "dummy", server: "lobby", message: "I need somewhere to build a very large duck" },
+      { actor: "developerDummy", server: "lobby", message: "How large are we talking?" },
+      { actor: "dummy", server: "lobby", message: "large enough to become a navigation landmark" },
+
+      // Conversation 7: accidental caps
+      { actor: "dummy", server: "lobby", message: "HELLO" },
+      { actor: "dummy", server: "lobby", message: "sorry caps lock" },
+      { actor: "moderatorDummy", server: "lobby", message: "WELCOME" },
+      {
+        actor: "adminDummy",
+        server: "lobby",
+        message: "The appropriate response has been issued.",
+      },
+
+      // Conversation 8: mystery sound
+      { actor: "dummy", server: "lockdownMinigames", message: "what was that explosion" },
+      {
+        actor: "developerDummy",
+        server: "lockdownMinigames",
+        message: "A completely intentional sound effect.",
+      },
+      {
+        actor: "adminDummy",
+        server: "lockdownMinigames",
+        message: "That answer arrived suspiciously quickly.",
+      },
+      {
+        actor: "developerDummy",
+        server: "lockdownMinigames",
+        message: "I was prepared for this exact question.",
+      },
+      { actor: "dummy", server: "lockdownMinigames", message: "that is not reassuring" },
+
+      // Conversation 9: fishing
+      {
+        actor: "dummy",
+        server: "lobby",
+        message: "I have been fishing for ten minutes and caught one bowl",
+      },
+      { actor: "moderatorDummy", server: "lobby", message: "A fine and seaworthy bowl." },
+      { actor: "dummy", server: "lobby", message: "I cannot sail this" },
+      { actor: "adminDummy", server: "lobby", message: "Not with that attitude." },
+
+      // Conversation 10: rank color
+      { actor: "dummy", server: "lobby", message: "the new rank colors look nice" },
+      {
+        actor: "developerDummy",
+        server: "devMinRank",
+        message: "Good. We only debated them for several centuries.",
+      },
+      {
+        actor: "moderatorDummy",
+        server: "lobby",
+        message: "I remember at least three separate shades of blue.",
+      },
+      {
+        actor: "adminDummy",
+        server: "lobby",
+        message: "They were meaningfully different shades of blue.",
+      },
+      { actor: "dummy", server: "lobby", message: "I believe you" },
+
+      // Conversation 11: spontaneous race
+      { actor: "dummy", server: "lobby", message: "race from spawn to the windmill?" },
+      { actor: "moderatorDummy", server: "lobby", message: "You are already halfway there." },
+      { actor: "dummy", server: "lobby", message: "strategic planning" },
+      { actor: "adminDummy", server: "lobby", message: "That is generally called cheating." },
+      { actor: "dummy", server: "lobby", message: "strategic planning with consequences" },
+
+      // Conversation 12: bug report, technically
+      { actor: "dummy", server: "lobby", message: "bug report: I fell off the map" },
+      { actor: "developerDummy", server: "lobby", message: "Where were you standing?" },
+      { actor: "dummy", server: "lobby", message: "outside the map" },
+      {
+        actor: "developerDummy",
+        server: "lobby",
+        message: "I have identified the probable cause.",
+      },
+      { actor: "moderatorDummy", server: "lobby", message: "Excellent investigative work." },
+
+      // Conversation 13: weather
+      { actor: "dummy", server: "lobby", message: "it has been raining for so long" },
+      { actor: "adminDummy", server: "lobby", message: "The crops appreciate your sacrifice." },
+      { actor: "dummy", server: "lobby", message: "my frames do not" },
+      {
+        actor: "developerDummy",
+        server: "lobby",
+        message: "The frames have been deemed an acceptable loss.",
+      },
+
+      // Conversation 14: pet naming
+      { actor: "dummy", server: "lobby", message: "I found a wolf, what should I name it" },
+      { actor: "moderatorDummy", server: "lobby", message: "Concrete." },
+      { actor: "adminDummy", server: "lobby", message: "That is an unusually dense name." },
+      { actor: "developerDummy", server: "lobby", message: "Name it Packet." },
+      { actor: "dummy", server: "lobby", message: "Packet wins" },
+
+      // Conversation 15: dramatic arrival
+      { actor: "adminDummy", server: "lobby", message: "I have arrived." },
+      { actor: "dummy", server: "lobby", message: "welcome back" },
+      { actor: "moderatorDummy", server: "lobby", message: "The announcement was necessary." },
+      { actor: "adminDummy", server: "lobby", message: "Naturally." },
+
+      // Conversation 16: invisible barrier
+      {
+        actor: "dummy",
+        server: "lockdownMinigames",
+        message: "why can I not walk through this doorway",
+      },
+      {
+        actor: "developerDummy",
+        server: "lockdownMinigames",
+        message: "The doorway is currently decorative.",
+      },
+      { actor: "dummy", server: "lockdownMinigames", message: "that is just a wall with ambition" },
+      {
+        actor: "moderatorDummy",
+        server: "lockdownMinigames",
+        message: "Please respect its career goals.",
+      },
+
+      // Conversation 17: trivia
+      {
+        actor: "moderatorDummy",
+        server: "lobby",
+        message: "Lobby trivia: the tallest tower has 214 blocks.",
+      },
+      { actor: "dummy", server: "lobby", message: "who counted that" },
+      {
+        actor: "developerDummy",
+        server: "lobby",
+        message: "Someone with access to the source files.",
+      },
+      { actor: "adminDummy", server: "lobby", message: "So, effectively, a wizard." },
+      { actor: "dummy", server: "lobby", message: "understood" },
+
+      // Conversation 18: suspicious chicken
+      { actor: "dummy", server: "lobby", message: "there is a chicken staring at me" },
+      {
+        actor: "moderatorDummy",
+        server: "lobby",
+        message: "Do not disclose staff operations in global chat.",
+      },
+      { actor: "adminDummy", server: "lobby", message: "The chicken has been reassigned." },
+      {
+        actor: "dummy",
+        server: "lobby",
+        message: "it walked away immediately after you said that",
+      },
+      { actor: "developerDummy", server: "lobby", message: "Coincidence." },
+
+      // Conversation 19: quiet moment
+      { actor: "dummy", server: "lobby", message: "this lobby music is actually relaxing" },
+      { actor: "developerDummy", server: "lobby", message: "Glad you like it." },
+      { actor: "moderatorDummy", server: "lobby", message: "Until you notice the loop." },
+      { actor: "dummy", server: "lobby", message: "why would you do this to me" },
+
+      // Conversation 20: closing exchange
+      { actor: "dummy", server: "lobby", message: "alright I am logging off, goodnight everyone" },
+      { actor: "moderatorDummy", server: "lobby", message: "Goodnight!" },
+      { actor: "adminDummy", server: "lobby", message: "Sleep well." },
+      {
+        actor: "developerDummy",
+        server: "velocity",
+        message: "Your session has been emotionally terminated.",
+      },
+      {
+        actor: "dummy",
+        server: "lobby",
+        message: "that sounded much more threatening than goodnight",
+      },
+      { actor: "developerDummy", server: "velocity", message: "Goodnight." },
+    ];
+
+    const seededChatMessages = globalChatConversations.map((entry, index) => {
+      const sequence = String(index + 1).padStart(12, "0");
+
+      return {
+        // Uses a separate UUID namespace so these do not collide with your
+        // existing 00000000-... dummy resource IDs.
+        id: `30000000-0000-0000-0000-${sequence}`,
+        actor_id: ids.actors[entry.actor],
+        producer_message_id: `seed-global-chat-${index + 1}`,
+        origin_server_id: ids.servers[entry.server],
+        channel_key: entry.channel ?? "global",
+        message: entry.message,
+      };
+    });
+
+    await db.insertInto("chat_messages").values(seededChatMessages).execute();
+
+    const nowMs = Date.now();
+
+    await db
+      .insertInto("player_session_events")
+      .values([
+        {
+          player_id: ids.players.refrizor,
+          server_id: ids.servers.lobby,
+          connected_at_ms: nowMs - 30 * 60 * 1000,
+          disconnected_at_ms: nowMs - 10 * 60 * 1000,
+        },
+        {
+          player_id: ids.players.dummy,
+          server_id: ids.servers.lobby,
+          connected_at_ms: nowMs - 24 * 60 * 1000,
+        },
+        {
+          player_id: ids.players.moderatorDummy,
+          server_id: ids.servers.lobby,
+          connected_at_ms: nowMs - 18 * 60 * 1000,
+        },
+        {
+          player_id: ids.players.adminDummy,
+          server_id: ids.servers.lockdownMinigames,
+          connected_at_ms: nowMs - 8 * 60 * 1000,
+        },
+      ])
+      .execute();
+
+    const metricObservations = [
+      createMetricObservation(
+        "40000000-0000-0000-0000-000000000001",
+        ids.servers.velocity,
+        nowMs,
+        -10,
+        {
+          onlinePlayerCount: 3,
+          maxPlayers: 5000,
+          heapUsedBytes: 192 * 1024 * 1024,
+          heapMaxBytes: 1024 * 1024 * 1024,
+          backendServerCount: 4,
+        },
+      ),
+      createMetricObservation(
+        "40000000-0000-0000-0000-000000000002",
+        ids.servers.velocity,
+        nowMs,
+        -5,
+        {
+          onlinePlayerCount: 3,
+          maxPlayers: 5000,
+          heapUsedBytes: 214 * 1024 * 1024,
+          heapMaxBytes: 1024 * 1024 * 1024,
+          backendServerCount: 4,
+        },
+      ),
+      createMetricObservation(
+        "40000000-0000-0000-0000-000000000003",
+        ids.servers.velocity,
+        nowMs,
+        -1,
+        {
+          onlinePlayerCount: 3,
+          maxPlayers: 5000,
+          heapUsedBytes: 226 * 1024 * 1024,
+          heapMaxBytes: 1024 * 1024 * 1024,
+          backendServerCount: 4,
+        },
+      ),
+      createMetricObservation(
+        "40000000-0000-0000-0000-000000000004",
+        ids.servers.lobby,
+        nowMs,
+        -10,
+        {
+          onlinePlayerCount: 1,
+          maxPlayers: 100,
+          tps1m: 19.98,
+          tps5m: 19.99,
+          tps15m: 20,
+          msptAvg: 18.4,
+          msptP95: 31.2,
+          heapUsedBytes: 768 * 1024 * 1024,
+          heapMaxBytes: 4096 * 1024 * 1024,
+          loadedChunks: 820,
+          loadedWorlds: 3,
+        },
+      ),
+      createMetricObservation(
+        "40000000-0000-0000-0000-000000000005",
+        ids.servers.lobby,
+        nowMs,
+        -5,
+        {
+          onlinePlayerCount: 2,
+          maxPlayers: 100,
+          tps1m: 19.96,
+          tps5m: 19.98,
+          tps15m: 19.99,
+          msptAvg: 20.1,
+          msptP95: 36.5,
+          heapUsedBytes: 812 * 1024 * 1024,
+          heapMaxBytes: 4096 * 1024 * 1024,
+          loadedChunks: 864,
+          loadedWorlds: 3,
+        },
+      ),
+      createMetricObservation(
+        "40000000-0000-0000-0000-000000000006",
+        ids.servers.lobby,
+        nowMs,
+        -1,
+        {
+          onlinePlayerCount: 2,
+          maxPlayers: 100,
+          tps1m: 19.97,
+          tps5m: 19.98,
+          tps15m: 19.99,
+          msptAvg: 19.7,
+          msptP95: 34.8,
+          heapUsedBytes: 824 * 1024 * 1024,
+          heapMaxBytes: 4096 * 1024 * 1024,
+          loadedChunks: 872,
+          loadedWorlds: 3,
+        },
+      ),
+      createMetricObservation(
+        "40000000-0000-0000-0000-000000000007",
+        ids.servers.lockdownMinigames,
+        nowMs,
+        -10,
+        {
+          onlinePlayerCount: 0,
+          maxPlayers: 40,
+          tps1m: 20,
+          tps5m: 20,
+          tps15m: 20,
+          msptAvg: 11.2,
+          msptP95: 21.9,
+          heapUsedBytes: 512 * 1024 * 1024,
+          heapMaxBytes: 3072 * 1024 * 1024,
+          loadedChunks: 420,
+          loadedWorlds: 2,
+        },
+      ),
+      createMetricObservation(
+        "40000000-0000-0000-0000-000000000008",
+        ids.servers.lockdownMinigames,
+        nowMs,
+        -5,
+        {
+          onlinePlayerCount: 1,
+          maxPlayers: 40,
+          tps1m: 19.91,
+          tps5m: 19.97,
+          tps15m: 19.99,
+          msptAvg: 24.6,
+          msptP95: 45.1,
+          heapUsedBytes: 640 * 1024 * 1024,
+          heapMaxBytes: 3072 * 1024 * 1024,
+          loadedChunks: 512,
+          loadedWorlds: 2,
+        },
+      ),
+      createMetricObservation(
+        "40000000-0000-0000-0000-000000000009",
+        ids.servers.lockdownMinigames,
+        nowMs,
+        -1,
+        {
+          onlinePlayerCount: 1,
+          maxPlayers: 40,
+          tps1m: 19.94,
+          tps5m: 19.97,
+          tps15m: 19.99,
+          msptAvg: 22.8,
+          msptP95: 41.7,
+          heapUsedBytes: 658 * 1024 * 1024,
+          heapMaxBytes: 3072 * 1024 * 1024,
+          loadedChunks: 520,
+          loadedWorlds: 2,
+        },
+      ),
+      createMetricObservation(
+        "40000000-0000-0000-0000-000000000010",
+        ids.servers.devMinRank,
+        nowMs,
+        -12,
+        {
+          onlinePlayerCount: 0,
+          maxPlayers: 20,
+          tps1m: 20,
+          tps5m: 20,
+          tps15m: 20,
+          msptAvg: 9.8,
+          msptP95: 15.2,
+          heapUsedBytes: 384 * 1024 * 1024,
+          heapMaxBytes: 2048 * 1024 * 1024,
+          loadedChunks: 160,
+          loadedWorlds: 1,
+        },
+      ),
+      createMetricObservation(
+        "40000000-0000-0000-0000-000000000011",
+        ids.servers.devPermission,
+        nowMs,
+        -20,
+        {
+          onlinePlayerCount: 0,
+          maxPlayers: 20,
+          tps1m: 20,
+          tps5m: 20,
+          tps15m: 20,
+          msptAvg: 8.9,
+          msptP95: 14.1,
+          heapUsedBytes: 340 * 1024 * 1024,
+          heapMaxBytes: 2048 * 1024 * 1024,
+          loadedChunks: 128,
+          loadedWorlds: 1,
+        },
+      ),
+    ];
+
+    await insertMetricObservations(db, metricObservations);
+    await insertLatestMetrics(db, latestMetricObservations(metricObservations));
+
+    await sql`
+      UPDATE servers
+      SET
+        status = 'online',
+        last_heartbeat_at_ms = server_latest_metrics.observed_at_ms
+      FROM server_latest_metrics
+      WHERE server_latest_metrics.server_id = servers.id
+        AND servers.id IN (
+          ${ids.servers.velocity}::uuid,
+          ${ids.servers.lobby}::uuid,
+          ${ids.servers.lockdownMinigames}::uuid
+        )
+    `.execute(db);
   },
 } satisfies Seed;
+
+type MetricObservationInput = {
+  onlinePlayerCount: number;
+  maxPlayers?: number;
+  tps1m?: number;
+  tps5m?: number;
+  tps15m?: number;
+  msptAvg?: number;
+  msptP95?: number;
+  heapUsedBytes?: number;
+  heapMaxBytes?: number;
+  loadedChunks?: number;
+  loadedWorlds?: number;
+  backendServerCount?: number;
+};
+
+type MetricObservation = MetricObservationInput & {
+  id: string;
+  serverId: string;
+  observedAtMs: number;
+};
+
+function createMetricObservation(
+  id: string,
+  serverId: string,
+  nowMs: number,
+  minutesOffset: number,
+  input: MetricObservationInput,
+): MetricObservation {
+  return {
+    id,
+    serverId,
+    observedAtMs: nowMs + minutesOffset * 60 * 1000,
+    ...input,
+  };
+}
+
+async function insertMetricObservations(
+  db: Kysely<DB>,
+  observations: MetricObservation[],
+): Promise<void> {
+  await sql`
+    INSERT INTO server_heartbeat_observations (
+      id,
+      server_id,
+      observed_at_ms,
+      online_player_count,
+      max_players,
+      tps_1m,
+      tps_5m,
+      tps_15m,
+      mspt_avg,
+      mspt_p95,
+      heap_used_bytes,
+      heap_max_bytes,
+      loaded_chunks,
+      loaded_worlds,
+      backend_server_count,
+      extra
+    )
+    VALUES ${sql.join(observations.map(metricObservationSql))}
+  `.execute(db);
+}
+
+async function insertLatestMetrics(
+  db: Kysely<DB>,
+  observations: MetricObservation[],
+): Promise<void> {
+  await sql`
+    INSERT INTO server_latest_metrics (
+      server_id,
+      observation_id,
+      observed_at_ms,
+      online_player_count,
+      max_players,
+      tps_1m,
+      tps_5m,
+      tps_15m,
+      mspt_avg,
+      mspt_p95,
+      heap_used_bytes,
+      heap_max_bytes,
+      loaded_chunks,
+      loaded_worlds,
+      backend_server_count,
+      extra
+    )
+    VALUES ${sql.join(
+      observations.map((observation) => {
+        return sql`(
+          ${observation.serverId}::uuid,
+          ${observation.id}::uuid,
+          ${observation.observedAtMs}::bigint,
+          ${observation.onlinePlayerCount},
+          ${observation.maxPlayers ?? null},
+          ${observation.tps1m ?? null},
+          ${observation.tps5m ?? null},
+          ${observation.tps15m ?? null},
+          ${observation.msptAvg ?? null},
+          ${observation.msptP95 ?? null},
+          ${observation.heapUsedBytes ?? null},
+          ${observation.heapMaxBytes ?? null},
+          ${observation.loadedChunks ?? null},
+          ${observation.loadedWorlds ?? null},
+          ${observation.backendServerCount ?? null},
+          '{}'::jsonb
+        )`;
+      }),
+    )}
+  `.execute(db);
+}
+
+function latestMetricObservations(observations: MetricObservation[]): MetricObservation[] {
+  const rowsByServer = new Map<string, MetricObservation>();
+
+  for (const observation of observations) {
+    const current = rowsByServer.get(observation.serverId);
+
+    if (!current || observation.observedAtMs > current.observedAtMs) {
+      rowsByServer.set(observation.serverId, observation);
+    }
+  }
+
+  return [...rowsByServer.values()];
+}
+
+function metricObservationSql(observation: MetricObservation) {
+  return sql`(
+    ${observation.id}::uuid,
+    ${observation.serverId}::uuid,
+    ${observation.observedAtMs}::bigint,
+    ${observation.onlinePlayerCount},
+    ${observation.maxPlayers ?? null},
+    ${observation.tps1m ?? null},
+    ${observation.tps5m ?? null},
+    ${observation.tps15m ?? null},
+    ${observation.msptAvg ?? null},
+    ${observation.msptP95 ?? null},
+    ${observation.heapUsedBytes ?? null},
+    ${observation.heapMaxBytes ?? null},
+    ${observation.loadedChunks ?? null},
+    ${observation.loadedWorlds ?? null},
+    ${observation.backendServerCount ?? null},
+    '{}'::jsonb
+  )`;
+}
 
 export default seed;

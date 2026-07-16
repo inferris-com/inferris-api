@@ -35,7 +35,7 @@ describe("auth routes", () => {
     expect(dependencies.services.auth.getCurrentUser).toHaveBeenCalledWith(
       expect.objectContaining({
         actorId: ids.actor,
-        argus: { userId: "argus-admin", role: "admin" },
+        argus: expect.objectContaining({ userId: "argus-admin", role: "admin" }),
       }),
     );
   });

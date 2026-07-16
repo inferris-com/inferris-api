@@ -13,7 +13,9 @@ export function createBackgroundRuntime(dependencies: AppDependencies): Backgrou
 
   return {
     start() {
-      cronScheduler.start(createCronJobs(dependencies.services.punishment));
+      cronScheduler.start(
+        createCronJobs(dependencies.services.punishment, dependencies.services.server),
+      );
       chatMessageFlushWorker.start();
     },
     async stop() {

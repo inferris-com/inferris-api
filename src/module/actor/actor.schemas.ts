@@ -14,6 +14,13 @@ export const listActorsQuerySchema = z.object({
   type: actorTypeSchema.optional(),
 });
 
+export const searchActorsQuerySchema = z
+  .object({
+    q: z.string().trim().min(1).max(64),
+    limit: z.coerce.number().int().min(1).max(25).default(10),
+  })
+  .strict();
+
 export const createActorBodySchema = z
   .object({
     id: z.guid(),
@@ -39,5 +46,6 @@ export const updateActorBodySchema = z
 export type ActorType = z.infer<typeof actorTypeSchema>;
 export type ActorIdParams = z.infer<typeof actorIdParamsSchema>;
 export type ListActorsQuery = z.infer<typeof listActorsQuerySchema>;
+export type SearchActorsQuery = z.infer<typeof searchActorsQuerySchema>;
 export type CreateActorBody = z.infer<typeof createActorBodySchema>;
 export type UpdateActorBody = z.infer<typeof updateActorBodySchema>;

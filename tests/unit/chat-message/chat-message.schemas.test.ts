@@ -59,3 +59,12 @@ test("listChatMessagesQuerySchema parses includePending=false", () => {
 
   expect(result.includePending).toBe(false);
 });
+
+test("listChatMessagesQuerySchema rejects cursor with beforeMs", () => {
+  const result = listChatMessagesQuerySchema.safeParse({
+    cursor: "abc",
+    beforeMs: "1000",
+  });
+
+  expect(result.success).toBe(false);
+});

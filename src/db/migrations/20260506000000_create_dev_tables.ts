@@ -341,6 +341,53 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE INDEX idx_servers_type ON servers (type);
   CREATE INDEX idx_servers_environment ON servers (environment);
 
+  CREATE TABLE server_heartbeat_observations
+  (
+    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    server_id            UUID   NOT NULL REFERENCES servers (id) ON DELETE CASCADE,
+    observed_at_ms       BIGINT NOT NULL DEFAULT get_unix_ms(),
+
+    online_player_count  INT    NULL CHECK (online_player_count >= 0),
+    max_players          INT    NULL CHECK (max_players >= 0),
+    tps_1m               NUMERIC(6, 3) NULL CHECK (tps_1m >= 0),
+    tps_5m               NUMERIC(6, 3) NULL CHECK (tps_5m >= 0),
+    tps_15m              NUMERIC(6, 3) NULL CHECK (tps_15m >= 0),
+    mspt_avg             NUMERIC(8, 3) NULL CHECK (mspt_avg >= 0),
+    mspt_p95             NUMERIC(8, 3) NULL CHECK (mspt_p95 >= 0),
+    heap_used_bytes      BIGINT NULL CHECK (heap_used_bytes >= 0),
+    heap_max_bytes       BIGINT NULL CHECK (heap_max_bytes >= 0),
+    loaded_chunks        INT    NULL CHECK (loaded_chunks >= 0),
+    loaded_worlds        INT    NULL CHECK (loaded_worlds >= 0),
+    backend_server_count INT    NULL CHECK (backend_server_count >= 0),
+    extra                JSONB  NOT NULL DEFAULT '{}'::jsonb
+  );
+  CREATE INDEX idx_server_heartbeat_observations_server_observed
+    ON server_heartbeat_observations (server_id, observed_at_ms DESC);
+  CREATE INDEX idx_server_heartbeat_observations_observed
+    ON server_heartbeat_observations (observed_at_ms DESC);
+
+  CREATE TABLE server_latest_metrics
+  (
+    server_id            UUID PRIMARY KEY REFERENCES servers (id) ON DELETE CASCADE,
+    observation_id       UUID   NOT NULL REFERENCES server_heartbeat_observations (id) ON DELETE CASCADE,
+    observed_at_ms       BIGINT NOT NULL,
+
+    online_player_count  INT    NULL CHECK (online_player_count >= 0),
+    max_players          INT    NULL CHECK (max_players >= 0),
+    tps_1m               NUMERIC(6, 3) NULL CHECK (tps_1m >= 0),
+    tps_5m               NUMERIC(6, 3) NULL CHECK (tps_5m >= 0),
+    tps_15m              NUMERIC(6, 3) NULL CHECK (tps_15m >= 0),
+    mspt_avg             NUMERIC(8, 3) NULL CHECK (mspt_avg >= 0),
+    mspt_p95             NUMERIC(8, 3) NULL CHECK (mspt_p95 >= 0),
+    heap_used_bytes      BIGINT NULL CHECK (heap_used_bytes >= 0),
+    heap_max_bytes       BIGINT NULL CHECK (heap_max_bytes >= 0),
+    loaded_chunks        INT    NULL CHECK (loaded_chunks >= 0),
+    loaded_worlds        INT    NULL CHECK (loaded_worlds >= 0),
+    backend_server_count INT    NULL CHECK (backend_server_count >= 0),
+    extra                JSONB  NOT NULL DEFAULT '{}'::jsonb,
+    updated_at_ms        BIGINT NOT NULL DEFAULT get_unix_ms()
+  );
+
   -- ============================
 --  RANKS & GROUPS
 -- ============================
@@ -442,6 +489,27 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   );
   CREATE INDEX idx_argus_users_role ON argus_users (role);
   CREATE INDEX idx_argus_users_account_state ON argus_users (account_state);
+
+  CREATE TABLE argus_sessions
+  (
+    id                        UUID PRIMARY KEY,
+    argus_user_id             UUID   NOT NULL REFERENCES argus_users (id) ON DELETE CASCADE,
+    created_at_ms             BIGINT NOT NULL DEFAULT get_unix_ms(),
+    last_seen_at_ms           BIGINT NOT NULL,
+    expires_at_ms             BIGINT NOT NULL,
+    revoked_at_ms             BIGINT NULL,
+    revoked_by_actor_id       UUID   NULL REFERENCES actors (id) ON DELETE SET NULL,
+    revoked_by_argus_user_id  UUID   NULL REFERENCES argus_users (id) ON DELETE SET NULL,
+    ip_address                TEXT   NULL,
+    user_agent                TEXT   NULL
+  );
+  CREATE INDEX idx_argus_sessions_user_last_seen
+    ON argus_sessions (argus_user_id, last_seen_at_ms DESC);
+  CREATE INDEX idx_argus_sessions_expires
+    ON argus_sessions (expires_at_ms);
+  CREATE INDEX idx_argus_sessions_revoked
+    ON argus_sessions (revoked_at_ms)
+    WHERE revoked_at_ms IS NOT NULL;
 
   CREATE TABLE argus_email_verifications
   (
@@ -933,6 +1001,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE TABLE reports
   (
     id                   UUID PRIMARY KEY           DEFAULT gen_random_uuid(),
+    code                 VARCHAR(12)       NOT NULL,
 
     reporter_actor_id    UUID              NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
     subject_actor_id     UUID              NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
@@ -984,6 +1053,9 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE INDEX idx_reports_status_severity_created
     ON reports (status, severity, created_at_ms DESC);
 
+  CREATE UNIQUE INDEX uq_reports_code
+    ON reports (code);
+
   CREATE INDEX idx_reports_reporter_created
     ON reports (reporter_actor_id, created_at_ms DESC);
 
@@ -1014,6 +1086,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     report_id         UUID    NOT NULL REFERENCES reports (id) ON DELETE CASCADE,
     author_actor_id   UUID    NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    author_argus_user_id UUID  NULL REFERENCES argus_users (id) ON DELETE SET NULL,
     parent_comment_id UUID    NULL REFERENCES report_comments (id) ON DELETE SET NULL,
 
     comment_text      TEXT    NOT NULL,
@@ -1021,9 +1094,19 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 
     created_at_ms     BIGINT  NOT NULL DEFAULT get_unix_ms(),
     edited_at_ms      BIGINT  NULL,
+    deleted_at_ms     BIGINT  NULL,
+    deleted_by_actor_id UUID   NULL REFERENCES actors (id) ON DELETE SET NULL,
+    deleted_by_argus_user_id UUID NULL REFERENCES argus_users (id) ON DELETE SET NULL,
 
     CONSTRAINT chk_report_comments_not_own_parent
-      CHECK (parent_comment_id IS NULL OR parent_comment_id <> id)
+      CHECK (parent_comment_id IS NULL OR parent_comment_id <> id),
+
+    CONSTRAINT chk_report_comments_deletion_consistent
+      CHECK (
+        (deleted_at_ms IS NULL AND deleted_by_actor_id IS NULL)
+          OR
+        (deleted_at_ms IS NOT NULL)
+      )
   );
 
   CREATE INDEX idx_report_comments_report_created
@@ -1033,6 +1116,15 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     WHERE parent_comment_id IS NOT NULL;
   CREATE INDEX idx_report_comments_author_created
     ON report_comments (author_actor_id, created_at_ms DESC);
+  CREATE INDEX idx_report_comments_author_argus_user_created
+    ON report_comments (author_argus_user_id, created_at_ms DESC)
+    WHERE author_argus_user_id IS NOT NULL;
+  CREATE INDEX idx_report_comments_deleted_by_actor
+    ON report_comments (deleted_by_actor_id, deleted_at_ms DESC)
+    WHERE deleted_by_actor_id IS NOT NULL;
+  CREATE INDEX idx_report_comments_deleted_by_argus_user
+    ON report_comments (deleted_by_argus_user_id, deleted_at_ms DESC)
+    WHERE deleted_by_argus_user_id IS NOT NULL;
   CREATE INDEX idx_report_comments_sticky_by_report
     ON report_comments (report_id, created_at_ms)
     WHERE is_sticky = TRUE;
@@ -1080,8 +1172,11 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     description          TEXT                NULL,
 
     opened_by_actor_id   UUID                NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    opened_by_argus_user_id UUID             NULL REFERENCES argus_users (id) ON DELETE SET NULL,
     assigned_to_actor_id UUID                NULL REFERENCES actors (id) ON DELETE SET NULL,
+    assigned_to_argus_user_id UUID           NULL REFERENCES argus_users (id) ON DELETE SET NULL,
     closed_by_actor_id   UUID                NULL REFERENCES actors (id) ON DELETE RESTRICT,
+    closed_by_argus_user_id UUID             NULL REFERENCES argus_users (id) ON DELETE SET NULL,
 
     origin_server_id     UUID                NULL REFERENCES servers (id) ON DELETE SET NULL,
 
@@ -1115,10 +1210,16 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 
   CREATE INDEX idx_mod_cases_opened_by_actor
     ON mod_cases (opened_by_actor_id, opened_at_ms DESC);
+  CREATE INDEX idx_mod_cases_opened_by_argus_user
+    ON mod_cases (opened_by_argus_user_id, opened_at_ms DESC)
+    WHERE opened_by_argus_user_id IS NOT NULL;
 
   CREATE INDEX idx_mod_cases_assigned_status_opened
     ON mod_cases (assigned_to_actor_id, status, opened_at_ms DESC)
     WHERE assigned_to_actor_id IS NOT NULL;
+  CREATE INDEX idx_mod_cases_assigned_argus_user_status_opened
+    ON mod_cases (assigned_to_argus_user_id, status, opened_at_ms DESC)
+    WHERE assigned_to_argus_user_id IS NOT NULL;
 
   CREATE INDEX idx_mod_cases_origin_server_opened
     ON mod_cases (origin_server_id, opened_at_ms DESC)
@@ -1127,6 +1228,9 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE INDEX idx_mod_cases_closed_by_actor
     ON mod_cases (closed_by_actor_id, closed_at_ms DESC)
     WHERE closed_by_actor_id IS NOT NULL;
+  CREATE INDEX idx_mod_cases_closed_by_argus_user
+    ON mod_cases (closed_by_argus_user_id, closed_at_ms DESC)
+    WHERE closed_by_argus_user_id IS NOT NULL;
 
   CREATE INDEX idx_mod_cases_sticky_open
     ON mod_cases (opened_at_ms DESC)

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { config } from "../../config.js";
+import { ValidationError } from "../../error/app-error.js";
 import {
   ChatActorNotFoundError,
   ChatBatchTooLargeError,
@@ -19,6 +20,7 @@ import type {
 } from "./chat-message.schemas.js";
 import type {
   ChatMessageListFilters,
+  ChatMessageCursor,
   ChatMessageRecord,
   ChatMessageWriteInput,
 } from "./chat-message.types.js";
@@ -29,6 +31,7 @@ export type ChatMessageListResponse = {
     count: number;
     limit: number;
     includePending: boolean;
+    nextCursor: string | null;
   };
 };
 
@@ -93,6 +96,7 @@ export class ChatMessageService {
         count: merged.length,
         limit: filters.limit,
         includePending: query.includePending,
+        nextCursor: getNextCursor(merged, filters.limit),
       },
     };
   }
@@ -215,6 +219,10 @@ function toFilters(query: ListChatMessagesQuery): ChatMessageListFilters {
     limit: query.limit,
   };
 
+  if (query.cursor !== undefined) {
+    filters.cursor = decodeChatMessageCursor(query.cursor);
+  }
+
   if (query.beforeMs !== undefined) {
     filters.beforeMs = query.beforeMs;
   }
@@ -243,4 +251,57 @@ function toFilters(query: ListChatMessagesQuery): ChatMessageListFilters {
   }
 
   return filters;
+}
+
+function getNextCursor(messages: ChatMessageRecord[], limit: number): string | null {
+  if (messages.length < limit) {
+    return null;
+  }
+
+  const last = messages.at(-1);
+
+  return last ? encodeChatMessageCursor(last) : null;
+}
+
+function encodeChatMessageCursor(message: ChatMessageRecord): string {
+  return Buffer.from(
+    JSON.stringify({
+      occurredAtMs: message.occurredAtMs,
+      ingestStreamId: message.ingestStreamId,
+      id: message.id,
+    }),
+    "utf8",
+  ).toString("base64url");
+}
+
+function decodeChatMessageCursor(cursor: string): ChatMessageCursor {
+  try {
+    const decoded = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as {
+      occurredAtMs?: unknown;
+      ingestStreamId?: unknown;
+      id?: unknown;
+    };
+
+    if (
+      typeof decoded.occurredAtMs !== "string" ||
+      !/^\d+$/.test(decoded.occurredAtMs) ||
+      !(typeof decoded.ingestStreamId === "string" || decoded.ingestStreamId === null) ||
+      typeof decoded.id !== "string"
+    ) {
+      throw new Error("Invalid cursor payload.");
+    }
+
+    return {
+      occurredAtMs: decoded.occurredAtMs,
+      ingestStreamId: decoded.ingestStreamId,
+      id: decoded.id,
+      tieBreaker: decoded.ingestStreamId ?? decoded.id,
+    };
+  } catch (error) {
+    throw new ValidationError({
+      code: "INVALID_CHAT_CURSOR",
+      message: "Invalid chat message cursor.",
+      cause: error,
+    });
+  }
 }

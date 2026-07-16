@@ -312,13 +312,25 @@
           "lastSeenAtMs": {
             "type": "integer"
           },
-          "userAgent": {
+          "expiresAtMs": {
+            "type": "integer"
+          },
+          "revokedAtMs": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "isCurrent": {
+            "type": "boolean"
+          },
+          "ipAddress": {
             "type": [
               "string",
               "null"
             ]
           },
-          "ipAddress": {
+          "userAgent": {
             "type": [
               "string",
               "null"
@@ -329,8 +341,11 @@
           "id",
           "createdAtMs",
           "lastSeenAtMs",
-          "userAgent",
-          "ipAddress"
+          "expiresAtMs",
+          "revokedAtMs",
+          "isCurrent",
+          "ipAddress",
+          "userAgent"
         ]
       },
       "AccountNotificationResponse": {
@@ -758,6 +773,43 @@
         "required": [
           "nickname",
           "coverRankKey"
+        ]
+      },
+      "PlayerSearchResultResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mojangId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string"
+          },
+          "activeNickname": {
+            "$ref": "#/components/schemas/PlayerNicknameSummaryResponse"
+          },
+          "deletedAtMs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "mojangId",
+          "actorId",
+          "username",
+          "activeNickname",
+          "deletedAtMs"
         ]
       },
       "PlayerFlagDefinitionResponse": {
@@ -1734,6 +1786,10 @@
             "type": "string",
             "format": "uuid"
           },
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9]{8,12}$"
+          },
           "reporterActorId": {
             "type": "string",
             "format": "uuid"
@@ -1848,6 +1904,7 @@
         },
         "required": [
           "id",
+          "code",
           "reporterActorId",
           "subjectActorId",
           "selectedReason",
@@ -1881,6 +1938,13 @@
             "type": "string",
             "format": "uuid"
           },
+          "authorArgusUserId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
           "parentCommentId": {
             "type": [
               "string",
@@ -1889,9 +1953,15 @@
             "format": "uuid"
           },
           "commentText": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "isSticky": {
+            "type": "boolean"
+          },
+          "isDeleted": {
             "type": "boolean"
           },
           "createdAtMs": {
@@ -1902,17 +1972,42 @@
               "string",
               "null"
             ]
+          },
+          "deletedAtMs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deletedByActorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "deletedByArgusUserId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           }
         },
         "required": [
           "id",
           "reportId",
           "authorActorId",
+          "authorArgusUserId",
           "parentCommentId",
           "commentText",
           "isSticky",
+          "isDeleted",
           "createdAtMs",
-          "editedAtMs"
+          "editedAtMs",
+          "deletedAtMs",
+          "deletedByActorId",
+          "deletedByArgusUserId"
         ]
       },
       "ModCaseResponse": {
@@ -1935,6 +2030,13 @@
             "type": "string",
             "format": "uuid"
           },
+          "openedByArgusUserId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
           "assignedToActorId": {
             "type": [
               "string",
@@ -1942,7 +2044,21 @@
             ],
             "format": "uuid"
           },
+          "assignedToArgusUserId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
           "closedByActorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "closedByArgusUserId": {
             "type": [
               "string",
               "null"
@@ -2021,8 +2137,11 @@
           "title",
           "description",
           "openedByActorId",
+          "openedByArgusUserId",
           "assignedToActorId",
+          "assignedToArgusUserId",
           "closedByActorId",
+          "closedByArgusUserId",
           "originServerId",
           "status",
           "severity",
@@ -2086,6 +2205,47 @@
           "addedByActorId",
           "addedAtMs",
           "note"
+        ]
+      },
+      "ChatMessageListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatMessageResponse"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "includePending": {
+                "type": "boolean"
+              },
+              "nextCursor": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "count",
+              "limit",
+              "includePending",
+              "nextCursor"
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "meta"
         ]
       },
       "ChatMessageResponse": {
@@ -3174,6 +3334,122 @@
             },
             "required": false,
             "name": "type",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ActorResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actors/search": {
+      "get": {
+        "tags": [
+          "Actors"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Search actors by name",
+        "operationId": "searchActors",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 25,
+              "default": 10
+            },
+            "required": false,
+            "name": "limit",
             "in": "query"
           }
         ],
@@ -6130,6 +6406,134 @@
                   },
                   "required": [
                     "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/players/search": {
+      "get": {
+        "tags": [
+          "Players"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Search players by username",
+        "operationId": "searchPlayers",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32
+            },
+            "required": true,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 25,
+              "default": 10
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "sensitive",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PlayerSearchResultResponse"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
                   ]
                 }
               }
@@ -9777,6 +10181,64 @@
                       "minLength": 1
                     },
                     "default": []
+                  },
+                  "metrics": {
+                    "type": "object",
+                    "properties": {
+                      "onlinePlayerCount": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "maxPlayers": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "tps1m": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tps5m": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tps15m": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "msptAvg": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "msptP95": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "heapUsedBytes": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "heapMaxBytes": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "loadedChunks": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "loadedWorlds": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "backendServerCount": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "extra": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
+                    },
+                    "additionalProperties": false
                   }
                 },
                 "additionalProperties": false
@@ -12938,6 +13400,94 @@
         }
       }
     },
+    "/reports/code/{code}": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Get a report by code",
+        "operationId": "getReportByCode",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9]{8,12}$"
+            },
+            "required": true,
+            "name": "code",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ReportResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/reports/{reportId}": {
       "get": {
         "tags": [
@@ -13349,6 +13899,203 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/{reportId}/comments/{commentId}": {
+      "patch": {
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Update a report comment",
+        "operationId": "updateReportComment",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "reportId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "commentId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "commentText": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4000
+                  },
+                  "isSticky": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "commentText"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ReportCommentResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Delete a report comment",
+        "operationId": "deleteReportComment",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "reportId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "commentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Report comment deleted"
           },
           "400": {
             "description": "Bad request",
@@ -14246,6 +14993,16 @@
           },
           {
             "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "required": false,
@@ -14334,31 +15091,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/ChatMessageResponse"
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "count": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "count"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "$ref": "#/components/schemas/ChatMessageListResponse"
                 }
               }
             }
@@ -15170,6 +15903,610 @@
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/WatchlistEntryResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics/overview": {
+      "get": {
+        "tags": [
+          "Metrics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Get network metrics overview",
+        "operationId": "getMetricsOverview",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "15m",
+                "1h",
+                "6h",
+                "24h"
+              ],
+              "default": "1h"
+            },
+            "required": false,
+            "name": "window",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "generatedAtMs": {
+                          "type": "string",
+                          "pattern": "^-?\\d+$"
+                        },
+                        "window": {
+                          "type": "string"
+                        },
+                        "current": {
+                          "type": "object",
+                          "properties": {
+                            "onlinePlayerCount": {
+                              "type": "number"
+                            },
+                            "serverCount": {
+                              "type": "number"
+                            },
+                            "onlineServerCount": {
+                              "type": "number"
+                            },
+                            "staleServerCount": {
+                              "type": "number"
+                            },
+                            "averageCompletedSessionSeconds": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "onlinePlayerCount",
+                            "serverCount",
+                            "onlineServerCount",
+                            "staleServerCount",
+                            "averageCompletedSessionSeconds"
+                          ]
+                        },
+                        "servers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "serverId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              },
+                              "environment": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string"
+                              },
+                              "lastHeartbeatAtMs": {
+                                "type": "string",
+                                "pattern": "^-?\\d+$"
+                              },
+                              "heartbeatAgeMs": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "isStale": {
+                                "type": "boolean"
+                              },
+                              "onlinePlayerCount": {
+                                "type": "number"
+                              },
+                              "reportedOnlinePlayerCount": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "maxPlayers": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "tps1m": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "tps5m": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "tps15m": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "msptAvg": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "msptP95": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "heapUsedBytes": {
+                                "type": "string",
+                                "pattern": "^-?\\d+$"
+                              },
+                              "heapMaxBytes": {
+                                "type": "string",
+                                "pattern": "^-?\\d+$"
+                              },
+                              "loadedChunks": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "loadedWorlds": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "backendServerCount": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "serverId",
+                              "name",
+                              "type",
+                              "environment",
+                              "status",
+                              "lastHeartbeatAtMs",
+                              "heartbeatAgeMs",
+                              "isStale",
+                              "onlinePlayerCount",
+                              "reportedOnlinePlayerCount",
+                              "maxPlayers",
+                              "tps1m",
+                              "tps5m",
+                              "tps15m",
+                              "msptAvg",
+                              "msptP95",
+                              "heapUsedBytes",
+                              "heapMaxBytes",
+                              "loadedChunks",
+                              "loadedWorlds",
+                              "backendServerCount"
+                            ]
+                          }
+                        },
+                        "series": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "bucketStartMs": {
+                                "type": "string",
+                                "pattern": "^-?\\d+$"
+                              },
+                              "joins": {
+                                "type": "number"
+                              },
+                              "disconnects": {
+                                "type": "number"
+                              },
+                              "chatMessages": {
+                                "type": "number"
+                              },
+                              "flaggedChatMessages": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "bucketStartMs",
+                              "joins",
+                              "disconnects",
+                              "chatMessages",
+                              "flaggedChatMessages"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "generatedAtMs",
+                        "window",
+                        "current",
+                        "servers",
+                        "series"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics/servers/{serverId}": {
+      "get": {
+        "tags": [
+          "Metrics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Get server metrics",
+        "operationId": "getServerMetrics",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "serverId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "15m",
+                "1h",
+                "6h",
+                "24h"
+              ],
+              "default": "1h"
+            },
+            "required": false,
+            "name": "window",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "generatedAtMs": {
+                          "type": "string",
+                          "pattern": "^-?\\d+$"
+                        },
+                        "window": {
+                          "type": "string"
+                        },
+                        "server": {
+                          "type": "object",
+                          "properties": {
+                            "serverId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "type": "string"
+                            },
+                            "environment": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string"
+                            },
+                            "lastHeartbeatAtMs": {
+                              "type": "string",
+                              "pattern": "^-?\\d+$"
+                            },
+                            "heartbeatAgeMs": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "isStale": {
+                              "type": "boolean"
+                            },
+                            "onlinePlayerCount": {
+                              "type": "number"
+                            },
+                            "reportedOnlinePlayerCount": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "maxPlayers": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "tps1m": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "tps5m": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "tps15m": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "msptAvg": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "msptP95": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "heapUsedBytes": {
+                              "type": "string",
+                              "pattern": "^-?\\d+$"
+                            },
+                            "heapMaxBytes": {
+                              "type": "string",
+                              "pattern": "^-?\\d+$"
+                            },
+                            "loadedChunks": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "loadedWorlds": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "backendServerCount": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "serverId",
+                            "name",
+                            "type",
+                            "environment",
+                            "status",
+                            "lastHeartbeatAtMs",
+                            "heartbeatAgeMs",
+                            "isStale",
+                            "onlinePlayerCount",
+                            "reportedOnlinePlayerCount",
+                            "maxPlayers",
+                            "tps1m",
+                            "tps5m",
+                            "tps15m",
+                            "msptAvg",
+                            "msptP95",
+                            "heapUsedBytes",
+                            "heapMaxBytes",
+                            "loadedChunks",
+                            "loadedWorlds",
+                            "backendServerCount"
+                          ]
+                        },
+                        "series": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "bucketStartMs": {
+                                "type": "string",
+                                "pattern": "^-?\\d+$"
+                              },
+                              "joins": {
+                                "type": "number"
+                              },
+                              "disconnects": {
+                                "type": "number"
+                              },
+                              "chatMessages": {
+                                "type": "number"
+                              },
+                              "flaggedChatMessages": {
+                                "type": "number"
+                              },
+                              "onlinePlayerCount": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "tps1m": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "msptAvg": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "heapUsedBytes": {
+                                "type": "string",
+                                "pattern": "^-?\\d+$"
+                              }
+                            },
+                            "required": [
+                              "bucketStartMs",
+                              "joins",
+                              "disconnects",
+                              "chatMessages",
+                              "flaggedChatMessages",
+                              "onlinePlayerCount",
+                              "tps1m",
+                              "msptAvg",
+                              "heapUsedBytes"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "generatedAtMs",
+                        "window",
+                        "server",
+                        "series"
+                      ]
                     }
                   },
                   "required": [

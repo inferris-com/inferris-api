@@ -52,10 +52,15 @@ export class ModCaseService {
     return toModCaseResponse(modCase);
   }
 
-  async createModCase(input: CreateModCaseBody, openedByActorId: string): Promise<ModCaseResponse> {
+  async createModCase(
+    input: CreateModCaseBody,
+    openedByActorId: string,
+    openedByArgusUserId?: string | null,
+  ): Promise<ModCaseResponse> {
     const modCase = await this.repo.createModCase({
       ...input,
       openedByActorId,
+      ...(openedByArgusUserId === undefined ? {} : { openedByArgusUserId }),
     });
     const response = toModCaseResponse(modCase);
 
@@ -71,13 +76,14 @@ export class ModCaseService {
     id: string,
     input: UpdateModCaseBody,
     actorId: string,
+    argusUserId?: string | null,
   ): Promise<ModCaseResponse> {
     const updateInput = {
       ...input,
     };
 
     if (input.status && terminalModCaseStatuses.has(input.status)) {
-      Object.assign(updateInput, { closedByActorId: actorId });
+      Object.assign(updateInput, { closedByActorId: actorId, closedByArgusUserId: argusUserId });
     }
 
     const modCase = await this.repo.updateModCase(id, updateInput);

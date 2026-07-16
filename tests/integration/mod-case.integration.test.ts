@@ -24,6 +24,7 @@ describe("mod case routes", () => {
         actors: [],
       },
       ids.apiKeyOwnerActor,
+      undefined,
     );
   });
 
@@ -48,6 +49,7 @@ describe("mod case routes", () => {
         resolution: "action_taken",
       },
       ids.apiKeyOwnerActor,
+      undefined,
     );
   });
 

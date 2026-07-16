@@ -10,6 +10,7 @@ import type {
 } from "./report.schemas.js";
 
 export type CreateReportInput = CreateReportBody & {
+  code: string;
   reporterActorId: string;
   subjectActorId: string;
 };
@@ -22,6 +23,14 @@ export type UpdateReportInput = UpdateReportBody & {
 export type CreateReportCommentInput = CreateReportCommentBody & {
   reportId: string;
   authorActorId: string;
+  authorArgusUserId?: string | null;
+};
+
+export type UpdateReportCommentInput = {
+  reportId: string;
+  commentId: string;
+  commentText: string;
+  isSticky?: boolean;
 };
 
 export class ReportPgRepository {
@@ -76,6 +85,16 @@ export class ReportPgRepository {
     );
   }
 
+  async findReportByCode(code: string): Promise<Selectable<Reports> | null> {
+    return (
+      (await this.db
+        .selectFrom("reports")
+        .selectAll()
+        .where("code", "=", code)
+        .executeTakeFirst()) ?? null
+    );
+  }
+
   async findActorIdByPlayerId(playerId: string): Promise<string | null> {
     const row = await this.db
       .selectFrom("players")
@@ -90,6 +109,7 @@ export class ReportPgRepository {
     return this.db
       .insertInto("reports")
       .values({
+        code: input.code,
         reporter_actor_id: input.reporterActorId,
         subject_actor_id: input.subjectActorId,
         selected_reason: input.selectedReason,
@@ -132,17 +152,94 @@ export class ReportPgRepository {
       .execute();
   }
 
+  async findCommentById(
+    reportId: string,
+    commentId: string,
+  ): Promise<Selectable<ReportComments> | null> {
+    return (
+      (await this.db
+        .selectFrom("report_comments")
+        .selectAll()
+        .where("report_id", "=", reportId)
+        .where("id", "=", commentId)
+        .executeTakeFirst()) ?? null
+    );
+  }
+
   async createComment(input: CreateReportCommentInput): Promise<Selectable<ReportComments>> {
     return this.db
       .insertInto("report_comments")
       .values({
         report_id: input.reportId,
         author_actor_id: input.authorActorId,
+        author_argus_user_id: input.authorArgusUserId ?? null,
         parent_comment_id: input.parentCommentId ?? null,
         comment_text: input.commentText,
         is_sticky: input.isSticky,
       })
       .returningAll()
       .executeTakeFirstOrThrow();
+  }
+
+  async updateComment(input: UpdateReportCommentInput): Promise<Selectable<ReportComments> | null> {
+    return (
+      (await this.db
+        .updateTable("report_comments")
+        .set({
+          comment_text: input.commentText,
+          is_sticky: input.isSticky,
+          edited_at_ms: sql`get_unix_ms()`,
+        })
+        .where("report_id", "=", input.reportId)
+        .where("id", "=", input.commentId)
+        .returningAll()
+        .executeTakeFirst()) ?? null
+    );
+  }
+
+  async deleteComment(
+    reportId: string,
+    commentId: string,
+    deletedByActorId: string,
+    deletedByArgusUserId?: string | null,
+  ): Promise<"deleted" | "tombstoned" | null> {
+    if (await this.commentHasReplies(reportId, commentId)) {
+      const tombstone = await this.db
+        .updateTable("report_comments")
+        .set({
+          comment_text: "[deleted]",
+          is_sticky: false,
+          edited_at_ms: null,
+          deleted_at_ms: sql`get_unix_ms()`,
+          deleted_by_actor_id: deletedByActorId,
+          deleted_by_argus_user_id: deletedByArgusUserId ?? null,
+        })
+        .where("report_id", "=", reportId)
+        .where("id", "=", commentId)
+        .where("deleted_at_ms", "is", null)
+        .executeTakeFirst();
+
+      return tombstone.numUpdatedRows > 0n ? "tombstoned" : null;
+    }
+
+    const result = await this.db
+      .deleteFrom("report_comments")
+      .where("report_id", "=", reportId)
+      .where("id", "=", commentId)
+      .where("deleted_at_ms", "is", null)
+      .executeTakeFirst();
+
+    return result.numDeletedRows > 0n ? "deleted" : null;
+  }
+
+  private async commentHasReplies(reportId: string, commentId: string): Promise<boolean> {
+    const row = await this.db
+      .selectFrom("report_comments")
+      .select("id")
+      .where("report_id", "=", reportId)
+      .where("parent_comment_id", "=", commentId)
+      .executeTakeFirst();
+
+    return Boolean(row);
   }
 }

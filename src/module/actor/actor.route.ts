@@ -5,6 +5,8 @@ import {
   actorIdParamsSchema,
   type ListActorsQuery,
   listActorsQuerySchema,
+  type SearchActorsQuery,
+  searchActorsQuerySchema,
   type UpdateActorBody,
   updateActorBodySchema,
 } from "./actor.schemas.js";
@@ -23,6 +25,15 @@ export function createActorRouter(service: ActorService, authRepository: AuthRep
     const body: ApiListSuccess<ActorResponse> = {
       data: actors.data,
       meta: { count: actors.meta.count },
+    };
+    res.json(body);
+  };
+
+  const searchActors: RequestHandler = async (req, res) => {
+    const actors = await service.searchActors(req.query as unknown as SearchActorsQuery);
+    const body: ApiListSuccess<ActorResponse> = {
+      data: actors,
+      meta: { count: actors.length },
     };
     res.json(body);
   };
@@ -60,6 +71,12 @@ export function createActorRouter(service: ActorService, authRepository: AuthRep
     readActors,
     validateRequest({ params: playerIdParamsSchema }),
     getActorByPlayerId,
+  );
+  router.get(
+    "/search",
+    readActors,
+    validateRequest({ query: searchActorsQuerySchema }) as unknown as RequestHandler,
+    searchActors,
   );
   router.get(
     "/",

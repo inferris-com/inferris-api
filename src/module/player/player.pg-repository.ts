@@ -14,6 +14,7 @@ import type {
   CreatePlayerBadgeAssignmentBody,
   ListPlayersQuery,
   ReplaceRankAssignmentInput,
+  SearchPlayersQuery,
   UpdatePlayerBody,
   UpdateProfileBody,
 } from "./player.schemas.js";
@@ -47,6 +48,42 @@ export class PlayerPgRepository implements PlayerRepository {
       .orderBy("players.username", "asc")
       .limit(limit)
       .offset(offset)
+      .execute();
+  }
+
+  async searchPlayers({ q, limit, sensitive }: SearchPlayersQuery) {
+    const pattern = `%${q}%`;
+    const prefixPattern = `${q}%`;
+
+    return this.db
+      .selectFrom("players")
+      .leftJoin("player_nicknames as active_nicknames", (join) =>
+        join
+          .onRef("active_nicknames.player_id", "=", "players.id")
+          .on("active_nicknames.is_active", "=", true),
+      )
+      .select([
+        "players.id",
+        "players.mojang_id",
+        "players.actor_id",
+        "players.username",
+        "players.deleted_at_ms",
+        "active_nicknames.nickname as active_nickname",
+        "active_nicknames.cover_rank_key as active_nickname_cover_rank_key",
+      ])
+      .where("players.username", "ilike", pattern)
+      .$if(!sensitive, (qb) => qb.where("players.deleted_at_ms", "is", null))
+      .orderBy(
+        sql<number>`case
+          when lower(players.username) = lower(${q}) then 0
+          when players.username ilike ${prefixPattern} then 1
+          else 2
+        end`,
+        "asc",
+      )
+      .orderBy("players.username", "asc")
+      .orderBy("players.id", "asc")
+      .limit(limit)
       .execute();
   }
 

@@ -16,6 +16,7 @@ import {
   playerProfileResponseSchema,
   playerRankAssignmentResponseSchema,
   playerResponseSchema,
+  playerSearchResultResponseSchema,
   playerSummaryResponseSchema,
 } from "./player.response.types.js";
 import {
@@ -32,6 +33,7 @@ import {
   playerMojangIdParamsSchema,
   playerRankAssignmentParamsSchema,
   replacePlayerRankAssignmentBodySchema,
+  searchPlayersQuerySchema,
   updatePlayerBodySchema,
   updatePlayerProfileBodySchema,
 } from "./player.schemas.js";
@@ -46,6 +48,20 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     operationId: "listPlayers",
     request: { query: listPlayersQuerySchema },
     responses: { "200": listResponse(playerSummaryResponseSchema), ...standardErrorResponses },
+  });
+
+  registry.registerPath({
+    method: "get",
+    path: "/players/search",
+    tags: ["Players"],
+    security: userOrServiceSecurity,
+    summary: "Search players by username",
+    operationId: "searchPlayers",
+    request: { query: searchPlayersQuerySchema },
+    responses: {
+      "200": listResponse(playerSearchResultResponseSchema),
+      ...standardErrorResponses,
+    },
   });
 
   registry.registerPath({

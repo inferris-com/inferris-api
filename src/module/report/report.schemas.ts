@@ -23,6 +23,18 @@ export const reportIdParamsSchema = z.object({
   reportId: z.guid({ message: "Invalid report UUID format." }),
 });
 
+export const reportCodeSchema = z
+  .string()
+  .regex(/^[A-Z0-9]{8,12}$/, "Report code must be 8-12 uppercase letters or digits.");
+
+export const reportCodeParamsSchema = z.object({
+  code: reportCodeSchema,
+});
+
+export const reportCommentIdParamsSchema = reportIdParamsSchema.extend({
+  commentId: z.guid({ message: "Invalid report comment UUID format." }),
+});
+
 export const createReportBodySchema = z
   .object({
     reporterActorId: z.guid().optional(),
@@ -73,8 +85,18 @@ export const createReportCommentBodySchema = z
   })
   .strict();
 
+export const updateReportCommentBodySchema = z
+  .object({
+    commentText: z.string().min(1).max(4000),
+    isSticky: z.boolean().optional(),
+  })
+  .strict();
+
 export type ReportIdParams = z.infer<typeof reportIdParamsSchema>;
+export type ReportCodeParams = z.infer<typeof reportCodeParamsSchema>;
+export type ReportCommentIdParams = z.infer<typeof reportCommentIdParamsSchema>;
 export type CreateReportBody = z.infer<typeof createReportBodySchema>;
 export type ListReportsQuery = z.infer<typeof listReportsQuerySchema>;
 export type UpdateReportBody = z.infer<typeof updateReportBodySchema>;
 export type CreateReportCommentBody = z.infer<typeof createReportCommentBodySchema>;
+export type UpdateReportCommentBody = z.infer<typeof updateReportCommentBodySchema>;

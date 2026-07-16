@@ -40,6 +40,17 @@ export const playerSummaryResponseSchema = z
   })
   .openapi("PlayerSummaryResponse");
 
+export const playerSearchResultResponseSchema = z
+  .object({
+    id: z.string().uuid(),
+    mojangId: z.string().uuid(),
+    actorId: z.string().uuid(),
+    username: z.string(),
+    activeNickname: playerNicknameSummaryResponseSchema.nullable(),
+    deletedAtMs: z.string().nullable(),
+  })
+  .openapi("PlayerSearchResultResponse");
+
 export const playerFlagDefinitionResponseSchema = z
   .object({
     key: z.string(),
@@ -126,6 +137,7 @@ export const playerNicknameResponseSchema = z
 
 export type ChatChannel = string;
 export type PlayerSummaryResponse = z.infer<typeof playerSummaryResponseSchema>;
+export type PlayerSearchResultResponse = z.infer<typeof playerSearchResultResponseSchema>;
 export type PlayerFlagDefinitionResponse = z.infer<typeof playerFlagDefinitionResponseSchema>;
 export type PlayerFlagBitmaskResponse = z.infer<typeof playerFlagBitmaskResponseSchema>;
 export type PlayerResponse = z.infer<typeof playerResponseSchema>;
