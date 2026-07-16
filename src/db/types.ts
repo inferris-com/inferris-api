@@ -140,6 +140,16 @@ export interface ArgusEmailVerifications {
   token_hash: string;
 }
 
+export interface ArgusNotifications {
+  account_id: string;
+  created_at_ms: Generated<Int8>;
+  description: string | null;
+  id: Generated<string>;
+  priority: Generated<number>;
+  read_at_ms: Int8 | null;
+  title: string;
+}
+
 export interface ArgusUsers {
   account_state: Generated<ArgusAccountStatus>;
   actor_id: string | null;
@@ -646,6 +656,7 @@ export interface DB {
   api_keys: ApiKeys;
   argus_alerts: ArgusAlerts;
   argus_email_verifications: ArgusEmailVerifications;
+  argus_notifications: ArgusNotifications;
   argus_users: ArgusUsers;
   audit_logs: AuditLogs;
   badges: Badges;

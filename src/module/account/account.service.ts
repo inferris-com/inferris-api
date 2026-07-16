@@ -79,17 +79,17 @@ export class AccountService {
 
   async listNotifications(auth: AuthContext): Promise<AccountNotificationResponse[]> {
     const argusUserId = requireArgusUserId(auth);
-    const [alerts, passwordSecurity] = await Promise.all([
-      this.repo.listActiveAlerts(),
+    const [accountNotifications, passwordSecurity] = await Promise.all([
+      this.repo.listUnreadNotifications(argusUserId),
       this.getPasswordSecurityCue(argusUserId),
     ]);
 
-    const notifications: AccountNotificationResponse[] = alerts.map((alert) => ({
-      id: `alert:${alert.id}`,
-      type: "alert" as const,
-      title: alert.title,
-      description: alert.description,
-      priority: alert.priority,
+    const notifications: AccountNotificationResponse[] = accountNotifications.map((notification) => ({
+      id: notification.id,
+      type: "notification" as const,
+      title: notification.title,
+      description: notification.description,
+      priority: notification.priority,
     }));
 
     if (passwordSecurity?.breached) {

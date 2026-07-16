@@ -467,6 +467,19 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     created_at_ms BIGINT      NOT NULL DEFAULT get_unix_ms()
   );
 
+  CREATE TABLE argus_notifications
+  (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    account_id    UUID   NOT NULL REFERENCES argus_users (id) ON DELETE CASCADE,
+    title         TEXT   NOT NULL,
+    description   TEXT   NULL,
+    priority      INT    NOT NULL DEFAULT 0,
+    read_at_ms    BIGINT NULL,
+    created_at_ms BIGINT NOT NULL DEFAULT get_unix_ms()
+  );
+  CREATE INDEX idx_argus_notifications_account_unread
+    ON argus_notifications (account_id, read_at_ms, priority DESC, created_at_ms DESC);
+
   -- API Keys
 --   Note: Items such as last used will be implemented later
   CREATE TABLE api_keys

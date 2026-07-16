@@ -44,7 +44,7 @@ export const accountResponseSchema = z
 export const accountNotificationResponseSchema = z
   .object({
     id: z.string(),
-    type: z.enum(["alert", "password_security"]),
+    type: z.enum(["notification", "password_security"]),
     title: z.string(),
     description: z.string().nullable(),
     priority: z.number().int(),
@@ -88,7 +88,7 @@ export type PasswordSecurityCue = {
 
 export type AccountNotificationResponse = {
   id: string;
-  type: "alert" | "password_security";
+  type: "notification" | "password_security";
   title: string;
   description: string | null;
   priority: number;

@@ -247,7 +247,7 @@ components:
         type:
           type: "string"
           enum:
-            - "alert"
+            - "notification"
             - "password_security"
         title:
           type: "string"

@@ -54,11 +54,12 @@ export class AccountPgRepository {
       .executeTakeFirstOrThrow();
   }
 
-  async listActiveAlerts() {
+  async listUnreadNotifications(accountId: string) {
     return this.db
-      .selectFrom("argus_alerts")
+      .selectFrom("argus_notifications")
       .selectAll()
-      .where("is_active", "=", true)
+      .where("account_id", "=", accountId)
+      .where("read_at_ms", "is", null)
       .orderBy("priority", "desc")
       .orderBy("created_at_ms", "desc")
       .execute();
