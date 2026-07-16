@@ -64,4 +64,18 @@ export class AccountPgRepository {
       .orderBy("created_at_ms", "desc")
       .execute();
   }
+
+  async markNotificationRead(accountId: string, notificationId: string): Promise<boolean> {
+    const result = await this.db
+      .updateTable("argus_notifications")
+      .set({
+        read_at_ms: sql`get_unix_ms()`,
+      })
+      .where("account_id", "=", accountId)
+      .where("id", "=", notificationId)
+      .where("read_at_ms", "is", null)
+      .executeTakeFirst();
+
+    return Number(result.numUpdatedRows) > 0;
+  }
 }

@@ -15,6 +15,7 @@ import type {
 } from "./account.response-types.js";
 import type { ChangePasswordBody } from "./account.schemas.js";
 
+const passwordSecurityNotificationId = "password-security:breached";
 const passwordSecurityTtlSeconds = 60 * 60 * 24 * 30;
 
 export class AccountService {
@@ -94,7 +95,7 @@ export class AccountService {
 
     if (passwordSecurity?.breached) {
       notifications.unshift({
-        id: "password-security:breached",
+        id: passwordSecurityNotificationId,
         type: "password_security",
         title: "Password found in public breaches",
         description:
@@ -106,6 +107,24 @@ export class AccountService {
     }
 
     return notifications;
+  }
+
+  async markNotificationRead(auth: AuthContext, notificationId: string): Promise<void> {
+    const argusUserId = requireArgusUserId(auth);
+
+    if (notificationId === passwordSecurityNotificationId) {
+      await this.redis.del(passwordSecurityKey(argusUserId));
+      return;
+    }
+
+    const updated = await this.repo.markNotificationRead(argusUserId, notificationId);
+
+    if (!updated) {
+      throw new NotFoundError({
+        code: "ACCOUNT_NOTIFICATION_NOT_FOUND",
+        message: "Account notification not found",
+      });
+    }
   }
 
   private async checkPasswordSecurity(password: string): Promise<PasswordSecurityCue | null> {

@@ -14,7 +14,11 @@ import {
   accountResponseSchema,
   passwordChangeResponseSchema,
 } from "./account.response-types.js";
-import { accountSessionParamsSchema, changePasswordBodySchema } from "./account.schemas.js";
+import {
+  accountNotificationParamsSchema,
+  accountSessionParamsSchema,
+  changePasswordBodySchema,
+} from "./account.schemas.js";
 
 const argusSessionResponseSchema = z
   .object({
@@ -79,5 +83,16 @@ export function registerAccountOpenApi(registry: OpenAPIRegistry) {
     summary: "List current Argus account notifications",
     operationId: "listAccountNotifications",
     responses: { "200": listResponse(accountNotificationResponseSchema), ...standardErrorResponses },
+  });
+
+  registry.registerPath({
+    method: "patch",
+    path: "/account/notifications/{notificationId}/read",
+    tags: ["Account"],
+    security: userSecurity,
+    summary: "Mark a current Argus account notification as read",
+    operationId: "markAccountNotificationRead",
+    request: { params: accountNotificationParamsSchema },
+    responses: { "204": noContentResponse, ...standardErrorResponses },
   });
 }

@@ -5,8 +5,10 @@ import { validateRequest } from "../../middleware/validation.js";
 import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
 import type { ArgusSessionResponse } from "../auth/auth.service.js";
 import {
+  accountNotificationParamsSchema,
   accountSessionParamsSchema,
   changePasswordBodySchema,
+  type AccountNotificationParams,
   type AccountSessionParams,
   type ChangePasswordBody,
 } from "./account.schemas.js";
@@ -63,6 +65,12 @@ export function createAccountRouter(service: AccountService): Router {
     res.json(body);
   };
 
+  const markNotificationRead: RequestHandler<AccountNotificationParams> = async (req, res) => {
+    const auth = requireAuth(req);
+    await service.markNotificationRead(auth, req.params.notificationId);
+    res.status(204).send();
+  };
+
   router.get("/", getAccount);
   router.patch(
     "/password",
@@ -76,6 +84,11 @@ export function createAccountRouter(service: AccountService): Router {
     revokeSession,
   );
   router.get("/notifications", listNotifications);
+  router.patch(
+    "/notifications/:notificationId/read",
+    validateRequest({ params: accountNotificationParamsSchema }),
+    markNotificationRead,
+  );
 
   return router;
 }

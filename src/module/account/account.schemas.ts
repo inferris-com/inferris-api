@@ -13,5 +13,12 @@ export const accountSessionParamsSchema = z
   })
   .strict();
 
+export const accountNotificationParamsSchema = z
+  .object({
+    notificationId: z.string().min(1).max(128),
+  })
+  .strict();
+
 export type ChangePasswordBody = z.infer<typeof changePasswordBodySchema>;
+export type AccountNotificationParams = z.infer<typeof accountNotificationParamsSchema>;
 export type AccountSessionParams = z.infer<typeof accountSessionParamsSchema>;
