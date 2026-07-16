@@ -6,6 +6,7 @@ import type { ArgusUserResponse } from "./argus-user.response-types.js";
 import type {
   CreateArgusUserBody,
   ListArgusUsersQuery,
+  ResolveArgusUsersQuery,
   UpdateArgusUserBody,
 } from "./argus-user.schemas.js";
 import type { PaginatedResult } from "../../shared/pagination.schemas.js";
@@ -22,6 +23,10 @@ export class ArgusUserService {
     const user = await this.repo.findUserById(userId);
     if (!user) throw new ArgusUserNotFoundError(userId);
     return toArgusUserResponse(user);
+  }
+
+  async resolveUsers(query: ResolveArgusUsersQuery): Promise<ArgusUserResponse[]> {
+    return (await this.repo.resolveUsers(query.q, query.limit)).map(toArgusUserResponse);
   }
 
   async createUser(input: CreateArgusUserBody): Promise<ArgusUserResponse> {

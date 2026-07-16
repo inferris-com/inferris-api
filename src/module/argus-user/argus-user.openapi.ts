@@ -12,6 +12,7 @@ import {
   argusUserParamsSchema,
   createArgusUserBodySchema,
   listArgusUsersQuerySchema,
+  resolveArgusUsersQuerySchema,
   updateArgusUserBodySchema,
 } from "./argus-user.schemas.js";
 
@@ -35,6 +36,16 @@ export function registerArgusUserOpenApi(registry: OpenAPIRegistry) {
     operationId: "getArgusUser",
     request: { params: argusUserParamsSchema },
     responses: { "200": successResponse(argusUserResponseSchema), ...standardErrorResponses },
+  });
+  registry.registerPath({
+    method: "get",
+    path: "/argus-users/resolve",
+    tags: ["Argus Users"],
+    security: userOrServiceSecurity,
+    summary: "Resolve Argus users",
+    operationId: "resolveArgusUsers",
+    request: { query: resolveArgusUsersQuerySchema },
+    responses: { "200": listResponse(argusUserResponseSchema), ...standardErrorResponses },
   });
   registry.registerPath({
     method: "post",

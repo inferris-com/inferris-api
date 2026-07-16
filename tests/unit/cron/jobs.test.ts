@@ -6,11 +6,13 @@ import type { ServerService } from "../../../src/module/server/server.service.js
 
 describe("createCronJobs", () => {
   test("registers punishment and inactive server expiration jobs", async () => {
+    const expirePunishments = jest.fn<() => Promise<unknown>>().mockResolvedValue([]);
+    const expireInactiveServers = jest.fn<() => Promise<unknown>>().mockResolvedValue(0);
     const punishmentService = {
-      expirePunishments: jest.fn<() => Promise<unknown>>().mockResolvedValue([]),
+      expirePunishments,
     } as unknown as PunishmentService;
     const serverService = {
-      expireInactiveServers: jest.fn<() => Promise<unknown>>().mockResolvedValue(0),
+      expireInactiveServers,
     } as unknown as ServerService;
 
     const jobs = createCronJobs(punishmentService, serverService);
@@ -19,7 +21,7 @@ describe("createCronJobs", () => {
 
     await Promise.all(jobs.map((job) => job.run()));
 
-    expect(punishmentService.expirePunishments).toHaveBeenCalledWith();
-    expect(serverService.expireInactiveServers).toHaveBeenCalledWith();
+    expect(expirePunishments).toHaveBeenCalledWith();
+    expect(expireInactiveServers).toHaveBeenCalledWith();
   });
 });

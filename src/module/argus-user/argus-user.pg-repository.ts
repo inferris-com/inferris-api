@@ -34,7 +34,24 @@ export class ArgusUserPgRepository {
   }
 
   async findUserById(userId: string) {
-    return this.db.selectFrom("argus_users").selectAll().where("id", "=", userId).executeTakeFirst();
+    return this.db
+      .selectFrom("argus_users")
+      .selectAll()
+      .where("id", "=", userId)
+      .executeTakeFirst();
+  }
+
+  async resolveUsers(query: string, limit: number) {
+    const pattern = `%${query.replaceAll("%", "\\%").replaceAll("_", "\\_")}%`;
+
+    return this.db
+      .selectFrom("argus_users")
+      .selectAll()
+      .where("account_state", "=", "active")
+      .where((eb) => eb.or([eb("username", "ilike", pattern), eb("email", "ilike", pattern)]))
+      .orderBy("username", "asc")
+      .limit(limit)
+      .execute();
   }
 
   async createUser(input: CreateArgusUserBody, passwordHash: string | null) {

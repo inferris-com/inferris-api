@@ -20,6 +20,8 @@ export const ids = {
   modCase: "00000000-0000-0000-0000-000000000009",
   watchlist: "00000000-0000-0000-0000-00000000000a",
   chatMessage: "00000000-0000-0000-0000-00000000000b",
+  argusDmConversation: "00000000-0000-0000-0000-00000000000c",
+  argusDmMessage: "00000000-0000-0000-0000-00000000000d",
 } as const;
 
 export type TestDependencies = Omit<AppDependencies, "authRepository" | "services"> & {
@@ -51,9 +53,21 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       updateAlert: AsyncMock;
       deactivateAlert: AsyncMock;
     };
+    argusDm: {
+      listConversations: AsyncMock;
+      getConversation: AsyncMock;
+      createConversation: AsyncMock;
+      updateConversation: AsyncMock;
+      leaveConversation: AsyncMock;
+      listMessages: AsyncMock;
+      createMessage: AsyncMock;
+      updateMessage: AsyncMock;
+      deleteMessage: AsyncMock;
+    };
     argusUser: {
       listUsers: AsyncMock;
       getUser: AsyncMock;
+      resolveUsers: AsyncMock;
       createUser: AsyncMock;
       updateUser: AsyncMock;
       disableUser: AsyncMock;
@@ -354,9 +368,21 @@ export function createTestDependencies(): TestDependencies {
         updateAlert: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deactivateAlert: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
+      argusDm: {
+        listConversations: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getConversation: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createConversation: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updateConversation: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        leaveConversation: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        listMessages: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createMessage: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updateMessage: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        deleteMessage: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
       argusUser: {
         listUsers: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getUser: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        resolveUsers: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createUser: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         updateUser: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         disableUser: jest.fn<(...args: unknown[]) => Promise<unknown>>(),

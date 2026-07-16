@@ -548,6 +548,49 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE INDEX idx_argus_notifications_account_unread
     ON argus_notifications (account_id, read_at_ms, priority DESC, created_at_ms DESC);
 
+  CREATE TABLE argus_dm_conversations
+  (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title               TEXT   NOT NULL CHECK (length(trim(title)) > 0 AND length(title) <= 160),
+    owner_argus_user_id UUID   NULL REFERENCES argus_users (id) ON DELETE SET NULL,
+    created_at_ms       BIGINT NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms       BIGINT NULL
+  );
+  CREATE INDEX idx_argus_dm_conversations_owner
+    ON argus_dm_conversations (owner_argus_user_id) WHERE owner_argus_user_id IS NOT NULL;
+  CREATE INDEX idx_argus_dm_conversations_created
+    ON argus_dm_conversations (created_at_ms DESC);
+
+  CREATE TABLE argus_dm_participants
+  (
+    conversation_id UUID   NOT NULL REFERENCES argus_dm_conversations (id) ON DELETE CASCADE,
+    argus_user_id   UUID   NOT NULL REFERENCES argus_users (id) ON DELETE CASCADE,
+    invited_by_argus_user_id UUID NULL REFERENCES argus_users (id) ON DELETE SET NULL,
+    joined_at_ms    BIGINT NOT NULL DEFAULT get_unix_ms(),
+    left_at_ms      BIGINT NULL,
+    PRIMARY KEY (conversation_id, argus_user_id)
+  );
+  CREATE INDEX idx_argus_dm_participants_user_active
+    ON argus_dm_participants (argus_user_id, conversation_id) WHERE left_at_ms IS NULL;
+  CREATE INDEX idx_argus_dm_participants_conversation_active
+    ON argus_dm_participants (conversation_id, argus_user_id) WHERE left_at_ms IS NULL;
+
+  CREATE TABLE argus_dm_messages
+  (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id     UUID   NOT NULL REFERENCES argus_dm_conversations (id) ON DELETE CASCADE,
+    author_argus_user_id UUID   NULL REFERENCES argus_users (id) ON DELETE SET NULL,
+    body                TEXT   NOT NULL CHECK (length(trim(body)) > 0 AND length(body) <= 10000),
+    created_at_ms       BIGINT NOT NULL DEFAULT get_unix_ms(),
+    edited_at_ms        BIGINT NULL,
+    deleted_at_ms       BIGINT NULL,
+    deleted_by_argus_user_id UUID NULL REFERENCES argus_users (id) ON DELETE SET NULL
+  );
+  CREATE INDEX idx_argus_dm_messages_conversation_created
+    ON argus_dm_messages (conversation_id, created_at_ms ASC);
+  CREATE INDEX idx_argus_dm_messages_author
+    ON argus_dm_messages (author_argus_user_id) WHERE author_argus_user_id IS NOT NULL;
+
   -- API Keys
 --   Note: Items such as last used will be implemented later
   CREATE TABLE api_keys

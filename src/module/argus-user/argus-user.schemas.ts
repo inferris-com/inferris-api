@@ -19,6 +19,13 @@ export const listArgusUsersQuerySchema = paginationQuerySchema
   })
   .strict();
 
+export const resolveArgusUsersQuerySchema = z
+  .object({
+    q: z.string().trim().min(1).max(100),
+    limit: z.coerce.number().int().min(1).max(50).default(10),
+  })
+  .strict();
+
 export const createArgusUserBodySchema = z
   .object({
     username: z.string().trim().min(1).max(100),
@@ -37,5 +44,6 @@ export const updateArgusUserBodySchema = createArgusUserBodySchema
 
 export type ArgusUserParams = z.infer<typeof argusUserParamsSchema>;
 export type ListArgusUsersQuery = z.infer<typeof listArgusUsersQuerySchema>;
+export type ResolveArgusUsersQuery = z.infer<typeof resolveArgusUsersQuerySchema>;
 export type CreateArgusUserBody = z.infer<typeof createArgusUserBodySchema>;
 export type UpdateArgusUserBody = z.infer<typeof updateArgusUserBodySchema>;

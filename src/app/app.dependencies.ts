@@ -7,6 +7,8 @@ import { ActorPgRepository } from "../module/actor/actor.pg-repository.js";
 import { ActorService } from "../module/actor/actor.service.js";
 import { ArgusAlertPgRepository } from "../module/argus-alert/argus-alert.pg-repository.js";
 import { ArgusAlertService } from "../module/argus-alert/argus-alert.service.js";
+import { ArgusDmPgRepository } from "../module/argus-dm/argus-dm.pg-repository.js";
+import { ArgusDmService } from "../module/argus-dm/argus-dm.service.js";
 import { ArgusUserPgRepository } from "../module/argus-user/argus-user.pg-repository.js";
 import { ArgusUserService } from "../module/argus-user/argus-user.service.js";
 import { authenticate } from "../module/auth/auth.middleware.js";
@@ -62,6 +64,7 @@ export type AppDependencies = {
     actor: ActorService;
     account: AccountService;
     argusAlert: ArgusAlertService;
+    argusDm: ArgusDmService;
     argusUser: ArgusUserService;
     auth: AuthService;
     auditLog: AuditLogService;
@@ -100,6 +103,7 @@ export function createAppDependencies({
   const actorRepository = new ActorPgRepository(database);
   const accountRepository = new AccountPgRepository(database);
   const argusAlertRepository = new ArgusAlertPgRepository(database);
+  const argusDmRepository = new ArgusDmPgRepository(database);
   const argusUserRepository = new ArgusUserPgRepository(database);
   const authRepository = new AuthRepository(database);
   const auditLogRepository = new AuditLogPgRepository(database);
@@ -130,6 +134,7 @@ export function createAppDependencies({
       actor: new ActorService(actorRepository),
       account: new AccountService(accountRepository, authService, redisClient),
       argusAlert: new ArgusAlertService(argusAlertRepository),
+      argusDm: new ArgusDmService(argusDmRepository),
       argusUser: new ArgusUserService(argusUserRepository),
       auth: authService,
       auditLog: new AuditLogService(auditLogRepository),

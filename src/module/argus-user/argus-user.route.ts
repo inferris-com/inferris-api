@@ -1,7 +1,7 @@
 import { type RequestHandler, Router } from "express";
 
 import { validateRequest } from "../../middleware/validation.js";
-import type { ApiSuccess } from "../../shared/http/api-response.types.js";
+import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
 import type { PaginatedResponse } from "../../shared/pagination.schemas.js";
 import { auditMutation, authorize } from "../auth/auth.middleware.js";
 import type { AuthRepository } from "../auth/auth.repository.js";
@@ -10,10 +10,12 @@ import {
   argusUserParamsSchema,
   createArgusUserBodySchema,
   listArgusUsersQuerySchema,
+  resolveArgusUsersQuerySchema,
   updateArgusUserBodySchema,
   type ArgusUserParams,
   type CreateArgusUserBody,
   type ListArgusUsersQuery,
+  type ResolveArgusUsersQuery,
   type UpdateArgusUserBody,
 } from "./argus-user.schemas.js";
 import type { ArgusUserService } from "./argus-user.service.js";
@@ -30,18 +32,34 @@ export function createArgusUserRouter(
     argusRole: "admin",
     privilegedRole: "administrator",
   });
+  const resolveArgusUsers = authorize(authRepository, {
+    argusRole: "moderator",
+  });
 
   const listUsers: RequestHandler = async (req, res) => {
     const result = await service.listUsers(req.query as unknown as ListArgusUsersQuery);
     const body: ArgusUserListSuccess = {
       data: result.rows,
-      meta: { count: result.rows.length, total: result.total, limit: result.limit, offset: result.offset },
+      meta: {
+        count: result.rows.length,
+        total: result.total,
+        limit: result.limit,
+        offset: result.offset,
+      },
     };
     res.json(body);
   };
   const getUser: RequestHandler<ArgusUserParams> = async (req, res) => {
     const user = await service.getUser(req.params.userId);
     const body: ApiSuccess<ArgusUserResponse> = { data: user };
+    res.json(body);
+  };
+  const resolveUsers: RequestHandler = async (req, res) => {
+    const users = await service.resolveUsers(req.query as unknown as ResolveArgusUsersQuery);
+    const body: ApiListSuccess<ArgusUserResponse> = {
+      data: users,
+      meta: { count: users.length },
+    };
     res.json(body);
   };
   const createUser: RequestHandler<Record<string, never>, unknown, CreateArgusUserBody> = async (
@@ -71,6 +89,12 @@ export function createArgusUserRouter(
     manageArgusUsers,
     validateRequest({ query: listArgusUsersQuerySchema }) as unknown as RequestHandler,
     listUsers,
+  );
+  router.get(
+    "/resolve",
+    resolveArgusUsers,
+    validateRequest({ query: resolveArgusUsersQuerySchema }) as unknown as RequestHandler,
+    resolveUsers,
   );
   router.get(
     "/:userId",

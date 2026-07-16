@@ -338,6 +338,135 @@ components:
         - "cssClass"
         - "isActive"
         - "createdAtMs"
+    ArgusDmConversationResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        title:
+          type: "string"
+        ownerArgusUserId:
+          type:
+            - "string"
+            - "null"
+          format: "uuid"
+        participants:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/ArgusDmParticipantResponse"
+        latestMessage:
+          type:
+            - "object"
+            - "null"
+          properties:
+            id:
+              type: "string"
+              format: "uuid"
+            authorArgusUserId:
+              type:
+                - "string"
+                - "null"
+              format: "uuid"
+            body:
+              type:
+                - "string"
+                - "null"
+            isDeleted:
+              type: "boolean"
+            createdAtMs:
+              type: "string"
+          required:
+            - "id"
+            - "authorArgusUserId"
+            - "body"
+            - "isDeleted"
+            - "createdAtMs"
+        createdAtMs:
+          type: "string"
+        updatedAtMs:
+          type:
+            - "string"
+            - "null"
+      required:
+        - "id"
+        - "title"
+        - "ownerArgusUserId"
+        - "participants"
+        - "latestMessage"
+        - "createdAtMs"
+        - "updatedAtMs"
+    ArgusDmParticipantResponse:
+      type: "object"
+      properties:
+        argusUserId:
+          type: "string"
+          format: "uuid"
+        username:
+          type: "string"
+        role:
+          type: "string"
+          enum:
+            - "moderator"
+            - "admin"
+        invitedByArgusUserId:
+          type:
+            - "string"
+            - "null"
+          format: "uuid"
+        joinedAtMs:
+          type: "string"
+      required:
+        - "argusUserId"
+        - "username"
+        - "role"
+        - "invitedByArgusUserId"
+        - "joinedAtMs"
+    ArgusDmMessageResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        conversationId:
+          type: "string"
+          format: "uuid"
+        authorArgusUserId:
+          type:
+            - "string"
+            - "null"
+          format: "uuid"
+        body:
+          type:
+            - "string"
+            - "null"
+        isDeleted:
+          type: "boolean"
+        createdAtMs:
+          type: "string"
+        editedAtMs:
+          type:
+            - "string"
+            - "null"
+        deletedAtMs:
+          type:
+            - "string"
+            - "null"
+        deletedByArgusUserId:
+          type:
+            - "string"
+            - "null"
+          format: "uuid"
+      required:
+        - "id"
+        - "conversationId"
+        - "authorArgusUserId"
+        - "body"
+        - "isDeleted"
+        - "createdAtMs"
+        - "editedAtMs"
+        - "deletedAtMs"
+        - "deletedByArgusUserId"
     ArgusUserResponse:
       type: "object"
       properties:
@@ -2954,6 +3083,570 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/argus-dms":
+    get:
+      tags:
+        - "Argus DMs"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "List Argus DM conversations"
+      operationId: "listArgusDmConversations"
+      parameters:
+        - schema:
+            type: "integer"
+            minimum: 1
+            maximum: 100
+            default: 25
+          required: false
+          name: "limit"
+          in: "query"
+        - schema:
+            type:
+              - "integer"
+              - "null"
+            minimum: 0
+            default: 0
+          required: false
+          name: "offset"
+          in: "query"
+      responses:
+        "200":
+          description: "Successful list response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ArgusDmConversationResponse"
+                  meta:
+                    type: "object"
+                    properties:
+                      count:
+                        type: "integer"
+                        minimum: 0
+                    required:
+                      - "count"
+                required:
+                  - "data"
+                  - "meta"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+    post:
+      tags:
+        - "Argus DMs"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Create an Argus DM conversation"
+      operationId: "createArgusDmConversation"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                title:
+                  type: "string"
+                  minLength: 1
+                  maxLength: 160
+                recipientArgusUserIds:
+                  type: "array"
+                  items:
+                    type: "string"
+                  minItems: 1
+                  maxItems: 50
+                body:
+                  type: "string"
+                  minLength: 1
+                  maxLength: 10000
+              required:
+                - "title"
+                - "recipientArgusUserIds"
+              additionalProperties: false
+      responses:
+        "201":
+          description: "Argus DM conversation created"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/ArgusDmConversationResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/argus-dms/{conversationId}":
+    get:
+      tags:
+        - "Argus DMs"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Get an Argus DM conversation"
+      operationId: "getArgusDmConversation"
+      parameters:
+        - schema:
+            type: "string"
+          required: true
+          name: "conversationId"
+          in: "path"
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/ArgusDmConversationResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+    patch:
+      tags:
+        - "Argus DMs"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Update an Argus DM conversation"
+      operationId: "updateArgusDmConversation"
+      parameters:
+        - schema:
+            type: "string"
+          required: true
+          name: "conversationId"
+          in: "path"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                title:
+                  type: "string"
+                  minLength: 1
+                  maxLength: 160
+                addRecipientArgusUserIds:
+                  type: "array"
+                  items:
+                    type: "string"
+                  minItems: 1
+                  maxItems: 50
+              additionalProperties: false
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/ArgusDmConversationResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/argus-dms/{conversationId}/leave":
+    post:
+      tags:
+        - "Argus DMs"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Leave an Argus DM conversation"
+      operationId: "leaveArgusDmConversation"
+      parameters:
+        - schema:
+            type: "string"
+          required: true
+          name: "conversationId"
+          in: "path"
+      responses:
+        "204":
+          description: "Argus DM conversation left"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/argus-dms/{conversationId}/messages":
+    get:
+      tags:
+        - "Argus DMs"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "List Argus DM messages"
+      operationId: "listArgusDmMessages"
+      parameters:
+        - schema:
+            type: "string"
+          required: true
+          name: "conversationId"
+          in: "path"
+      responses:
+        "200":
+          description: "Successful list response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ArgusDmMessageResponse"
+                  meta:
+                    type: "object"
+                    properties:
+                      count:
+                        type: "integer"
+                        minimum: 0
+                    required:
+                      - "count"
+                required:
+                  - "data"
+                  - "meta"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+    post:
+      tags:
+        - "Argus DMs"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Create an Argus DM message"
+      operationId: "createArgusDmMessage"
+      parameters:
+        - schema:
+            type: "string"
+          required: true
+          name: "conversationId"
+          in: "path"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                body:
+                  type: "string"
+                  minLength: 1
+                  maxLength: 10000
+              required:
+                - "body"
+              additionalProperties: false
+      responses:
+        "201":
+          description: "Argus DM message created"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/ArgusDmMessageResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/argus-dms/{conversationId}/messages/{messageId}":
+    patch:
+      tags:
+        - "Argus DMs"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Update an Argus DM message"
+      operationId: "updateArgusDmMessage"
+      parameters:
+        - schema:
+            type: "string"
+          required: true
+          name: "conversationId"
+          in: "path"
+        - schema:
+            type: "string"
+          required: true
+          name: "messageId"
+          in: "path"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                body:
+                  type: "string"
+                  minLength: 1
+                  maxLength: 10000
+              required:
+                - "body"
+              additionalProperties: false
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/ArgusDmMessageResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+    delete:
+      tags:
+        - "Argus DMs"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Delete an Argus DM message"
+      operationId: "deleteArgusDmMessage"
+      parameters:
+        - schema:
+            type: "string"
+          required: true
+          name: "conversationId"
+          in: "path"
+        - schema:
+            type: "string"
+          required: true
+          name: "messageId"
+          in: "path"
+      responses:
+        "204":
+          description: "Argus DM message deleted"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
   "/argus-users":
     get:
       tags:
@@ -3310,6 +4003,80 @@ paths:
                     "$ref": "#/components/schemas/ArgusUserResponse"
                 required:
                   - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/argus-users/resolve":
+    get:
+      tags:
+        - "Argus Users"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      summary: "Resolve Argus users"
+      operationId: "resolveArgusUsers"
+      parameters:
+        - schema:
+            type: "string"
+            minLength: 1
+            maxLength: 100
+          required: true
+          name: "q"
+          in: "query"
+        - schema:
+            type: "integer"
+            minimum: 1
+            maximum: 50
+            default: 10
+          required: false
+          name: "limit"
+          in: "query"
+      responses:
+        "200":
+          description: "Successful list response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ArgusUserResponse"
+                  meta:
+                    type: "object"
+                    properties:
+                      count:
+                        type: "integer"
+                        minimum: 0
+                    required:
+                      - "count"
+                required:
+                  - "data"
+                  - "meta"
         "400":
           description: "Bad request"
           content:

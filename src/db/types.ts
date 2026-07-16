@@ -134,6 +134,33 @@ export interface ArgusAlerts {
   title: string;
 }
 
+export interface ArgusDmConversations {
+  created_at_ms: Generated<Int8>;
+  id: Generated<string>;
+  owner_argus_user_id: string | null;
+  title: string;
+  updated_at_ms: Int8 | null;
+}
+
+export interface ArgusDmMessages {
+  author_argus_user_id: string | null;
+  body: string;
+  conversation_id: string;
+  created_at_ms: Generated<Int8>;
+  deleted_at_ms: Int8 | null;
+  deleted_by_argus_user_id: string | null;
+  edited_at_ms: Int8 | null;
+  id: Generated<string>;
+}
+
+export interface ArgusDmParticipants {
+  argus_user_id: string;
+  conversation_id: string;
+  invited_by_argus_user_id: string | null;
+  joined_at_ms: Generated<Int8>;
+  left_at_ms: Int8 | null;
+}
+
 export interface ArgusEmailVerifications {
   account_id: string;
   expires_at_ms: Int8;
@@ -718,6 +745,9 @@ export interface DB {
   actors: Actors;
   api_keys: ApiKeys;
   argus_alerts: ArgusAlerts;
+  argus_dm_conversations: ArgusDmConversations;
+  argus_dm_messages: ArgusDmMessages;
+  argus_dm_participants: ArgusDmParticipants;
   argus_email_verifications: ArgusEmailVerifications;
   argus_notifications: ArgusNotifications;
   argus_sessions: ArgusSessions;
