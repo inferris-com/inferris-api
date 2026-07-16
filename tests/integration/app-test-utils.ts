@@ -117,6 +117,7 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
     punishment: {
       listPunishments: AsyncMock;
       getPunishment: AsyncMock;
+      getPunishmentByCode: AsyncMock;
       createPunishment: AsyncMock;
       revokePunishment: AsyncMock;
     };
@@ -403,6 +404,7 @@ export function createTestDependencies(): TestDependencies {
       punishment: {
         listPunishments: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getPunishment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getPunishmentByCode: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createPunishment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         revokePunishment: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },

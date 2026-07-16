@@ -16,6 +16,8 @@ import {
   createPunishmentBodySchema,
   type ListPunishmentsQuery,
   listPunishmentsQuerySchema,
+  type PunishmentCodeParams,
+  punishmentCodeParamsSchema,
   type PunishmentIdParams,
   punishmentIdParamsSchema,
   type RevokePunishmentBody,
@@ -52,6 +54,13 @@ export function createPunishmentRouter(
     res.json(body);
   };
 
+  const getPunishmentByCode: RequestHandler<PunishmentCodeParams> = async (req, res) => {
+    const punishment = await service.getPunishmentByCode(req.params.code);
+    const body: ApiSuccess<PunishmentResponse> = { data: punishment };
+
+    res.json(body);
+  };
+
   const createPunishment: RequestHandler<ParamsDictionary, unknown, CreatePunishmentBody> = async (
     req,
     res,
@@ -82,6 +91,12 @@ export function createPunishmentRouter(
     readPunishments,
     validateRequest({ query: listPunishmentsQuerySchema }) as unknown as RequestHandler,
     listPunishments,
+  );
+  router.get(
+    "/code/:code",
+    readPunishments,
+    validateRequest({ params: punishmentCodeParamsSchema }),
+    getPunishmentByCode,
   );
   router.get(
     "/:punishmentId",

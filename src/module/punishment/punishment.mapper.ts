@@ -10,6 +10,7 @@ export function toPunishmentResponse(row: Selectable<Punishments>): PunishmentRe
 
   return {
     id: row.id,
+    code: row.code,
     subjectActorId: row.subject_actor_id,
     issuerActorId: row.issuer_actor_id,
     serverOriginId: row.server_origin_id,

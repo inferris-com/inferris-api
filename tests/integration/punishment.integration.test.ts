@@ -43,6 +43,46 @@ describe("punishment routes", () => {
     );
   });
 
+  test("GET /punishments/code/:code resolves punishment by portable code", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.punishment.getPunishmentByCode.mockResolvedValue({
+      id: ids.punishment,
+      code: "AB12CD34EF",
+      type: "warn",
+      subjectActorId: ids.actor,
+    });
+
+    const response = await request
+      .get("/punishments/code/AB12CD34EF")
+      .set("Authorization", "Bearer moderator-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      data: {
+        id: ids.punishment,
+        code: "AB12CD34EF",
+      },
+    });
+    expect(dependencies.services.punishment.getPunishmentByCode).toHaveBeenCalledWith("AB12CD34EF");
+    expect(dependencies.services.punishment.getPunishment).not.toHaveBeenCalled();
+  });
+
+  test("GET /punishments/code/:code validates portable code format", async () => {
+    const { dependencies, request } = createTestApp();
+
+    const response = await request
+      .get("/punishments/code/abc-123")
+      .set("Authorization", "Bearer moderator-token");
+
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({
+      error: {
+        code: "VALIDATION_ERROR",
+      },
+    });
+    expect(dependencies.services.punishment.getPunishmentByCode).not.toHaveBeenCalled();
+  });
+
   test("POST /punishments validates exactly one subject identity", async () => {
     const { dependencies, request } = createTestApp();
 

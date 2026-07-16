@@ -1,3 +1,6 @@
+import { randomInt } from "node:crypto";
+
+import { PgErrorCode, isPgErrorCode } from "../../shared/db/pg-error.utils.js";
 import {
   ActivePunishmentConflictError,
   InvalidPunishmentDurationError,
@@ -13,6 +16,10 @@ import type {
   ListPunishmentsQuery,
   RevokePunishmentBody,
 } from "./punishment.schemas.js";
+
+const punishmentCodeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const punishmentCodeLength = 10;
+const maxPunishmentCodeCreateAttempts = 5;
 
 export type PunishmentListResponse = {
   data: PunishmentResponse[];
@@ -54,6 +61,16 @@ export class PunishmentService {
     return toPunishmentResponse(punishment);
   }
 
+  async getPunishmentByCode(code: string): Promise<PunishmentResponse> {
+    const punishment = await this.repo.findPunishmentByCode(code);
+
+    if (!punishment) {
+      throw new PunishmentNotFoundError(code);
+    }
+
+    return toPunishmentResponse(punishment);
+  }
+
   async createPunishment(
     input: CreatePunishmentBody,
     issuerActorId: string,
@@ -71,11 +88,11 @@ export class PunishmentService {
       throw new ActivePunishmentConflictError(input.type, subjectActorId);
     }
 
-    const punishment = await this.repo.createPunishment({
-      ...input,
+    const punishment = await this.createPunishmentWithUniqueCode(
+      input,
       subjectActorId,
       issuerActorId,
-    });
+    );
     const response = toPunishmentResponse(punishment);
 
     await this.publisher.publish({
@@ -84,6 +101,35 @@ export class PunishmentService {
     });
 
     return response;
+  }
+
+  private async createPunishmentWithUniqueCode(
+    input: CreatePunishmentBody,
+    subjectActorId: string,
+    issuerActorId: string,
+  ) {
+    for (let attempt = 1; attempt <= maxPunishmentCodeCreateAttempts; attempt += 1) {
+      try {
+        return await this.repo.createPunishment({
+          ...input,
+          code: generatePunishmentCode(),
+          subjectActorId,
+          issuerActorId,
+        });
+      } catch (err) {
+        if (
+          isPgErrorCode(err, PgErrorCode.UniqueViolation) &&
+          err.constraint === "uq_punishments_code" &&
+          attempt < maxPunishmentCodeCreateAttempts
+        ) {
+          continue;
+        }
+
+        throw err;
+      }
+    }
+
+    throw new Error("Failed to generate a unique punishment code.");
   }
 
   async revokePunishment(
@@ -164,4 +210,14 @@ export class PunishmentService {
 
     return responses;
   }
+}
+
+function generatePunishmentCode(): string {
+  let code = "";
+
+  for (let index = 0; index < punishmentCodeLength; index += 1) {
+    code += punishmentCodeAlphabet.charAt(randomInt(punishmentCodeAlphabet.length));
+  }
+
+  return code;
 }

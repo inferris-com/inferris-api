@@ -5,6 +5,7 @@ import type { PaginatedResult } from "../../shared/pagination.schemas.js";
 import type { CreatePunishmentBody, ListPunishmentsQuery } from "./punishment.schemas.js";
 
 export type CreatePunishmentInput = CreatePunishmentBody & {
+  code: string;
   subjectActorId: string;
   issuerActorId: string;
 };
@@ -113,6 +114,16 @@ export class PunishmentPgRepository {
     );
   }
 
+  async findPunishmentByCode(code: string): Promise<Selectable<Punishments> | null> {
+    return (
+      (await this.db
+        .selectFrom("punishments")
+        .selectAll()
+        .where("code", "=", code)
+        .executeTakeFirst()) ?? null
+    );
+  }
+
   async findActorIdByPlayerId(playerId: string): Promise<string | null> {
     const row = await this.db
       .selectFrom("players")
@@ -127,6 +138,7 @@ export class PunishmentPgRepository {
     return this.db
       .insertInto("punishments")
       .values({
+        code: input.code,
         subject_actor_id: input.subjectActorId,
         issuer_actor_id: input.issuerActorId,
         server_origin_id: input.serverOriginId ?? null,

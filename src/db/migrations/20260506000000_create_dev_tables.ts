@@ -826,6 +826,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE TABLE punishments
   (
     id                 UUID PRIMARY KEY                 DEFAULT gen_random_uuid(),
+    code               VARCHAR(12)             NOT NULL,
 
     subject_actor_id   UUID                    NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
     issuer_actor_id    UUID                    NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
@@ -882,6 +883,8 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 
   CREATE INDEX idx_punishments_subject_created
     ON punishments (subject_actor_id, created_at_ms DESC);
+  CREATE UNIQUE INDEX uq_punishments_code
+    ON punishments (code);
   CREATE INDEX idx_punishments_issuer_created
     ON punishments (issuer_actor_id, created_at_ms DESC);
   CREATE INDEX idx_punishments_type_created

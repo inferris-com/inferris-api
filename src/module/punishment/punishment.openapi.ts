@@ -11,6 +11,7 @@ import { punishmentResponseSchema } from "./punishment.response-types.js";
 import {
   createPunishmentBodySchema,
   listPunishmentsQuerySchema,
+  punishmentCodeParamsSchema,
   punishmentIdParamsSchema,
   revokePunishmentBodySchema,
 } from "./punishment.schemas.js";
@@ -25,6 +26,17 @@ export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
     operationId: "listPunishments",
     request: { query: listPunishmentsQuerySchema },
     responses: { "200": listResponse(punishmentResponseSchema), ...standardErrorResponses },
+  });
+
+  registry.registerPath({
+    method: "get",
+    path: "/punishments/code/{code}",
+    tags: ["Punishments"],
+    security: userOrServiceSecurity,
+    summary: "Get a punishment by code",
+    operationId: "getPunishmentByCode",
+    request: { params: punishmentCodeParamsSchema },
+    responses: { "200": successResponse(punishmentResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({

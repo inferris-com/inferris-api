@@ -487,6 +487,7 @@ export interface PunishmentAppeals {
 }
 
 export interface Punishments {
+  code: string;
   created_at_ms: Generated<Int8>;
   ends_at_ms: Int8 | null;
   id: Generated<string>;

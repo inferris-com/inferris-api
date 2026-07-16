@@ -7,6 +7,7 @@ extendZodWithOpenApi(z);
 export const punishmentResponseSchema = z
   .object({
     id: z.string().uuid(),
+    code: z.string().regex(/^[A-Z0-9]{8,12}$/),
     subjectActorId: z.string().uuid(),
     issuerActorId: z.string().uuid(),
     serverOriginId: z.string().uuid().nullable(),
