@@ -74,6 +74,7 @@ export class ArgusDmPgRepository {
         "argus_users.role",
         "argus_dm_participants.invited_by_argus_user_id",
         "argus_dm_participants.joined_at_ms",
+        "argus_dm_participants.last_read_at_ms",
         "argus_dm_participants.conversation_id",
       ])
       .where("argus_dm_participants.conversation_id", "in", conversationIds)
@@ -112,6 +113,18 @@ export class ArgusDmPgRepository {
         .returningAll()
         .executeTakeFirstOrThrow();
 
+      const message = input.body
+        ? await trx
+            .insertInto("argus_dm_messages")
+            .values({
+              conversation_id: conversation.id,
+              author_argus_user_id: ownerArgusUserId,
+              body: input.body,
+            })
+            .returningAll()
+            .executeTakeFirstOrThrow()
+        : null;
+
       await trx
         .insertInto("argus_dm_participants")
         .values(
@@ -119,20 +132,13 @@ export class ArgusDmPgRepository {
             conversation_id: conversation.id,
             argus_user_id: argusUserId,
             invited_by_argus_user_id: argusUserId === ownerArgusUserId ? null : ownerArgusUserId,
+            last_read_at_ms:
+              argusUserId === ownerArgusUserId
+                ? (message?.created_at_ms ?? sql`get_unix_ms()`)
+                : null,
           })),
         )
         .execute();
-
-      if (input.body) {
-        await trx
-          .insertInto("argus_dm_messages")
-          .values({
-            conversation_id: conversation.id,
-            author_argus_user_id: ownerArgusUserId,
-            body: input.body,
-          })
-          .execute();
-      }
 
       return conversation;
     });
@@ -145,6 +151,13 @@ export class ArgusDmPgRepository {
   ): Promise<Selectable<ArgusDmConversations> | null> {
     return this.db.transaction().execute(async (trx) => {
       if (input.addRecipientArgusUserIds && input.addRecipientArgusUserIds.length > 0) {
+        const latestMessage = await trx
+          .selectFrom("argus_dm_messages")
+          .select("created_at_ms")
+          .where("conversation_id", "=", conversationId)
+          .orderBy("created_at_ms", "desc")
+          .executeTakeFirst();
+
         await trx
           .insertInto("argus_dm_participants")
           .values(
@@ -152,12 +165,14 @@ export class ArgusDmPgRepository {
               conversation_id: conversationId,
               argus_user_id: argusUserId,
               invited_by_argus_user_id: invitedByArgusUserId,
+              last_read_at_ms: latestMessage?.created_at_ms ?? sql`get_unix_ms()`,
               left_at_ms: null,
             })),
           )
           .onConflict((oc) =>
             oc.columns(["conversation_id", "argus_user_id"]).doUpdateSet({
               invited_by_argus_user_id: invitedByArgusUserId,
+              last_read_at_ms: latestMessage?.created_at_ms ?? sql`get_unix_ms()`,
               left_at_ms: null,
               joined_at_ms: sql`get_unix_ms()`,
             }),
@@ -248,8 +263,16 @@ export class ArgusDmPgRepository {
 
       await trx
         .updateTable("argus_dm_conversations")
-        .set({ updated_at_ms: sql`get_unix_ms()` })
+        .set({ updated_at_ms: message.created_at_ms })
         .where("id", "=", conversationId)
+        .executeTakeFirst();
+
+      await trx
+        .updateTable("argus_dm_participants")
+        .set({ last_read_at_ms: message.created_at_ms })
+        .where("conversation_id", "=", conversationId)
+        .where("argus_user_id", "=", authorArgusUserId)
+        .where("left_at_ms", "is", null)
         .executeTakeFirst();
 
       return message;
@@ -296,6 +319,89 @@ export class ArgusDmPgRepository {
         .returningAll()
         .executeTakeFirst()) ?? null
     );
+  }
+
+  async markConversationRead(conversationId: string, argusUserId: string): Promise<boolean> {
+    const result = await this.db
+      .updateTable("argus_dm_participants")
+      .set({ last_read_at_ms: sql`get_unix_ms()` })
+      .where("conversation_id", "=", conversationId)
+      .where("argus_user_id", "=", argusUserId)
+      .where("left_at_ms", "is", null)
+      .executeTakeFirst();
+
+    return result.numUpdatedRows > 0n;
+  }
+
+  async countUnreadConversations(argusUserId: string): Promise<number> {
+    const row = await this.db
+      .selectFrom("argus_dm_participants")
+      .select((eb) => eb.fn.countAll<string>().as("total"))
+      .where("argus_dm_participants.argus_user_id", "=", argusUserId)
+      .where("argus_dm_participants.left_at_ms", "is", null)
+      .where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom("argus_dm_messages")
+            .select("argus_dm_messages.id")
+            .whereRef(
+              "argus_dm_messages.conversation_id",
+              "=",
+              "argus_dm_participants.conversation_id",
+            )
+            .where("argus_dm_messages.author_argus_user_id", "!=", argusUserId)
+            .where("argus_dm_messages.deleted_at_ms", "is", null)
+            .where((messageEb) =>
+              messageEb.or([
+                messageEb("argus_dm_participants.last_read_at_ms", "is", null),
+                messageEb(
+                  "argus_dm_messages.created_at_ms",
+                  ">",
+                  messageEb.ref("argus_dm_participants.last_read_at_ms"),
+                ),
+              ]),
+            ),
+        ),
+      )
+      .executeTakeFirstOrThrow();
+
+    return Number(row.total);
+  }
+
+  async countUnreadMessages(
+    conversationIds: string[],
+    argusUserId: string,
+  ): Promise<{ conversation_id: string; total: string | number | bigint }[]> {
+    if (conversationIds.length === 0) {
+      return [];
+    }
+
+    return this.db
+      .selectFrom("argus_dm_participants")
+      .innerJoin(
+        "argus_dm_messages",
+        "argus_dm_messages.conversation_id",
+        "argus_dm_participants.conversation_id",
+      )
+      .select(["argus_dm_participants.conversation_id"])
+      .select((eb) => eb.fn.count("argus_dm_messages.id").as("total"))
+      .where("argus_dm_participants.conversation_id", "in", conversationIds)
+      .where("argus_dm_participants.argus_user_id", "=", argusUserId)
+      .where("argus_dm_participants.left_at_ms", "is", null)
+      .where("argus_dm_messages.author_argus_user_id", "!=", argusUserId)
+      .where("argus_dm_messages.deleted_at_ms", "is", null)
+      .where((eb) =>
+        eb.or([
+          eb("argus_dm_participants.last_read_at_ms", "is", null),
+          eb(
+            "argus_dm_messages.created_at_ms",
+            ">",
+            eb.ref("argus_dm_participants.last_read_at_ms"),
+          ),
+        ]),
+      )
+      .groupBy("argus_dm_participants.conversation_id")
+      .execute();
   }
 
   async listExistingActiveUserIds(argusUserIds: string[]): Promise<string[]> {

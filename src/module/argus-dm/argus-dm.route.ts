@@ -9,6 +9,7 @@ import type { AuthRepository } from "../auth/auth.repository.js";
 import type {
   ArgusDmConversationResponse,
   ArgusDmMessageResponse,
+  ArgusDmUnreadCountResponse,
 } from "./argus-dm.response-types.js";
 import {
   argusDmConversationParamsSchema,
@@ -55,6 +56,13 @@ export function createArgusDmRouter(
     res.status(201).json(body);
   };
 
+  const getUnreadCount: RequestHandler = async (req, res) => {
+    const unreadCount = await service.getUnreadCount(requireArgusUserId(req));
+    const body: ApiSuccess<ArgusDmUnreadCountResponse> = { data: unreadCount };
+
+    res.json(body);
+  };
+
   const getConversation: RequestHandler<ArgusDmConversationParams> = async (req, res) => {
     const conversation = await service.getConversation(
       req.params.conversationId,
@@ -83,6 +91,12 @@ export function createArgusDmRouter(
 
   const leaveConversation: RequestHandler<ArgusDmConversationParams> = async (req, res) => {
     await service.leaveConversation(req.params.conversationId, requireArgusUserId(req));
+
+    res.status(204).send();
+  };
+
+  const markConversationRead: RequestHandler<ArgusDmConversationParams> = async (req, res) => {
+    await service.markConversationRead(req.params.conversationId, requireArgusUserId(req));
 
     res.status(204).send();
   };
@@ -152,6 +166,7 @@ export function createArgusDmRouter(
     validateRequest({ body: createArgusDmConversationBodySchema }),
     createConversation,
   );
+  router.get("/unread-count", useArgusDms, getUnreadCount);
   router.get(
     "/:conversationId",
     useArgusDms,
@@ -174,6 +189,13 @@ export function createArgusDmRouter(
     auditMutation(authRepository, "argus-dms.conversations.leave"),
     validateRequest({ params: argusDmConversationParamsSchema }),
     leaveConversation,
+  );
+  router.post(
+    "/:conversationId/read",
+    useArgusDms,
+    auditMutation(authRepository, "argus-dms.conversations.read"),
+    validateRequest({ params: argusDmConversationParamsSchema }),
+    markConversationRead,
   );
   router.get(
     "/:conversationId/messages",

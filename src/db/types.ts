@@ -158,6 +158,7 @@ export interface ArgusDmParticipants {
   conversation_id: string;
   invited_by_argus_user_id: string | null;
   joined_at_ms: Generated<Int8>;
+  last_read_at_ms: Int8 | null;
   left_at_ms: Int8 | null;
 }
 

@@ -494,6 +494,19 @@
               "$ref": "#/components/schemas/ArgusDmParticipantResponse"
             }
           },
+          "isUnread": {
+            "type": "boolean"
+          },
+          "unreadMessageCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastReadAtMs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "latestMessage": {
             "type": [
               "object",
@@ -547,6 +560,9 @@
           "title",
           "ownerArgusUserId",
           "participants",
+          "isUnread",
+          "unreadMessageCount",
+          "lastReadAtMs",
           "latestMessage",
           "createdAtMs",
           "updatedAtMs"
@@ -578,6 +594,12 @@
           },
           "joinedAtMs": {
             "type": "string"
+          },
+          "lastReadAtMs": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -585,7 +607,20 @@
           "username",
           "role",
           "invitedByArgusUserId",
-          "joinedAtMs"
+          "joinedAtMs",
+          "lastReadAtMs"
+        ]
+      },
+      "ArgusDmUnreadCountResponse": {
+        "type": "object",
+        "properties": {
+          "unreadConversations": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "unreadConversations"
         ]
       },
       "ArgusDmMessageResponse": {
@@ -4706,6 +4741,83 @@
         }
       }
     },
+    "/argus-dms/unread-count": {
+      "get": {
+        "tags": [
+          "Argus DMs"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Get Argus DM unread conversation count",
+        "operationId": "getArgusDmUnreadCount",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ArgusDmUnreadCountResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/argus-dms/{conversationId}": {
       "get": {
         "tags": [
@@ -4932,6 +5044,78 @@
         "responses": {
           "204": {
             "description": "Argus DM conversation left"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/argus-dms/{conversationId}/read": {
+      "post": {
+        "tags": [
+          "Argus DMs"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Mark an Argus DM conversation read",
+        "operationId": "markArgusDmConversationRead",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Argus DM conversation marked read"
           },
           "400": {
             "description": "Bad request",

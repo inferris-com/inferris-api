@@ -37,6 +37,10 @@ export type ArgusDmConversationListResponse = {
   };
 };
 
+export type ArgusDmUnreadCountResponse = {
+  unreadConversations: number;
+};
+
 export class ArgusDmService {
   constructor(private readonly repo: ArgusDmPgRepository) {}
 
@@ -45,7 +49,7 @@ export class ArgusDmService {
     query: ListArgusDmConversationsQuery,
   ): Promise<ArgusDmConversationListResponse> {
     const result = await this.repo.listConversations(argusUserId, query);
-    const conversations = await this.hydrateConversations(result.rows);
+    const conversations = await this.hydrateConversations(result.rows, argusUserId);
 
     return {
       data: conversations,
@@ -61,10 +65,15 @@ export class ArgusDmService {
   async getConversation(
     conversationId: string,
     argusUserId: string,
+    markRead = true,
   ): Promise<ArgusDmConversationResponse> {
     const conversation = await this.requireConversationParticipant(conversationId, argusUserId);
 
-    return this.hydrateConversation(conversation);
+    if (markRead) {
+      await this.repo.markConversationRead(conversationId, argusUserId);
+    }
+
+    return this.hydrateConversation(conversation, argusUserId);
   }
 
   async createConversation(
@@ -85,7 +94,7 @@ export class ArgusDmService {
       participantArgusUserIds,
     );
 
-    return this.hydrateConversation(conversation);
+    return this.hydrateConversation(conversation, ownerArgusUserId);
   }
 
   async updateConversation(
@@ -112,7 +121,7 @@ export class ArgusDmService {
       throw new ArgusDmConversationNotFoundError(conversationId);
     }
 
-    return this.hydrateConversation(updated);
+    return this.hydrateConversation(updated, argusUserId);
   }
 
   async leaveConversation(conversationId: string, argusUserId: string): Promise<void> {
@@ -128,6 +137,7 @@ export class ArgusDmService {
     argusUserId: string,
   ): Promise<ArgusDmMessageResponse[]> {
     await this.requireConversationParticipant(conversationId, argusUserId);
+    await this.repo.markConversationRead(conversationId, argusUserId);
 
     return (await this.repo.listMessages(conversationId)).map(toArgusDmMessageResponse);
   }
@@ -189,6 +199,20 @@ export class ArgusDmService {
     }
   }
 
+  async markConversationRead(conversationId: string, argusUserId: string): Promise<void> {
+    await this.requireConversationParticipant(conversationId, argusUserId);
+
+    if (!(await this.repo.markConversationRead(conversationId, argusUserId))) {
+      throw new ArgusDmConversationNotFoundError(conversationId);
+    }
+  }
+
+  async getUnreadCount(argusUserId: string): Promise<ArgusDmUnreadCountResponse> {
+    return {
+      unreadConversations: await this.repo.countUnreadConversations(argusUserId),
+    };
+  }
+
   private async requireConversationParticipant(conversationId: string, argusUserId: string) {
     const conversation = await this.repo.findConversationForParticipant(
       conversationId,
@@ -214,11 +238,13 @@ export class ArgusDmService {
 
   private async hydrateConversations(
     conversations: Awaited<ReturnType<ArgusDmPgRepository["listConversations"]>>["rows"],
+    currentArgusUserId: string,
   ): Promise<ArgusDmConversationResponse[]> {
     const conversationIds = conversations.map((conversation) => conversation.id);
-    const [participantRows, latestMessages] = await Promise.all([
+    const [participantRows, latestMessages, unreadCounts] = await Promise.all([
       this.repo.listActiveParticipants(conversationIds),
       this.repo.listLatestMessages(conversationIds),
+      this.repo.countUnreadMessages(conversationIds, currentArgusUserId),
     ]);
 
     const participantsByConversation = new Map<string, ArgusDmParticipantResponse[]>();
@@ -234,24 +260,32 @@ export class ArgusDmService {
     const latestMessageByConversation = new Map(
       latestMessages.map((message) => [message.conversation_id, message] as const),
     );
+    const unreadCountByConversation = new Map(
+      unreadCounts.map((row) => [row.conversation_id, Number(row.total)] as const),
+    );
 
     return conversations.map((conversation) =>
       toArgusDmConversationResponse(
         conversation,
         participantsByConversation.get(conversation.id) ?? [],
         latestMessageByConversation.get(conversation.id) ?? null,
+        participantsByConversation
+          .get(conversation.id)
+          ?.find((participant) => participant.argusUserId === currentArgusUserId) ?? null,
+        unreadCountByConversation.get(conversation.id) ?? 0,
       ),
     );
   }
 
   private async hydrateConversation(
     conversation: Awaited<ReturnType<ArgusDmPgRepository["findConversationForParticipant"]>>,
+    currentArgusUserId: string,
   ): Promise<ArgusDmConversationResponse> {
     if (!conversation) {
       throw new ArgusDmConversationNotFoundError("unknown");
     }
 
-    const [hydrated] = await this.hydrateConversations([conversation]);
+    const [hydrated] = await this.hydrateConversations([conversation], currentArgusUserId);
 
     if (!hydrated) {
       throw new ArgusDmConversationNotFoundError(conversation.id);

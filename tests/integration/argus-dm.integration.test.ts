@@ -10,6 +10,9 @@ describe("argus DM routes", () => {
       title: "Staff sync",
       ownerArgusUserId: "argus-moderator",
       participants: [],
+      isUnread: false,
+      unreadMessageCount: 0,
+      lastReadAtMs: "1000",
       latestMessage: null,
       createdAtMs: "1000",
       updatedAtMs: null,
@@ -57,6 +60,34 @@ describe("argus DM routes", () => {
 
     expect(response.status).toBe(200);
     expect(dependencies.services.argusDm.listMessages).toHaveBeenCalledWith(
+      ids.argusDmConversation,
+      "argus-moderator",
+    );
+  });
+
+  test("GET /argus-dms/unread-count returns current user unread conversation count", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.argusDm.getUnreadCount.mockResolvedValue({ unreadConversations: 3 });
+
+    const response = await request
+      .get("/argus-dms/unread-count")
+      .set("Authorization", "Bearer moderator-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ data: { unreadConversations: 3 } });
+    expect(dependencies.services.argusDm.getUnreadCount).toHaveBeenCalledWith("argus-moderator");
+  });
+
+  test("POST /argus-dms/:conversationId/read marks conversation read", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.argusDm.markConversationRead.mockResolvedValue(undefined);
+
+    const response = await request
+      .post(`/argus-dms/${ids.argusDmConversation}/read`)
+      .set("Authorization", "Bearer moderator-token");
+
+    expect(response.status).toBe(204);
+    expect(dependencies.services.argusDm.markConversationRead).toHaveBeenCalledWith(
       ids.argusDmConversation,
       "argus-moderator",
     );

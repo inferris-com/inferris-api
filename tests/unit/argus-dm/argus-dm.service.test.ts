@@ -23,6 +23,9 @@ function createRepo(overrides: Record<string, unknown> = {}) {
     createConversation: jest.fn().mockResolvedValue(conversation),
     updateConversation: jest.fn().mockResolvedValue(conversation),
     leaveConversation: jest.fn().mockResolvedValue(true),
+    markConversationRead: jest.fn().mockResolvedValue(true),
+    countUnreadConversations: jest.fn().mockResolvedValue(0),
+    countUnreadMessages: jest.fn().mockResolvedValue([]),
     listMessages: jest.fn().mockResolvedValue([]),
     findMessageById: jest.fn(),
     createMessage: jest.fn(),
@@ -117,5 +120,21 @@ describe("ArgusDmService", () => {
     await service.updateMessage(conversation.id, message.id, { body: "Edited" }, "owner");
 
     expect(repo.updateMessage).toHaveBeenCalledWith(conversation.id, message.id, "Edited");
+  });
+
+  test("marks conversation read when listing messages", async () => {
+    const repo = createRepo();
+    const service = new ArgusDmService(repo as never);
+
+    await service.listMessages(conversation.id, "owner");
+
+    expect(repo.markConversationRead).toHaveBeenCalledWith(conversation.id, "owner");
+  });
+
+  test("returns derived unread conversation count", async () => {
+    const repo = createRepo({ countUnreadConversations: jest.fn().mockResolvedValue(2) });
+    const service = new ArgusDmService(repo as never);
+
+    await expect(service.getUnreadCount("owner")).resolves.toEqual({ unreadConversations: 2 });
   });
 });

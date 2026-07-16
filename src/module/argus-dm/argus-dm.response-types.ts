@@ -10,6 +10,7 @@ export const argusDmParticipantResponseSchema = z
     role: z.enum(["moderator", "admin"]),
     invitedByArgusUserId: z.string().uuid().nullable(),
     joinedAtMs: z.string(),
+    lastReadAtMs: z.string().nullable(),
   })
   .openapi("ArgusDmParticipantResponse");
 
@@ -19,6 +20,9 @@ export const argusDmConversationResponseSchema = z
     title: z.string(),
     ownerArgusUserId: z.string().uuid().nullable(),
     participants: z.array(argusDmParticipantResponseSchema),
+    isUnread: z.boolean(),
+    unreadMessageCount: z.number().int().min(0),
+    lastReadAtMs: z.string().nullable(),
     latestMessage: z
       .object({
         id: z.string().uuid(),
@@ -47,6 +51,13 @@ export const argusDmMessageResponseSchema = z
   })
   .openapi("ArgusDmMessageResponse");
 
+export const argusDmUnreadCountResponseSchema = z
+  .object({
+    unreadConversations: z.number().int().min(0),
+  })
+  .openapi("ArgusDmUnreadCountResponse");
+
 export type ArgusDmParticipantResponse = z.infer<typeof argusDmParticipantResponseSchema>;
 export type ArgusDmConversationResponse = z.infer<typeof argusDmConversationResponseSchema>;
 export type ArgusDmMessageResponse = z.infer<typeof argusDmMessageResponseSchema>;
+export type ArgusDmUnreadCountResponse = z.infer<typeof argusDmUnreadCountResponseSchema>;

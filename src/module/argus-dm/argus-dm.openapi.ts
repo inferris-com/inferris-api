@@ -10,6 +10,7 @@ import {
 import {
   argusDmConversationResponseSchema,
   argusDmMessageResponseSchema,
+  argusDmUnreadCountResponseSchema,
 } from "./argus-dm.response-types.js";
 import {
   argusDmConversationParamsSchema,
@@ -57,6 +58,19 @@ export function registerArgusDmOpenApi(registry: OpenAPIRegistry) {
 
   registry.registerPath({
     method: "get",
+    path: "/argus-dms/unread-count",
+    tags: ["Argus DMs"],
+    security: userOrServiceSecurity,
+    summary: "Get Argus DM unread conversation count",
+    operationId: "getArgusDmUnreadCount",
+    responses: {
+      "200": successResponse(argusDmUnreadCountResponseSchema),
+      ...standardErrorResponses,
+    },
+  });
+
+  registry.registerPath({
+    method: "get",
     path: "/argus-dms/{conversationId}",
     tags: ["Argus DMs"],
     security: userOrServiceSecurity,
@@ -98,6 +112,20 @@ export function registerArgusDmOpenApi(registry: OpenAPIRegistry) {
     operationId: "leaveArgusDmConversation",
     request: { params: argusDmConversationParamsSchema },
     responses: { "204": { description: "Argus DM conversation left" }, ...standardErrorResponses },
+  });
+
+  registry.registerPath({
+    method: "post",
+    path: "/argus-dms/{conversationId}/read",
+    tags: ["Argus DMs"],
+    security: userOrServiceSecurity,
+    summary: "Mark an Argus DM conversation read",
+    operationId: "markArgusDmConversationRead",
+    request: { params: argusDmConversationParamsSchema },
+    responses: {
+      "204": { description: "Argus DM conversation marked read" },
+      ...standardErrorResponses,
+    },
   });
 
   registry.registerPath({

@@ -14,18 +14,24 @@ export type ArgusDmParticipantRow = {
   role: "moderator" | "admin";
   invited_by_argus_user_id: string | null;
   joined_at_ms: string | number | bigint;
+  last_read_at_ms: string | number | bigint | null;
 };
 
 export function toArgusDmConversationResponse(
   row: Selectable<ArgusDmConversations>,
   participants: ArgusDmParticipantResponse[],
   latestMessage: Selectable<ArgusDmMessages> | null,
+  currentParticipant: ArgusDmParticipantResponse | null,
+  unreadMessageCount: number,
 ): ArgusDmConversationResponse {
   return {
     id: row.id,
     title: row.title,
     ownerArgusUserId: row.owner_argus_user_id,
     participants,
+    isUnread: unreadMessageCount > 0,
+    unreadMessageCount,
+    lastReadAtMs: currentParticipant?.lastReadAtMs ?? null,
     latestMessage: latestMessage
       ? {
           id: latestMessage.id,
@@ -49,6 +55,7 @@ export function toArgusDmParticipantResponse(
     role: row.role,
     invitedByArgusUserId: row.invited_by_argus_user_id,
     joinedAtMs: int8ToString(row.joined_at_ms),
+    lastReadAtMs: int8ToStringOrNull(row.last_read_at_ms),
   };
 }
 

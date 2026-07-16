@@ -59,6 +59,8 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       createConversation: AsyncMock;
       updateConversation: AsyncMock;
       leaveConversation: AsyncMock;
+      markConversationRead: AsyncMock;
+      getUnreadCount: AsyncMock;
       listMessages: AsyncMock;
       createMessage: AsyncMock;
       updateMessage: AsyncMock;
@@ -374,6 +376,8 @@ export function createTestDependencies(): TestDependencies {
         createConversation: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         updateConversation: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         leaveConversation: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        markConversationRead: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getUnreadCount: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         listMessages: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         createMessage: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         updateMessage: jest.fn<(...args: unknown[]) => Promise<unknown>>(),

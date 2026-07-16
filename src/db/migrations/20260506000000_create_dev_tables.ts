@@ -567,6 +567,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     argus_user_id   UUID   NOT NULL REFERENCES argus_users (id) ON DELETE CASCADE,
     invited_by_argus_user_id UUID NULL REFERENCES argus_users (id) ON DELETE SET NULL,
     joined_at_ms    BIGINT NOT NULL DEFAULT get_unix_ms(),
+    last_read_at_ms BIGINT NULL,
     left_at_ms      BIGINT NULL,
     PRIMARY KEY (conversation_id, argus_user_id)
   );
