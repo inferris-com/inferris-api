@@ -6644,25 +6644,21 @@ paths:
           in: "query"
         - schema:
             type: "string"
-            format: "uuid"
           required: false
           name: "playerId"
           in: "query"
         - schema:
             type: "string"
-            format: "uuid"
           required: false
           name: "serverId"
           in: "query"
         - schema:
             type: "string"
-            format: "uuid"
           required: false
           name: "proxyServerId"
           in: "query"
         - schema:
             type: "string"
-            format: "uuid"
           required: false
           name: "backendServerId"
           in: "query"
@@ -6761,7 +6757,6 @@ paths:
       parameters:
         - schema:
             type: "string"
-            format: "uuid"
           required: true
           name: "networkSessionId"
           in: "path"

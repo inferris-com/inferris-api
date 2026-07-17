@@ -4,16 +4,16 @@ import { paginationQuerySchema } from "../../shared/pagination.schemas.js";
 
 export const networkSessionParamsSchema = z
   .object({
-    networkSessionId: z.string().uuid(),
+    networkSessionId: z.string().guid(),
   })
   .strict();
 
 export const listPlayerSessionsQuerySchema = paginationQuerySchema
   .extend({
-    playerId: z.string().uuid().optional(),
-    serverId: z.string().uuid().optional(),
-    proxyServerId: z.string().uuid().optional(),
-    backendServerId: z.string().uuid().optional(),
+    playerId: z.string().guid().optional(),
+    serverId: z.string().guid().optional(),
+    proxyServerId: z.string().guid().optional(),
+    backendServerId: z.string().guid().optional(),
     state: z.enum(["all", "active", "completed"]).default("all"),
     fromMs: z.coerce.string().regex(/^\d+$/).optional(),
     toMs: z.coerce.string().regex(/^\d+$/).optional(),
