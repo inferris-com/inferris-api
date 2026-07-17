@@ -6,7 +6,6 @@ import type {
   ServerAccessPolicies,
   ServerEnv,
   Servers,
-  ServerStatus,
   ServerType,
 } from "../../db/types.js";
 import type {
@@ -35,8 +34,14 @@ type PlayerSessionIdentity = {
 };
 
 type PlayerSessionRecord = PlayerSessionIdentity & {
+  proxyServerId: string;
+  networkSessionId: string;
+};
+
+type BackendSessionRecord = PlayerSessionIdentity & {
+  networkSessionId: string;
   serverId: string;
-  sessionEventId: string;
+  backendSessionId: string;
 };
 
 export class ServerPgRepository {
@@ -61,19 +66,13 @@ export class ServerPgRepository {
           name: input.name,
           type: input.type,
           environment: input.environment,
-          status: input.status,
           port: input.port,
-          version: input.version,
-          last_started_at_ms: now,
         })
         .onConflict((oc) =>
           oc.column("name").doUpdateSet({
             type: input.type,
             environment: input.environment,
-            status: input.status,
             port: input.port,
-            version: input.version,
-            last_started_at_ms: now,
             last_updated_at_ms: now,
           }),
         )
@@ -96,23 +95,23 @@ export class ServerPgRepository {
     });
   }
 
-  async startPlayerSession(
+  async startNetworkSession(
     serverId: string,
     player: PlayerSessionIdentity,
   ): Promise<PlayerSessionRecord | null> {
     return this.db.transaction().execute(async (trx) => {
       const server = await trx
         .selectFrom("servers")
-        .select("id")
+        .select(["id", "type"])
         .where("id", "=", serverId)
         .executeTakeFirst();
 
-      if (!server) {
+      if (!server || server.type !== "velocity") {
         return null;
       }
 
       await trx
-        .updateTable("player_session_events")
+        .updateTable("network_sessions")
         .set({
           disconnected_at_ms: sql`get_unix_ms()`,
           disconnect_reason: "replaced",
@@ -123,12 +122,12 @@ export class ServerPgRepository {
         .execute();
 
       const session = await trx
-        .insertInto("player_session_events")
+        .insertInto("network_sessions")
         .values({
           player_id: player.playerId,
-          server_id: serverId,
+          proxy_server_id: serverId,
         })
-        .returning(["id", "server_id"])
+        .returning(["id", "proxy_server_id"])
         .executeTakeFirstOrThrow();
 
       await trx
@@ -142,29 +141,29 @@ export class ServerPgRepository {
 
       return {
         ...player,
-        serverId: session.server_id,
-        sessionEventId: session.id,
+        proxyServerId: session.proxy_server_id,
+        networkSessionId: session.id,
       };
     });
   }
 
-  async endPlayerSession(
+  async endNetworkSession(
     serverId: string,
     player: PlayerSessionIdentity,
     reason: string,
   ): Promise<PlayerSessionRecord | null> {
     return this.db.transaction().execute(async (trx) => {
       const session = await trx
-        .updateTable("player_session_events")
+        .updateTable("network_sessions")
         .set({
           disconnected_at_ms: sql`get_unix_ms()`,
           disconnect_reason: reason,
           updated_at_ms: sql`get_unix_ms()`,
         })
         .where("player_id", "=", player.playerId)
-        .where("server_id", "=", serverId)
+        .where("proxy_server_id", "=", serverId)
         .where("disconnected_at_ms", "is", null)
-        .returning(["id", "server_id"])
+        .returning(["id", "proxy_server_id"])
         .executeTakeFirst();
 
       if (!session) {
@@ -173,8 +172,104 @@ export class ServerPgRepository {
 
       return {
         ...player,
-        serverId: session.server_id,
-        sessionEventId: session.id,
+        proxyServerId: session.proxy_server_id,
+        networkSessionId: session.id,
+      };
+    });
+  }
+
+  async startBackendSession(
+    serverId: string,
+    player: PlayerSessionIdentity,
+  ): Promise<BackendSessionRecord | null> {
+    return this.db.transaction().execute(async (trx) => {
+      const server = await trx
+        .selectFrom("servers")
+        .select(["id", "type"])
+        .where("id", "=", serverId)
+        .executeTakeFirst();
+
+      if (!server || server.type !== "paper") {
+        return null;
+      }
+
+      const networkSession = await trx
+        .selectFrom("network_sessions_current")
+        .select("network_session_id")
+        .where("player_id", "=", player.playerId)
+        .executeTakeFirst();
+
+      if (!networkSession) {
+        return null;
+      }
+
+      await trx
+        .updateTable("backend_sessions")
+        .set({
+          left_at_ms: sql`get_unix_ms()`,
+          leave_reason: "transfer",
+          updated_at_ms: sql`get_unix_ms()`,
+        })
+        .where("network_session_id", "=", networkSession.network_session_id)
+        .where("left_at_ms", "is", null)
+        .execute();
+
+      const visit = await trx
+        .insertInto("backend_sessions")
+        .values({
+          network_session_id: networkSession.network_session_id,
+          player_id: player.playerId,
+          backend_server_id: serverId,
+        })
+        .returning(["id", "network_session_id", "backend_server_id"])
+        .executeTakeFirstOrThrow();
+
+      await trx
+        .updateTable("players")
+        .set({
+          last_seen_at_ms: sql`get_unix_ms()`,
+          last_server_id: serverId,
+        })
+        .where("id", "=", player.playerId)
+        .execute();
+
+      return {
+        ...player,
+        networkSessionId: visit.network_session_id,
+        serverId: visit.backend_server_id,
+        backendSessionId: visit.id,
+      };
+    });
+  }
+
+  async endBackendSession(
+    serverId: string,
+    player: PlayerSessionIdentity,
+    reason: string,
+  ): Promise<BackendSessionRecord | null> {
+    return this.db.transaction().execute(async (trx) => {
+      const visit = await trx
+        .updateTable("backend_sessions")
+        .set({
+          left_at_ms: sql`get_unix_ms()`,
+          leave_reason: reason,
+          updated_at_ms: sql`get_unix_ms()`,
+        })
+        .where("player_id", "=", player.playerId)
+        .where("backend_server_id", "=", serverId)
+        .where("left_at_ms", "is", null)
+        .returning(["id", "network_session_id", "backend_server_id"])
+        .executeTakeFirst();
+
+      if (!visit) {
+        return null;
+      }
+
+      return {
+        ...player,
+        networkSessionId: visit.network_session_id,
+        serverId: visit.backend_server_id,
+        backendSessionId: visit.id,
       };
     });
   }
@@ -184,32 +279,13 @@ export class ServerPgRepository {
     input: ServerHeartbeatBody,
   ): Promise<PlayerSessionRecord[] | null> {
     return this.db.transaction().execute(async (trx) => {
-      const serverUpdate: {
-        status?: "online" | "offline";
-        port?: number | null;
-        version?: string;
-        last_heartbeat_at_ms: string;
-      } = {
-        last_heartbeat_at_ms: Date.now().toString(),
-      };
-
-      if (input.status !== undefined) {
-        serverUpdate.status = input.status;
-      }
-      if (input.port !== undefined) {
-        serverUpdate.port = input.port;
-      }
-      if (input.version !== undefined) {
-        serverUpdate.version = input.version;
-      }
-
-      const updateResult = await trx
-        .updateTable("servers")
-        .set(serverUpdate)
+      const server = await trx
+        .selectFrom("servers")
+        .select(["id", "type"])
         .where("id", "=", serverId)
         .executeTakeFirst();
 
-      if (updateResult.numUpdatedRows === 0n) {
+      if (!server) {
         return null;
       }
 
@@ -219,68 +295,117 @@ export class ServerPgRepository {
         return [];
       }
 
-      const rows = await trx
-        .selectFrom("player_sessions_current")
-        .innerJoin("players", "players.id", "player_sessions_current.player_id")
-        .select([
-          "players.id as playerId",
-          "players.actor_id as actorId",
-          "players.mojang_id as mojangId",
-          "player_sessions_current.server_id as serverId",
-          "player_sessions_current.session_event_id as sessionEventId",
-        ])
-        .where("player_sessions_current.server_id", "=", serverId)
-        .where("players.mojang_id", "in", input.onlineMojangIds)
-        .execute();
+      const rows =
+        server.type === "velocity"
+          ? await trx
+              .selectFrom("network_sessions_current")
+              .innerJoin("players", "players.id", "network_sessions_current.player_id")
+              .select([
+                "players.id as playerId",
+                "players.actor_id as actorId",
+                "players.mojang_id as mojangId",
+                "network_sessions_current.proxy_server_id as proxyServerId",
+                "network_sessions_current.network_session_id as networkSessionId",
+              ])
+              .where("network_sessions_current.proxy_server_id", "=", serverId)
+              .where("players.mojang_id", "in", input.onlineMojangIds)
+              .execute()
+          : await trx
+              .selectFrom("backend_sessions_current")
+              .innerJoin("players", "players.id", "backend_sessions_current.player_id")
+              .innerJoin(
+                "network_sessions_current",
+                "network_sessions_current.network_session_id",
+                "backend_sessions_current.network_session_id",
+              )
+              .select([
+                "players.id as playerId",
+                "players.actor_id as actorId",
+                "players.mojang_id as mojangId",
+                "network_sessions_current.proxy_server_id as proxyServerId",
+                "network_sessions_current.network_session_id as networkSessionId",
+              ])
+              .where("backend_sessions_current.backend_server_id", "=", serverId)
+              .where("players.mojang_id", "in", input.onlineMojangIds)
+              .execute();
 
       return rows.map((row) => ({
         playerId: row.playerId,
         actorId: row.actorId,
         mojangId: row.mojangId,
-        serverId: row.serverId,
-        sessionEventId: row.sessionEventId,
+        proxyServerId: row.proxyServerId,
+        networkSessionId: row.networkSessionId,
       }));
     });
   }
 
   async expireInactiveServers(inactiveBeforeMs: string): Promise<number> {
     return this.db.transaction().execute(async (trx) => {
-      const servers = await trx
-        .selectFrom("servers")
-        .select("id")
-        .where("status", "=", "online")
-        .where(
-          sql`coalesce(last_heartbeat_at_ms, last_started_at_ms, created_at_ms)`,
-          "<=",
-          inactiveBeforeMs,
-        )
+      const instances = await trx
+        .selectFrom("server_instances")
+        .innerJoin("servers", "servers.id", "server_instances.server_id")
+        .select(["server_instances.id", "servers.type"])
+        .where("server_instances.state", "in", ["active", "draining"])
+        .where(sql`coalesce(last_heartbeat_at_ms, started_at_ms, created_at_ms)`, "<=", inactiveBeforeMs)
         .execute();
-      const serverIds = servers.map((server) => server.id);
+      const proxyInstanceIds = instances
+        .filter((instance) => instance.type === "velocity")
+        .map((instance) => instance.id);
+      const backendInstanceIds = instances
+        .filter((instance) => instance.type !== "velocity")
+        .map((instance) => instance.id);
+      const instanceIds = instances.map((instance) => instance.id);
 
-      if (serverIds.length === 0) {
+      if (instanceIds.length === 0) {
         return 0;
       }
 
-      await trx
-        .updateTable("player_session_events")
-        .set({
-          disconnected_at_ms: sql`get_unix_ms()`,
-          disconnect_reason: "server_inactive",
-          updated_at_ms: sql`get_unix_ms()`,
-        })
-        .where("server_id", "in", serverIds)
-        .where("disconnected_at_ms", "is", null)
-        .execute();
+      if (proxyInstanceIds.length > 0) {
+        await trx
+          .updateTable("network_sessions")
+          .set({
+            disconnected_at_ms: sql`get_unix_ms()`,
+            disconnect_reason: "proxy_lost",
+            updated_at_ms: sql`get_unix_ms()`,
+          })
+          .where("proxy_server_instance_id", "in", proxyInstanceIds)
+          .where("disconnected_at_ms", "is", null)
+          .execute();
+      }
+
+      if (backendInstanceIds.length > 0) {
+        await trx
+          .updateTable("backend_sessions")
+          .set({
+            left_at_ms: sql`get_unix_ms()`,
+            leave_reason: "backend_lost",
+            updated_at_ms: sql`get_unix_ms()`,
+          })
+          .where("backend_server_instance_id", "in", backendInstanceIds)
+          .where("left_at_ms", "is", null)
+          .execute();
+      }
 
       const result = await trx
-        .updateTable("servers")
+        .updateTable("server_instances")
         .set({
-          status: "offline",
-          last_updated_at_ms: sql`get_unix_ms()`,
+          state: "lost",
+          lost_at_ms: sql`get_unix_ms()`,
+          updated_at_ms: sql`get_unix_ms()`,
         })
-        .where("id", "in", serverIds)
-        .where("status", "=", "online")
+        .where("id", "in", instanceIds)
+        .where("state", "in", ["active", "draining"])
         .executeTakeFirst();
+
+      await trx
+        .updateTable("server_instance_tokens")
+        .set({
+          revoked_at_ms: sql`get_unix_ms()`,
+          revoked_reason: "lost",
+        })
+        .where("server_instance_id", "in", instanceIds)
+        .where("revoked_at_ms", "is", null)
+        .execute();
 
       return Number(result.numUpdatedRows);
     });
@@ -294,9 +419,7 @@ export class ServerPgRepository {
           name: input.name,
           type: input.type,
           environment: input.environment,
-          status: input.status,
           port: input.port,
-          version: input.version,
         })
         .onConflict((oc) => oc.column("name").doNothing())
         .returningAll()
@@ -373,11 +496,7 @@ export class ServerPgRepository {
         name?: string;
         type?: ServerType;
         environment?: ServerEnv;
-        status?: ServerStatus;
         port?: number | null;
-        version?: string;
-        last_started_at_ms?: string | null;
-        last_heartbeat_at_ms?: string | null;
         created_at_ms?: string;
         last_updated_at_ms?: string | null;
       } = {};
@@ -391,20 +510,8 @@ export class ServerPgRepository {
       if (input.environment !== undefined) {
         serverUpdate.environment = input.environment;
       }
-      if (input.status !== undefined) {
-        serverUpdate.status = input.status;
-      }
       if (input.port !== undefined) {
         serverUpdate.port = input.port;
-      }
-      if (input.version !== undefined) {
-        serverUpdate.version = input.version;
-      }
-      if (input.lastStartedAtMs !== undefined) {
-        serverUpdate.last_started_at_ms = input.lastStartedAtMs;
-      }
-      if (input.lastHeartbeatAtMs !== undefined) {
-        serverUpdate.last_heartbeat_at_ms = input.lastHeartbeatAtMs;
       }
       if (input.createdAtMs !== undefined) {
         serverUpdate.created_at_ms = input.createdAtMs;
@@ -529,11 +636,7 @@ export class ServerPgRepository {
           "name",
           "type",
           "environment",
-          "status",
           "port",
-          "version",
-          "last_started_at_ms",
-          "last_heartbeat_at_ms",
           "created_at_ms",
           "last_updated_at_ms",
         ])
@@ -557,11 +660,7 @@ export class ServerPgRepository {
           "name",
           "type",
           "environment",
-          "status",
           "port",
-          "version",
-          "last_started_at_ms",
-          "last_heartbeat_at_ms",
           "created_at_ms",
           "last_updated_at_ms",
         ])

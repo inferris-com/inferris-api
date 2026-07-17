@@ -7,6 +7,7 @@ import {
   createRefreshToken,
   hashApiKeySecret,
   hashMinecraftSessionToken,
+  hashServerInstanceToken,
   hashRefreshToken,
   parseApiKeyToken,
   signAccessToken,
@@ -54,8 +55,8 @@ export type MinecraftSessionState = {
   actorId: string;
   playerId: string;
   mojangId: string;
-  serverId: string;
-  sessionEventId: string;
+  proxyServerId: string;
+  networkSessionId: string;
   issuedAtMs: number;
 };
 
@@ -110,12 +111,12 @@ export class AuthService {
       return null;
     }
 
-    const current = await this.repo.findCurrentPlayerSession(state.playerId);
+    const current = await this.repo.findCurrentNetworkSession(state.playerId);
 
     if (
       !current ||
-      current.serverId !== state.serverId ||
-      current.sessionEventId !== state.sessionEventId
+      current.proxyServerId !== state.proxyServerId ||
+      current.networkSessionId !== state.networkSessionId
     ) {
       return null;
     }
@@ -124,14 +125,14 @@ export class AuthService {
 
     return {
       principalType: "minecraft_session",
-      principalId: state.sessionEventId,
+      principalId: state.networkSessionId,
       actorId: state.actorId,
       platform: "minecraft",
       minecraftSession: {
         playerId: state.playerId,
         mojangId: state.mojangId,
-        serverId: state.serverId,
-        sessionEventId: state.sessionEventId,
+        proxyServerId: state.proxyServerId,
+        networkSessionId: state.networkSessionId,
       },
       ...(privileged ? { privileged } : {}),
     };
@@ -171,8 +172,31 @@ export class AuthService {
         ...(privileged ? { privileged } : {}),
       };
     } catch {
+      return this.authenticateServerInstanceToken(token);
+    }
+  }
+
+  async authenticateServerInstanceToken(token: string): Promise<AuthContext | null> {
+    const instance = await this.repo.findActiveServerInstanceByTokenHash(
+      hashServerInstanceToken(token),
+    );
+
+    if (!instance) {
       return null;
     }
+
+    return {
+      principalType: "server_instance",
+      principalId: instance.id,
+      actorId: null,
+      platform: "minecraft",
+      serverInstance: {
+        id: instance.id,
+        serverId: instance.serverId,
+        serverType: instance.serverType,
+        state: instance.state,
+      },
+    };
   }
 
   async login(input: LoginBody, sessionMeta: SessionMeta = {}): Promise<AuthTokenResponse> {
@@ -186,6 +210,12 @@ export class AuthService {
 
     if (!passwordValid) {
       throw invalidCredentials();
+    }
+
+    if (user.accountState === "disabled") {
+      throw accountDisabled();
+    } else if (user.accountState === "verify_email") {
+      throw accountVerifyEmail();
     }
 
     return this.issueTokenResponse(user, sessionMeta);
@@ -415,5 +445,19 @@ function invalidCredentials(): UnauthorizedError {
   return new UnauthorizedError({
     code: "INVALID_CREDENTIALS",
     message: "Invalid credentials",
+  });
+}
+
+function accountDisabled(): UnauthorizedError {
+  return new UnauthorizedError({
+    code: "ACCOUNT_DISABLED",
+    message: "Argus account is disabled.",
+  });
+}
+
+function accountVerifyEmail(): UnauthorizedError {
+  return new UnauthorizedError({
+    code: "ACCOUNT_VERIFY_EMAIL",
+    message: "Please verify your email before logging in.",
   });
 }

@@ -141,3 +141,16 @@ export function createMinecraftSessionToken(): { token: string; tokenHash: strin
 export function hashMinecraftSessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
+
+export function createServerInstanceToken(): { token: string; tokenHash: string } {
+  const token = randomBytes(48).toString("base64url");
+
+  return {
+    token,
+    tokenHash: hashServerInstanceToken(token),
+  };
+}
+
+export function hashServerInstanceToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}

@@ -7,10 +7,11 @@ import { authorize } from "../auth/auth.middleware.js";
 import type { AuthRepository } from "../auth/auth.repository.js";
 import type { PlayerSessionResponse } from "./player-session.response-types.js";
 import {
+  getPlayerSessionQuerySchema,
   listPlayerSessionsQuerySchema,
   type ListPlayerSessionsQuery,
-  type PlayerSessionParams,
-  playerSessionParamsSchema,
+  type NetworkSessionParams,
+  networkSessionParamsSchema,
 } from "./player-session.schemas.js";
 import type { PlayerSessionService } from "./player-session.service.js";
 
@@ -44,24 +45,11 @@ export function createPlayerSessionRouter(
     res.json(body);
   };
 
-  const listLiveSessions: RequestHandler = async (req, res) => {
-    const query = req.query as unknown as Omit<ListPlayerSessionsQuery, "state">;
-    const result = await service.listLiveSessions(query);
-    const body: PlayerSessionListSuccess = {
-      data: result.rows,
-      meta: {
-        count: result.rows.length,
-        total: result.total,
-        limit: result.limit,
-        offset: result.offset,
-      },
-    };
-
-    res.json(body);
-  };
-
-  const getSession: RequestHandler<PlayerSessionParams> = async (req, res) => {
-    const session = await service.getSession(req.params.sessionId);
+  const getSession: RequestHandler<NetworkSessionParams> = async (req, res) => {
+    const session = await service.getSession(
+      req.params.networkSessionId,
+      req.query.include === "backendSessions",
+    );
     const body: ApiSuccess<PlayerSessionResponse> = { data: session };
 
     res.json(body);
@@ -73,18 +61,13 @@ export function createPlayerSessionRouter(
     validateRequest({ query: listPlayerSessionsQuerySchema }) as unknown as RequestHandler,
     listSessions,
   );
+  router.get("/live", readSessions, (_req, res) => {
+    res.status(404).send();
+  });
   router.get(
-    "/live",
+    "/:networkSessionId",
     readSessions,
-    validateRequest({
-      query: listPlayerSessionsQuerySchema.omit({ state: true }),
-    }) as unknown as RequestHandler,
-    listLiveSessions,
-  );
-  router.get(
-    "/:sessionId",
-    readSessions,
-    validateRequest({ params: playerSessionParamsSchema }),
+    validateRequest({ params: networkSessionParamsSchema, query: getPlayerSessionQuerySchema }),
     getSession,
   );
 

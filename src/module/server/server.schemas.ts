@@ -29,10 +29,8 @@ export const createServerBodySchema = z
 
     type: serverTypeSchema,
     environment: serverEnvTypeSchema,
-    status: serverStatusTypeSchema.optional(),
 
     port: z.int().min(1).max(65535).nullable(),
-    version: z.string(),
   })
   .strict();
 
@@ -104,13 +102,7 @@ export const updateServerBodySchema = z
 
     type: serverTypeSchema.optional(),
     environment: serverEnvTypeSchema.optional(),
-    status: serverStatusTypeSchema.optional(),
-
     port: z.int().min(1).max(65535).optional().nullable(),
-    version: z.string(),
-
-    lastStartedAtMs: BigIntStringSchema.optional(),
-    lastHeartbeatAtMs: BigIntStringSchema.optional(),
 
     createdAtMs: BigIntStringSchema.optional(),
     lastUpdatedAtMs: BigIntStringSchema.optional().nullable(),

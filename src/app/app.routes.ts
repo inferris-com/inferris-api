@@ -19,6 +19,7 @@ import { createPlayerRouter } from "../module/player/player.route.js";
 import { createPunishmentRouter } from "../module/punishment/punishment.route.js";
 import { createRankRouter } from "../module/rank/rank.route.js";
 import { createReportRouter } from "../module/report/report.route.js";
+import { createServerInstanceRouter } from "../module/server-instance/server-instance.route.js";
 import { createServerRouter } from "../module/server/server.route.js";
 import { createStaffPrivilegeRouter } from "../module/staff-privilege/staff-privilege.route.js";
 import { createWatchlistRouter } from "../module/watchlist/watchlist.route.js";
@@ -56,12 +57,17 @@ export function registerAppRoutes(app: Express, dependencies: AppDependencies): 
     createAuditLogRouter(services.auditLog, authRepository),
   );
   app.use(
-    "/player-sessions",
+    "/network-sessions",
     authenticateRequest,
     createPlayerSessionRouter(services.playerSession, authRepository),
   );
   app.use("/actors", authenticateRequest, createActorRouter(services.actor, authRepository));
   app.use("/servers", authenticateRequest, createServerRouter(services.server, authRepository));
+  app.use(
+    "/server-instances",
+    authenticateRequest,
+    createServerInstanceRouter(services.serverInstance, authRepository),
+  );
   app.use(
     "/permissions",
     authenticateRequest,

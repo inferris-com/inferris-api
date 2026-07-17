@@ -1417,7 +1417,7 @@
           "source"
         ]
       },
-      "PlayerSessionDetailsResponse": {
+      "NetworkSessionDetailsResponse": {
         "type": "object",
         "properties": {
           "id": {
@@ -1439,12 +1439,32 @@
             "type": "string",
             "format": "uuid"
           },
-          "serverId": {
+          "proxyServerId": {
             "type": "string",
             "format": "uuid"
           },
-          "serverName": {
+          "proxyServerName": {
             "type": "string"
+          },
+          "currentBackendServerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "currentBackendServerName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currentBackendSessionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           },
           "isLive": {
             "type": "boolean"
@@ -1470,6 +1490,68 @@
               "string",
               "null"
             ]
+          },
+          "backendSessions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "backendServerId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "backendServerName": {
+                  "type": "string"
+                },
+                "backendServerInstanceId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "isActive": {
+                  "type": "boolean"
+                },
+                "joinedAtMs": {
+                  "type": "string"
+                },
+                "leftAtMs": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "leaveReason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "meta": {},
+                "updatedAtMs": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "backendServerId",
+                "backendServerName",
+                "backendServerInstanceId",
+                "isActive",
+                "joinedAtMs",
+                "leftAtMs",
+                "leaveReason",
+                "updatedAtMs"
+              ]
+            }
           }
         },
         "required": [
@@ -1478,8 +1560,11 @@
           "playerUsername",
           "playerMojangId",
           "actorId",
-          "serverId",
-          "serverName",
+          "proxyServerId",
+          "proxyServerName",
+          "currentBackendServerId",
+          "currentBackendServerName",
+          "currentBackendSessionId",
           "isLive",
           "connectedAtMs",
           "disconnectedAtMs",
@@ -1556,27 +1641,9 @@
           "environment": {
             "type": "string"
           },
-          "status": {
-            "type": "string"
-          },
           "port": {
             "type": [
               "integer",
-              "null"
-            ]
-          },
-          "version": {
-            "type": "string"
-          },
-          "lastStartedAtMs": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "lastHeartbeatAtMs": {
-            "type": [
-              "string",
               "null"
             ]
           },
@@ -1595,11 +1662,7 @@
           "name",
           "type",
           "environment",
-          "status",
           "port",
-          "version",
-          "lastStartedAtMs",
-          "lastHeartbeatAtMs",
           "createdAtMs",
           "lastUpdatedAtMs"
         ]
@@ -1656,69 +1719,6 @@
           "endsAtMs"
         ]
       },
-      "PlayerSessionResponse": {
-        "type": "object",
-        "properties": {
-          "playerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "actorId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "mojangId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "serverId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sessionEventId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "token": {
-            "type": "string"
-          },
-          "expiresAtMs": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "playerId",
-          "actorId",
-          "mojangId",
-          "serverId",
-          "sessionEventId",
-          "token",
-          "expiresAtMs"
-        ]
-      },
-      "ServerHeartbeatResponse": {
-        "type": "object",
-        "properties": {
-          "refreshedMojangIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          "missingMojangIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        },
-        "required": [
-          "refreshedMojangIds",
-          "missingMojangIds"
-        ]
-      },
       "AccessResponse": {
         "type": "object",
         "properties": {
@@ -1766,6 +1766,206 @@
           "note",
           "createdAtMs",
           "updatedAtMs"
+        ]
+      },
+      "RegisterServerInstanceResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ServerInstanceResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "token"
+            ]
+          }
+        ]
+      },
+      "ServerInstanceResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "serverId": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "runtimePort": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startedAtMs": {
+            "type": "string"
+          },
+          "drainingAtMs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stoppedAtMs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lostAtMs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "supersededAtMs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastHeartbeatAtMs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "heartbeatIntervalMs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastEventSequence": {
+            "type": "string"
+          },
+          "isSyntheticBackfill": {
+            "type": "boolean"
+          },
+          "createdAtMs": {
+            "type": "string"
+          },
+          "updatedAtMs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "serverId",
+          "state",
+          "runtimePort",
+          "version",
+          "startedAtMs",
+          "drainingAtMs",
+          "stoppedAtMs",
+          "lostAtMs",
+          "supersededAtMs",
+          "lastHeartbeatAtMs",
+          "heartbeatIntervalMs",
+          "lastEventSequence",
+          "isSyntheticBackfill",
+          "createdAtMs",
+          "updatedAtMs"
+        ]
+      },
+      "ServerInstanceHeartbeatResponse": {
+        "type": "object",
+        "properties": {
+          "serverInstanceId": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "lastHeartbeatAtMs": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "serverInstanceId",
+          "state",
+          "lastHeartbeatAtMs"
+        ]
+      },
+      "ServerInstanceMetricsResponse": {
+        "type": "object",
+        "properties": {
+          "serverInstanceId": {
+            "type": "string"
+          },
+          "observationId": {
+            "type": "string"
+          },
+          "observedAtMs": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "serverInstanceId",
+          "observationId",
+          "observedAtMs"
+        ]
+      },
+      "ServerInstancePresenceResponse": {
+        "type": "object",
+        "properties": {
+          "serverInstanceId": {
+            "type": "string"
+          },
+          "observedAtMs": {
+            "type": "string"
+          },
+          "observedPlayerCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "serverInstanceId",
+          "observedAtMs",
+          "observedPlayerCount"
+        ]
+      },
+      "ServerInstanceEventResponse": {
+        "type": "object",
+        "properties": {
+          "serverInstanceId": {
+            "type": "string"
+          },
+          "eventId": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "idempotent": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "serverInstanceId",
+          "eventId",
+          "sequence",
+          "type",
+          "idempotent"
         ]
       },
       "StaffPrivilegeResponse": {
@@ -3048,7 +3248,7 @@
                   },
                   "newPassword": {
                     "type": "string",
-                    "minLength": 12,
+                    "minLength": 3,
                     "maxLength": 256
                   }
                 },
@@ -3149,7 +3349,7 @@
                   },
                   "newPassword": {
                     "type": "string",
-                    "minLength": 12,
+                    "minLength": 3,
                     "maxLength": 256
                   }
                 },
@@ -9830,10 +10030,10 @@
         }
       }
     },
-    "/player-sessions": {
+    "/network-sessions": {
       "get": {
         "tags": [
-          "Player Sessions"
+          "Network Sessions"
         ],
         "security": [
           {
@@ -9843,8 +10043,8 @@
             "apiKeyAuth": []
           }
         ],
-        "summary": "List player sessions",
-        "operationId": "listPlayerSessions",
+        "summary": "List Minecraft network sessions",
+        "operationId": "listNetworkSessions",
         "parameters": [
           {
             "schema": {
@@ -9886,6 +10086,24 @@
             },
             "required": false,
             "name": "serverId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "proxyServerId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "backendServerId",
             "in": "query"
           },
           {
@@ -9893,14 +10111,51 @@
               "type": "string",
               "enum": [
                 "all",
-                "live",
-                "historical"
+                "active",
+                "completed"
               ],
               "default": "all"
             },
             "required": false,
             "name": "state",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            },
+            "required": false,
+            "name": "fromMs",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            },
+            "required": false,
+            "name": "toMs",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "backendSessions"
+              ]
+            },
+            "required": false,
+            "name": "include",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
@@ -9914,7 +10169,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/PlayerSessionDetailsResponse"
+                        "$ref": "#/components/schemas/NetworkSessionDetailsResponse"
                       }
                     },
                     "meta": {
@@ -9981,10 +10236,10 @@
         }
       }
     },
-    "/player-sessions/live": {
+    "/network-sessions/{networkSessionId}": {
       "get": {
         "tags": [
-          "Player Sessions"
+          "Network Sessions"
         ],
         "security": [
           {
@@ -9994,145 +10249,8 @@
             "apiKeyAuth": []
           }
         ],
-        "summary": "List live player sessions",
-        "operationId": "listLivePlayerSessions",
-        "parameters": [
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 25
-            },
-            "required": false,
-            "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "minimum": 0,
-              "default": 0
-            },
-            "required": false,
-            "name": "offset",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": false,
-            "name": "playerId",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": false,
-            "name": "serverId",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful list response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/PlayerSessionDetailsResponse"
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "count": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "count"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/player-sessions/{sessionId}": {
-      "get": {
-        "tags": [
-          "Player Sessions"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "apiKeyAuth": []
-          }
-        ],
-        "summary": "Get a player session",
-        "operationId": "getPlayerSession",
+        "summary": "Get a Minecraft network session",
+        "operationId": "getNetworkSession",
         "parameters": [
           {
             "schema": {
@@ -10140,8 +10258,19 @@
               "format": "uuid"
             },
             "required": true,
-            "name": "sessionId",
+            "name": "networkSessionId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "backendSessions"
+              ]
+            },
+            "required": false,
+            "name": "include",
+            "in": "query"
           }
         ],
         "responses": {
@@ -10153,7 +10282,7 @@
                   "type": "object",
                   "properties": {
                     "data": {
-                      "$ref": "#/components/schemas/PlayerSessionDetailsResponse"
+                      "$ref": "#/components/schemas/NetworkSessionDetailsResponse"
                     }
                   },
                   "required": [
@@ -10894,13 +11023,6 @@
                       "development"
                     ]
                   },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "online",
-                      "offline"
-                    ]
-                  },
                   "port": {
                     "type": [
                       "integer",
@@ -10908,17 +11030,13 @@
                     ],
                     "minimum": 1,
                     "maximum": 65535
-                  },
-                  "version": {
-                    "type": "string"
                   }
                 },
                 "required": [
                   "name",
                   "type",
                   "environment",
-                  "port",
-                  "version"
+                  "port"
                 ],
                 "additionalProperties": false
               }
@@ -11031,13 +11149,6 @@
                       "development"
                     ]
                   },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "online",
-                      "offline"
-                    ]
-                  },
                   "port": {
                     "type": [
                       "integer",
@@ -11045,17 +11156,13 @@
                     ],
                     "minimum": 1,
                     "maximum": 65535
-                  },
-                  "version": {
-                    "type": "string"
                   }
                 },
                 "required": [
                   "name",
                   "type",
                   "environment",
-                  "port",
-                  "version"
+                  "port"
                 ],
                 "additionalProperties": false
               }
@@ -11534,303 +11641,6 @@
         }
       }
     },
-    "/servers/{serverId}/player-sessions": {
-      "post": {
-        "tags": [
-          "Player Sessions"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "apiKeyAuth": []
-          }
-        ],
-        "summary": "Start a Minecraft player session",
-        "operationId": "startMinecraftPlayerSession",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "serverId",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "mojangId": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "username": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 32
-                  }
-                },
-                "required": [
-                  "mojangId",
-                  "username"
-                ],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Player session started",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "$ref": "#/components/schemas/PlayerSessionResponse"
-                    }
-                  },
-                  "required": [
-                    "data"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/servers/{serverId}/heartbeat": {
-      "post": {
-        "tags": [
-          "Servers"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "apiKeyAuth": []
-          }
-        ],
-        "summary": "Refresh server heartbeat and online Minecraft sessions",
-        "operationId": "refreshServerHeartbeatAndOnlineMinecraftSessions",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "serverId",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "online",
-                      "offline"
-                    ]
-                  },
-                  "port": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": 1,
-                    "maximum": 65535
-                  },
-                  "version": {
-                    "type": "string"
-                  },
-                  "onlineMojangIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "default": []
-                  },
-                  "metrics": {
-                    "type": "object",
-                    "properties": {
-                      "onlinePlayerCount": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "maxPlayers": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "tps1m": {
-                        "type": "number",
-                        "minimum": 0
-                      },
-                      "tps5m": {
-                        "type": "number",
-                        "minimum": 0
-                      },
-                      "tps15m": {
-                        "type": "number",
-                        "minimum": 0
-                      },
-                      "msptAvg": {
-                        "type": "number",
-                        "minimum": 0
-                      },
-                      "msptP95": {
-                        "type": "number",
-                        "minimum": 0
-                      },
-                      "heapUsedBytes": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "heapMaxBytes": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "loadedChunks": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "loadedWorlds": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "backendServerCount": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "extra": {
-                        "type": "object",
-                        "additionalProperties": {}
-                      }
-                    },
-                    "additionalProperties": false
-                  }
-                },
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "$ref": "#/components/schemas/ServerHeartbeatResponse"
-                    }
-                  },
-                  "required": [
-                    "data"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/servers/{serverId}/access": {
       "put": {
         "tags": [
@@ -12174,13 +11984,6 @@
                       "development"
                     ]
                   },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "online",
-                      "offline"
-                    ]
-                  },
                   "port": {
                     "type": [
                       "integer",
@@ -12188,17 +11991,6 @@
                     ],
                     "minimum": 1,
                     "maximum": 65535
-                  },
-                  "version": {
-                    "type": "string"
-                  },
-                  "lastStartedAtMs": {
-                    "type": "string",
-                    "pattern": "^-?\\d+$"
-                  },
-                  "lastHeartbeatAtMs": {
-                    "type": "string",
-                    "pattern": "^-?\\d+$"
                   },
                   "createdAtMs": {
                     "type": "string",
@@ -12209,9 +12001,6 @@
                     "pattern": "^-?\\d+$"
                   }
                 },
-                "required": [
-                  "version"
-                ],
                 "additionalProperties": false
               }
             }
@@ -12600,10 +12389,10 @@
         }
       }
     },
-    "/servers/{serverId}/player-sessions/{mojangId}": {
-      "delete": {
+    "/server-instances/register": {
+      "post": {
         "tags": [
-          "Player Sessions"
+          "Server Instances"
         ],
         "security": [
           {
@@ -12613,30 +12402,61 @@
             "apiKeyAuth": []
           }
         ],
-        "summary": "End a Minecraft player session",
-        "operationId": "endMinecraftPlayerSession",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "serverId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "required": true,
-            "name": "mojangId",
-            "in": "path"
+        "summary": "Register a running server instance",
+        "operationId": "registerServerInstance",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "serverId": {
+                    "type": "string"
+                  },
+                  "runtimePort": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 65535
+                  },
+                  "version": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "heartbeatIntervalMs": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "serverId"
+                ],
+                "additionalProperties": false
+              }
+            }
           }
-        ],
+        },
         "responses": {
-          "204": {
-            "description": "No content"
+          "201": {
+            "description": "Server instance registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/RegisterServerInstanceResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "description": "Bad request",
@@ -12677,6 +12497,605 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/server-instances/{serverInstanceId}": {
+      "get": {
+        "tags": [
+          "Server Instances"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "summary": "Get a server instance",
+        "operationId": "getServerInstance",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "serverInstanceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ServerInstanceResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/server-instances/{serverInstanceId}/heartbeat": {
+      "put": {
+        "tags": [
+          "Server Instances"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Refresh server instance heartbeat",
+        "operationId": "refreshServerInstanceHeartbeat",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "serverInstanceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "observedAtMs": {
+                    "type": "string",
+                    "pattern": "^-?\\d+$"
+                  },
+                  "heartbeatIntervalMs": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "runtimePort": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 65535
+                  },
+                  "version": {
+                    "type": "string",
+                    "maxLength": 100
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ServerInstanceHeartbeatResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/server-instances/{serverInstanceId}/metrics": {
+      "post": {
+        "tags": [
+          "Server Instances"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Record server instance metrics",
+        "operationId": "recordServerInstanceMetrics",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "serverInstanceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "observedAtMs": {
+                    "type": "string",
+                    "pattern": "^-?\\d+$"
+                  },
+                  "onlinePlayerCount": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "maxPlayers": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "tps1m": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "tps5m": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "tps15m": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "msptAvg": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "msptP95": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "heapUsedBytes": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "heapMaxBytes": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "loadedChunks": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "loadedWorlds": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "backendServerCount": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "extra": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Metrics recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ServerInstanceMetricsResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/server-instances/{serverInstanceId}/presence": {
+      "put": {
+        "tags": [
+          "Server Instances"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Reconcile observed server instance presence",
+        "operationId": "reconcileServerInstancePresence",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "serverInstanceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "observedAtMs": {
+                    "type": "string",
+                    "pattern": "^-?\\d+$"
+                  },
+                  "onlineMojangIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "default": []
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ServerInstancePresenceResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/server-instances/{serverInstanceId}/events": {
+      "post": {
+        "tags": [
+          "Server Instances"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Record an ordered server instance event",
+        "operationId": "recordServerInstanceEvent",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "serverInstanceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "sequence": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "SERVER_SHUTTING_DOWN",
+                      "SERVER_STOPPED",
+                      "NETWORK_SESSION_STARTED",
+                      "BACKEND_CONNECTED",
+                      "NETWORK_SESSION_ENDED"
+                    ]
+                  },
+                  "occurredAtMs": {
+                    "type": "string",
+                    "pattern": "^-?\\d+$"
+                  },
+                  "payload": {
+                    "type": "object",
+                    "additionalProperties": {},
+                    "default": {}
+                  }
+                },
+                "required": [
+                  "eventId",
+                  "sequence",
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ServerInstanceEventResponse"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Event sequence conflict"
           }
         }
       }

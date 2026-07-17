@@ -15,23 +15,27 @@ export class PlayerSessionService {
 
     return {
       ...result,
-      rows: result.rows.map(toPlayerSessionResponse),
+      rows: result.rows.map((row) =>
+        toPlayerSessionResponse(
+          row.session,
+          row.backendSessions ?? [],
+          query.include === "backendSessions",
+        ),
+      ),
     };
   }
 
-  async listLiveSessions(
-    query: Omit<ListPlayerSessionsQuery, "state">,
-  ): Promise<PaginatedResult<PlayerSessionResponse>> {
-    return this.listSessions({ ...query, state: "live" });
-  }
-
-  async getSession(sessionId: string): Promise<PlayerSessionResponse> {
-    const session = await this.repo.findSessionById(sessionId);
+  async getSession(sessionId: string, includeBackendSessions = false): Promise<PlayerSessionResponse> {
+    const session = await this.repo.findSessionById(sessionId, includeBackendSessions);
 
     if (!session) {
       throw new PlayerSessionNotFoundError(sessionId);
     }
 
-    return toPlayerSessionResponse(session);
+    return toPlayerSessionResponse(
+      session.session,
+      session.backendSessions ?? [],
+      includeBackendSessions,
+    );
   }
 }

@@ -10,12 +10,7 @@ export function toServerResponse(servers: Selectable<Servers>): ServerResponse {
     name: servers.name,
     type: servers.type,
     environment: servers.environment,
-    status: servers.status,
     port: servers.port,
-    version: servers.version,
-
-    lastStartedAtMs: int8ToStringOrNull(servers.last_started_at_ms),
-    lastHeartbeatAtMs: int8ToStringOrNull(servers.last_heartbeat_at_ms),
 
     createdAtMs: int8ToStringOrDefault(servers.created_at_ms, "0"),
     lastUpdatedAtMs: int8ToStringOrNull(servers.last_updated_at_ms),

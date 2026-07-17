@@ -188,12 +188,24 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       getAccessPolicy: AsyncMock;
       getLockdownByServer: AsyncMock;
       getActiveGlobalLockdown: AsyncMock;
+      startNetworkSession: AsyncMock;
+      endNetworkSession: AsyncMock;
+      startBackendSession: AsyncMock;
+      endBackendSession: AsyncMock;
       startPlayerSession: AsyncMock;
       endPlayerSession: AsyncMock;
       heartbeat: AsyncMock;
       deleteServer: AsyncMock;
       deletePolicy: AsyncMock;
       deleteLockdown: AsyncMock;
+    };
+    serverInstance: {
+      registerInstance: AsyncMock;
+      getInstance: AsyncMock;
+      heartbeat: AsyncMock;
+      recordMetrics: AsyncMock;
+      reconcilePresence: AsyncMock;
+      processEvent: AsyncMock;
     };
     staffPrivilege: {
       listPrivileges: AsyncMock;
@@ -247,6 +259,19 @@ const serverApiKeyAuth: AuthContext = {
     id: "server-key-1",
     scopes: ["*"],
     isSuperKey: false,
+  },
+};
+
+const serverInstanceAuth: AuthContext = {
+  principalType: "server_instance",
+  principalId: ids.chatMessage,
+  actorId: null,
+  platform: "minecraft",
+  serverInstance: {
+    id: ids.chatMessage,
+    serverId: ids.server,
+    serverType: "velocity",
+    state: "active",
   },
 };
 
@@ -307,8 +332,32 @@ function testAuthenticate(): RequestHandler {
       return;
     }
 
+    if (authorization === "Bearer instance-token") {
+      req.auth = structuredClone(serverInstanceAuth);
+      next();
+      return;
+    }
+
     if (authorization === "ApiKey server-token") {
       req.auth = structuredClone(serverApiKeyAuth);
+      next();
+      return;
+    }
+
+    if (
+      authorization === "MinecraftSession player-token" &&
+      req.header("x-api-key") === "server-token"
+    ) {
+      req.auth = {
+        ...structuredClone(serverApiKeyAuth),
+        actorId: ids.actor,
+        minecraftSession: {
+          playerId: ids.player,
+          mojangId: ids.player,
+          proxyServerId: ids.server,
+          networkSessionId: ids.chatMessage,
+        },
+      };
       next();
       return;
     }
@@ -515,12 +564,24 @@ export function createTestDependencies(): TestDependencies {
         getAccessPolicy: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getLockdownByServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         getActiveGlobalLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        startNetworkSession: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        endNetworkSession: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        startBackendSession: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        endBackendSession: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         startPlayerSession: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         endPlayerSession: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         heartbeat: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deleteServer: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deletePolicy: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         deleteLockdown: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
+      serverInstance: {
+        registerInstance: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getInstance: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        heartbeat: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        recordMetrics: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        reconcilePresence: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        processEvent: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
       staffPrivilege: {
         listPrivileges: jest.fn<(...args: unknown[]) => Promise<unknown>>(),

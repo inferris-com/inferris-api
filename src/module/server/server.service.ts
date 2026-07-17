@@ -7,8 +7,9 @@ import { toAccessResponse, toLockdownResponse, toServerResponse } from "./server
 import type {
   AccessResponse,
   LockdownResponse,
-  PlayerSessionResponse,
+  NetworkSessionResponse,
   ServerHeartbeatResponse,
+  BackendSessionResponse,
   ServerResponse,
 } from "./server.response.types.js";
 import type { ServerPgRepository } from "./server.pg-repository.js";
@@ -50,10 +51,10 @@ export class ServerService {
     return servers.map(toServerResponse);
   }
 
-  async startPlayerSession(
+  async startNetworkSession(
     serverId: string,
     input: CreatePlayerSessionBody,
-  ): Promise<PlayerSessionResponse> {
+  ): Promise<NetworkSessionResponse> {
     const server = await this.repo.findServerById(serverId);
     if (!server) {
       throw new ServerNotFoundError(serverId);
@@ -64,7 +65,7 @@ export class ServerService {
       username: input.username,
       serverId,
     });
-    const session = await this.repo.startPlayerSession(serverId, {
+    const session = await this.repo.startNetworkSession(serverId, {
       playerId: player.id,
       actorId: player.actor_id,
       mojangId: player.mojang_id,
@@ -85,8 +86,8 @@ export class ServerService {
       actorId: session.actorId,
       playerId: session.playerId,
       mojangId: session.mojangId,
-      serverId: session.serverId,
-      sessionEventId: session.sessionEventId,
+      proxyServerId: session.proxyServerId,
+      networkSessionId: session.networkSessionId,
       issuedAtMs,
     };
 
@@ -104,13 +105,13 @@ export class ServerService {
     };
   }
 
-  async endPlayerSession(serverId: string, mojangId: string): Promise<void> {
+  async endNetworkSession(serverId: string, mojangId: string): Promise<void> {
     const player = await this.players.getPlayerIdentityByMojangId(mojangId);
     if (!player) {
       return;
     }
 
-    const session = await this.repo.endPlayerSession(
+    const session = await this.repo.endNetworkSession(
       serverId,
       {
         playerId: player.id,
@@ -129,6 +130,56 @@ export class ServerService {
       await this.redis.del(minecraftSessionTokenKey(tokenHash));
     }
     await this.redis.del(minecraftSessionPlayerKey(session.playerId));
+  }
+
+  async startBackendSession(
+    serverId: string,
+    input: CreatePlayerSessionBody,
+  ): Promise<BackendSessionResponse> {
+    const player = await this.players.getPlayerIdentityByMojangId(input.mojangId);
+    if (!player) {
+      throw new ServerNotFoundError(serverId);
+    }
+
+    const visit = await this.repo.startBackendSession(serverId, {
+      playerId: player.id,
+      actorId: player.actor_id,
+      mojangId: player.mojang_id,
+    });
+
+    if (!visit) {
+      throw new ServerNotFoundError(serverId);
+    }
+
+    return visit;
+  }
+
+  async endBackendSession(serverId: string, mojangId: string): Promise<void> {
+    const player = await this.players.getPlayerIdentityByMojangId(mojangId);
+    if (!player) {
+      return;
+    }
+
+    await this.repo.endBackendSession(
+      serverId,
+      {
+        playerId: player.id,
+        actorId: player.actor_id,
+        mojangId: player.mojang_id,
+      },
+      "leave",
+    );
+  }
+
+  async startPlayerSession(
+    serverId: string,
+    input: CreatePlayerSessionBody,
+  ): Promise<NetworkSessionResponse> {
+    return this.startNetworkSession(serverId, input);
+  }
+
+  async endPlayerSession(serverId: string, mojangId: string): Promise<void> {
+    await this.endNetworkSession(serverId, mojangId);
   }
 
   async heartbeat(serverId: string, input: ServerHeartbeatBody): Promise<ServerHeartbeatResponse> {

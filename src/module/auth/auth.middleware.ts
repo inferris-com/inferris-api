@@ -60,6 +60,79 @@ export function requireActor(): RequestHandler {
   };
 }
 
+export function requireMinecraftSession(): RequestHandler {
+  return (req, _res, next) => {
+    if (!req.auth) {
+      next(unauthorized("Authentication required"));
+      return;
+    }
+
+    if (!req.auth.minecraftSession) {
+      next(
+        new ValidationError({
+          code: "MINECRAFT_SESSION_REQUIRED",
+          message: "This endpoint requires a Minecraft session credential.",
+        }),
+      );
+      return;
+    }
+
+    next();
+  };
+}
+
+export function requireServerInstance(): RequestHandler {
+  return (req, _res, next) => {
+    if (!req.auth) {
+      next(unauthorized("Authentication required"));
+      return;
+    }
+
+    if (!req.auth.serverInstance) {
+      next(
+        new ForbiddenError({
+          code: "SERVER_INSTANCE_REQUIRED",
+          message: "This endpoint requires a server instance bearer token.",
+        }),
+      );
+      return;
+    }
+
+    next();
+  };
+}
+
+export function requireProxyServerInstance(): RequestHandler {
+  return (req, _res, next) => {
+    if (!req.auth) {
+      next(unauthorized("Authentication required"));
+      return;
+    }
+
+    if (!req.auth.serverInstance) {
+      next(
+        new ForbiddenError({
+          code: "SERVER_INSTANCE_REQUIRED",
+          message: "This endpoint requires a server instance bearer token.",
+        }),
+      );
+      return;
+    }
+
+    if (req.auth.serverInstance.serverType !== "velocity") {
+      next(
+        new ForbiddenError({
+          code: "PROXY_INSTANCE_REQUIRED",
+          message: "Canonical session events require an authenticated proxy instance.",
+        }),
+      );
+      return;
+    }
+
+    next();
+  };
+}
+
 export function authorize(repo: AuthRepository, policy: RoutePolicy): RequestHandler {
   return async (req, _res, next) => {
     if (!req.auth) {
@@ -265,9 +338,7 @@ async function auditDenied(repo: AuthRepository, req: Request, policy: RoutePoli
 
   await repo.insertAuditLog({
     actorId: getRequestActorId(req),
-    ...(req.auth.credentialOwnerActorId
-      ? { subjectActorId: req.auth.credentialOwnerActorId }
-      : {}),
+    ...(req.auth.credentialOwnerActorId ? { subjectActorId: req.auth.credentialOwnerActorId } : {}),
     principalType: req.auth.principalType,
     principalId: req.auth.principalId,
     platform: req.auth.platform,
@@ -284,11 +355,7 @@ async function auditDenied(repo: AuthRepository, req: Request, policy: RoutePoli
   });
 }
 
-async function authenticateCredential(
-  service: AuthService,
-  credential: Credential,
-  req: Request,
-) {
+async function authenticateCredential(service: AuthService, credential: Credential, req: Request) {
   if (credential.kind === "bearer") {
     return service.authenticateAccessToken(credential.token);
   }

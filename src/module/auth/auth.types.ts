@@ -37,6 +37,12 @@ export type AuthContext = {
     scopes: ApiScope[];
     isSuperKey: boolean;
   };
+  serverInstance?: {
+    id: string;
+    serverId: string;
+    serverType: string;
+    state: string;
+  };
   argus?: {
     userId: string;
     role: ArgusAccountRole;
@@ -45,8 +51,8 @@ export type AuthContext = {
   minecraftSession?: {
     playerId: string;
     mojangId: string;
-    serverId: string;
-    sessionEventId: string;
+    proxyServerId: string;
+    networkSessionId: string;
   };
   privileged?: {
     id: string;

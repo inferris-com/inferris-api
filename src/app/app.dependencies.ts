@@ -45,6 +45,8 @@ import { RankService } from "../module/rank/rank.service.js";
 import { ReportPgRepository } from "../module/report/report.pg-repository.js";
 import { ReportPublisher } from "../module/report/report.publisher.js";
 import { ReportService } from "../module/report/report.service.js";
+import { ServerInstancePgRepository } from "../module/server-instance/server-instance.pg-repository.js";
+import { ServerInstanceService } from "../module/server-instance/server-instance.service.js";
 import { ServerPgRepository } from "../module/server/server.pg-repository.js";
 import { ServerService } from "../module/server/server.service.js";
 import { StaffPrivilegePgRepository } from "../module/staff-privilege/staff-privilege.pg-repository.js";
@@ -80,6 +82,7 @@ export type AppDependencies = {
     punishment: PunishmentService;
     rank: RankService;
     report: ReportService;
+    serverInstance: ServerInstanceService;
     server: ServerService;
     staffPrivilege: StaffPrivilegeService;
     watchlist: WatchlistService;
@@ -120,6 +123,7 @@ export function createAppDependencies({
   const punishmentRepository = new PunishmentPgRepository(database);
   const rankRepository = new RankPgRepository(database);
   const reportRepository = new ReportPgRepository(database);
+  const serverInstanceRepository = new ServerInstancePgRepository(database);
   const serverRepository = new ServerPgRepository(database);
   const staffPrivilegeRepository = new StaffPrivilegePgRepository(database);
   const watchlistRepository = new WatchlistPgRepository(database);
@@ -150,6 +154,7 @@ export function createAppDependencies({
       punishment: new PunishmentService(punishmentRepository, new PunishmentPublisher(redisClient)),
       rank: new RankService(rankRepository),
       report: new ReportService(reportRepository, new ReportPublisher(redisClient)),
+      serverInstance: new ServerInstanceService(serverInstanceRepository, playerService),
       server: new ServerService(serverRepository, redisClient, playerService),
       staffPrivilege: new StaffPrivilegeService(staffPrivilegeRepository),
       watchlist: new WatchlistService(watchlistRepository),

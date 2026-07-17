@@ -21,11 +21,7 @@ export const serverResponseSchema = z
     name: z.string(),
     type: z.string(),
     environment: z.string(),
-    status: z.string(),
     port: z.number().int().nullable(),
-    version: z.string(),
-    lastStartedAtMs: z.string().nullable(),
-    lastHeartbeatAtMs: z.string().nullable(),
     createdAtMs: z.string(),
     lastUpdatedAtMs: z.string().nullable(),
   })
@@ -57,17 +53,28 @@ export const lockdownResponseSchema = z
   })
   .openapi("LockdownResponse");
 
-export const playerSessionResponseSchema = z
+export const networkSessionResponseSchema = z
   .object({
     playerId: z.string().uuid(),
     actorId: z.string().uuid(),
     mojangId: z.string().uuid(),
-    serverId: z.string().uuid(),
-    sessionEventId: z.string().uuid(),
+    proxyServerId: z.string().uuid(),
+    networkSessionId: z.string().uuid(),
     token: z.string(),
     expiresAtMs: z.string(),
   })
-  .openapi("PlayerSessionResponse");
+  .openapi("NetworkSessionResponse");
+
+export const serverVisitResponseSchema = z
+  .object({
+    playerId: z.string().uuid(),
+    actorId: z.string().uuid(),
+    mojangId: z.string().uuid(),
+    networkSessionId: z.string().uuid(),
+    serverId: z.string().uuid(),
+    backendSessionId: z.string().uuid(),
+  })
+  .openapi("BackendSessionResponse");
 
 export const serverHeartbeatResponseSchema = z
   .object({
@@ -81,5 +88,6 @@ export type PlayerSummaryResponse = z.infer<typeof serverPlayerSummaryResponseSc
 export type ServerResponse = z.infer<typeof serverResponseSchema>;
 export type AccessResponse = z.infer<typeof accessResponseSchema>;
 export type LockdownResponse = z.infer<typeof lockdownResponseSchema>;
-export type PlayerSessionResponse = z.infer<typeof playerSessionResponseSchema>;
+export type NetworkSessionResponse = z.infer<typeof networkSessionResponseSchema>;
+export type BackendSessionResponse = z.infer<typeof serverVisitResponseSchema>;
 export type ServerHeartbeatResponse = z.infer<typeof serverHeartbeatResponseSchema>;

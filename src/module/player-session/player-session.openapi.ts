@@ -8,41 +8,31 @@ import {
 } from "../../openapi/openapi.helpers.js";
 import { playerSessionResponseSchema } from "./player-session.response-types.js";
 import {
+  getPlayerSessionQuerySchema,
   listPlayerSessionsQuerySchema,
-  playerSessionParamsSchema,
+  networkSessionParamsSchema,
 } from "./player-session.schemas.js";
 
 export function registerPlayerSessionOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({
     method: "get",
-    path: "/player-sessions",
-    tags: ["Player Sessions"],
+    path: "/network-sessions",
+    tags: ["Network Sessions"],
     security: userOrServiceSecurity,
-    summary: "List player sessions",
-    operationId: "listPlayerSessions",
+    summary: "List Minecraft network sessions",
+    operationId: "listNetworkSessions",
     request: { query: listPlayerSessionsQuerySchema },
     responses: { "200": listResponse(playerSessionResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
     method: "get",
-    path: "/player-sessions/live",
-    tags: ["Player Sessions"],
+    path: "/network-sessions/{networkSessionId}",
+    tags: ["Network Sessions"],
     security: userOrServiceSecurity,
-    summary: "List live player sessions",
-    operationId: "listLivePlayerSessions",
-    request: { query: listPlayerSessionsQuerySchema.omit({ state: true }) },
-    responses: { "200": listResponse(playerSessionResponseSchema), ...standardErrorResponses },
-  });
-
-  registry.registerPath({
-    method: "get",
-    path: "/player-sessions/{sessionId}",
-    tags: ["Player Sessions"],
-    security: userOrServiceSecurity,
-    summary: "Get a player session",
-    operationId: "getPlayerSession",
-    request: { params: playerSessionParamsSchema },
+    summary: "Get a Minecraft network session",
+    operationId: "getNetworkSession",
+    request: { params: networkSessionParamsSchema, query: getPlayerSessionQuerySchema },
     responses: { "200": successResponse(playerSessionResponseSchema), ...standardErrorResponses },
   });
 }

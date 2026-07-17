@@ -2,9 +2,9 @@ import z from "zod";
 
 import { paginationQuerySchema } from "../../shared/pagination.schemas.js";
 
-export const playerSessionParamsSchema = z
+export const networkSessionParamsSchema = z
   .object({
-    sessionId: z.string().uuid(),
+    networkSessionId: z.string().uuid(),
   })
   .strict();
 
@@ -12,9 +12,22 @@ export const listPlayerSessionsQuerySchema = paginationQuerySchema
   .extend({
     playerId: z.string().uuid().optional(),
     serverId: z.string().uuid().optional(),
-    state: z.enum(["all", "live", "historical"]).default("all"),
+    proxyServerId: z.string().uuid().optional(),
+    backendServerId: z.string().uuid().optional(),
+    state: z.enum(["all", "active", "completed"]).default("all"),
+    fromMs: z.coerce.string().regex(/^\d+$/).optional(),
+    toMs: z.coerce.string().regex(/^\d+$/).optional(),
+    include: z.enum(["backendSessions"]).optional(),
+    cursor: z.string().optional(),
   })
   .strict();
 
-export type PlayerSessionParams = z.infer<typeof playerSessionParamsSchema>;
+export const getPlayerSessionQuerySchema = z
+  .object({
+    include: z.enum(["backendSessions"]).optional(),
+  })
+  .strict();
+
+export type NetworkSessionParams = z.infer<typeof networkSessionParamsSchema>;
 export type ListPlayerSessionsQuery = z.infer<typeof listPlayerSessionsQuerySchema>;
+export type GetPlayerSessionQuery = z.infer<typeof getPlayerSessionQuerySchema>;

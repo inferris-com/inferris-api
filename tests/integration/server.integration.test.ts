@@ -12,7 +12,7 @@ describe("server and lockdown routes", () => {
         name: "lobby",
         type: "paper",
         environment: "development",
-        status: "online",
+        port: 25565,
       },
     ]);
 
@@ -26,7 +26,7 @@ describe("server and lockdown routes", () => {
           name: "lobby",
           type: "paper",
           environment: "development",
-          status: "online",
+          port: 25565,
         },
       ],
       meta: { count: 1 },
@@ -41,9 +41,7 @@ describe("server and lockdown routes", () => {
       name: "lobby",
       type: "paper",
       environment: "development",
-      status: "online",
       port: 25565,
-      version: "1.21.8",
     });
 
     const response = await request
@@ -53,9 +51,7 @@ describe("server and lockdown routes", () => {
         name: "lobby",
         type: "paper",
         environment: "development",
-        status: "online",
         port: 25565,
-        version: "1.21.8",
       });
 
     expect(response.status).toBe(200);
@@ -69,10 +65,79 @@ describe("server and lockdown routes", () => {
       name: "lobby",
       type: "paper",
       environment: "development",
-      status: "online",
       port: 25565,
-      version: "1.21.8",
     });
+  });
+
+  test("POST /servers/:serverId/network-sessions is removed", async () => {
+    const { dependencies, request } = createTestApp();
+
+    const response = await request
+      .post(`/servers/${ids.server}/network-sessions`)
+      .set("Authorization", "ApiKey server-token")
+      .send({
+        mojangId: ids.player,
+        username: "Developer",
+      });
+
+    expect(response.status).toBe(404);
+    expect(dependencies.services.server.startNetworkSession).not.toHaveBeenCalled();
+  });
+
+  test("POST /servers/:serverId/server-visits is removed", async () => {
+    const { dependencies, request } = createTestApp();
+
+    const response = await request
+      .post(`/servers/${ids.server}/server-visits`)
+      .set("Authorization", "MinecraftSession player-token")
+      .set("X-Api-Key", "server-token")
+      .send({
+        mojangId: ids.player,
+        username: "Developer",
+      });
+
+    expect(response.status).toBe(404);
+    expect(dependencies.services.server.startBackendSession).not.toHaveBeenCalled();
+  });
+
+  test("DELETE /servers/:serverId/network-sessions/:mojangId ends network session", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.server.endNetworkSession.mockResolvedValue(undefined);
+
+    const response = await request
+      .delete(`/servers/${ids.server}/network-sessions/${ids.player}`)
+      .set("Authorization", "ApiKey server-token");
+
+    expect(response.status).toBe(404);
+    expect(dependencies.services.server.endNetworkSession).not.toHaveBeenCalled();
+  });
+
+  test("DELETE /servers/:serverId/server-visits/:mojangId ends backend visit", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.server.endBackendSession.mockResolvedValue(undefined);
+
+    const response = await request
+      .delete(`/servers/${ids.server}/server-visits/${ids.player}`)
+      .set("Authorization", "MinecraftSession player-token")
+      .set("X-Api-Key", "server-token");
+
+    expect(response.status).toBe(404);
+    expect(dependencies.services.server.endBackendSession).not.toHaveBeenCalled();
+  });
+
+  test("POST /servers/:serverId/server-visits requires Minecraft session context", async () => {
+    const { dependencies, request } = createTestApp();
+
+    const response = await request
+      .post(`/servers/${ids.server}/server-visits`)
+      .set("Authorization", "ApiKey server-token")
+      .send({
+        mojangId: ids.player,
+        username: "Developer",
+      });
+
+    expect(response.status).toBe(404);
+    expect(dependencies.services.server.startBackendSession).not.toHaveBeenCalled();
   });
 
   test("POST /servers requires admin staff authority", async () => {
@@ -86,7 +151,6 @@ describe("server and lockdown routes", () => {
         type: "paper",
         environment: "development",
         port: 25565,
-        version: "1.21.8",
       });
 
     expect(response.status).toBe(403);
@@ -162,12 +226,8 @@ describe("server and lockdown routes", () => {
     });
   });
 
-  test("POST /servers/:serverId/heartbeat accepts typed metrics", async () => {
+  test("POST /servers/:serverId/heartbeat is removed", async () => {
     const { dependencies, request } = createTestApp();
-    dependencies.services.server.heartbeat.mockResolvedValue({
-      refreshedMojangIds: [],
-      missingMojangIds: [],
-    });
 
     const response = await request
       .post(`/servers/${ids.server}/heartbeat`)
@@ -189,32 +249,11 @@ describe("server and lockdown routes", () => {
         },
       });
 
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({
-      data: {
-        refreshedMojangIds: [],
-        missingMojangIds: [],
-      },
-    });
-    expect(dependencies.services.server.heartbeat).toHaveBeenCalledWith(ids.server, {
-      status: "online",
-      port: 25565,
-      version: "1.21.8",
-      onlineMojangIds: [],
-      metrics: {
-        onlinePlayerCount: 12,
-        maxPlayers: 100,
-        tps1m: 19.98,
-        msptAvg: 22.4,
-        heapUsedBytes: 268435456,
-        heapMaxBytes: 1073741824,
-        loadedChunks: 1200,
-        loadedWorlds: 3,
-      },
-    });
+    expect(response.status).toBe(404);
+    expect(dependencies.services.server.heartbeat).not.toHaveBeenCalled();
   });
 
-  test("POST /servers/:serverId/heartbeat rejects invalid metrics", async () => {
+  test("POST /servers/:serverId/heartbeat invalid payload still uses removed route", async () => {
     const { dependencies, request } = createTestApp();
 
     const response = await request
@@ -227,12 +266,7 @@ describe("server and lockdown routes", () => {
         },
       });
 
-    expect(response.status).toBe(400);
-    expect(response.body).toMatchObject({
-      error: {
-        code: "VALIDATION_ERROR",
-      },
-    });
+    expect(response.status).toBe(404);
     expect(dependencies.services.server.heartbeat).not.toHaveBeenCalled();
   });
 

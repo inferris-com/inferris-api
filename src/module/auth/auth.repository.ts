@@ -38,10 +38,17 @@ export type PrivilegedRecord = {
   role: UserPrivilegeRole;
 };
 
-export type CurrentPlayerSessionRecord = {
+export type CurrentNetworkSessionRecord = {
   playerId: string;
+  proxyServerId: string;
+  networkSessionId: string;
+};
+
+export type ServerInstanceAuthRecord = {
+  id: string;
   serverId: string;
-  sessionEventId: string;
+  serverType: string;
+  state: string;
 };
 
 export type ArgusSessionRecord = {
@@ -134,7 +141,8 @@ export class AuthRepository {
         "account_state",
         "account_security_lock",
       ])
-      .where("account_state", "=", "active")
+      .where("account_state", "in", ["active", "suspended", "disabled", "verify_email"])
+
       .where((eb) =>
         eb.or([
           eb(sql`lower(username)`, "=", usernameOrEmail.toLowerCase()),
@@ -238,18 +246,53 @@ export class AuthRepository {
     return matchingEffects.includes("allow");
   }
 
-  async findCurrentPlayerSession(playerId: string): Promise<CurrentPlayerSessionRecord | null> {
+  async findCurrentNetworkSession(playerId: string): Promise<CurrentNetworkSessionRecord | null> {
     const row = await this.db
-      .selectFrom("player_sessions_current")
-      .select(["player_id", "server_id", "session_event_id"])
+      .selectFrom("network_sessions_current")
+      .select(["player_id", "proxy_server_id", "network_session_id"])
       .where("player_id", "=", playerId)
       .executeTakeFirst();
 
     return row
       ? {
           playerId: row.player_id,
+          proxyServerId: row.proxy_server_id,
+          networkSessionId: row.network_session_id,
+        }
+      : null;
+  }
+
+  async findActiveServerInstanceByTokenHash(
+    tokenHash: string,
+  ): Promise<ServerInstanceAuthRecord | null> {
+    const rows = await sql<{
+      id: string;
+      server_id: string;
+      server_type: string;
+      state: string;
+    }>`
+      SELECT
+        si.id,
+        si.server_id,
+        s.type::text AS server_type,
+        si.state::text AS state
+      FROM server_instance_tokens sit
+      INNER JOIN server_instances si ON si.id = sit.server_instance_id
+      INNER JOIN servers s ON s.id = si.server_id
+      WHERE sit.token_hash = ${tokenHash}
+        AND sit.revoked_at_ms IS NULL
+        AND si.state IN ('active', 'draining')
+      LIMIT 1
+    `.execute(this.db);
+
+    const row = rows.rows[0];
+
+    return row
+      ? {
+          id: row.id,
           serverId: row.server_id,
-          sessionEventId: row.session_event_id,
+          serverType: row.server_type,
+          state: row.state,
         }
       : null;
   }

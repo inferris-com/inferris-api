@@ -59,7 +59,7 @@ export type PermissionEffect = "allow" | "deny";
 
 export type Platform = "argus" | "bot" | "discord" | "minecraft" | "other";
 
-export type PrincipalType = "argus_user" | "discord_bot" | "internal_worker" | "minecraft_session" | "server_api_key" | "service_actor_api_key" | "system" | "unknown" | "user_api_key";
+export type PrincipalType = "argus_user" | "discord_bot" | "internal_worker" | "minecraft_session" | "server_api_key" | "server_instance" | "service_actor_api_key" | "system" | "unknown" | "user_api_key";
 
 export type Punishment = "ban" | "kick" | "mute" | "warn";
 
@@ -75,9 +75,11 @@ export type ServerAccessMode = "min_rank" | "open" | "permission";
 
 export type ServerEnv = "alpha" | "beta" | "development" | "production";
 
-export type ServerLockdownScope = "global" | "local";
+export type ServerEventType = "BACKEND_CONNECTED" | "NETWORK_SESSION_ENDED" | "NETWORK_SESSION_STARTED" | "SERVER_SHUTTING_DOWN" | "SERVER_STOPPED";
 
-export type ServerStatus = "offline" | "online";
+export type ServerInstanceState = "active" | "draining" | "lost" | "stopped" | "superseded";
+
+export type ServerLockdownScope = "global" | "local";
 
 export type ServerType = "paper" | "unspecified" | "vanilla" | "velocity";
 
@@ -224,6 +226,28 @@ export interface AuditLogs {
   subject_actor_id: string | null;
   target_id: string | null;
   target_type: string | null;
+}
+
+export interface BackendSessions {
+  backend_server_id: string;
+  backend_server_instance_id: string | null;
+  id: Generated<string>;
+  joined_at_ms: Generated<Int8>;
+  leave_reason: string | null;
+  left_at_ms: Int8 | null;
+  meta: Generated<Json>;
+  network_session_id: string;
+  player_id: string;
+  updated_at_ms: Int8 | null;
+}
+
+export interface BackendSessionsCurrent {
+  backend_server_id: string;
+  backend_session_id: string;
+  joined_at_ms: Generated<Int8>;
+  network_session_id: string;
+  player_id: string;
+  updated_at_ms: Int8 | null;
 }
 
 export interface Badges {
@@ -399,6 +423,26 @@ export interface ModerationResourceLinks {
   target_type: ModerationResourceType;
 }
 
+export interface NetworkSessions {
+  connected_at_ms: Generated<Int8>;
+  disconnect_reason: string | null;
+  disconnected_at_ms: Int8 | null;
+  id: Generated<string>;
+  meta: Generated<Json>;
+  player_id: string;
+  proxy_server_id: string;
+  proxy_server_instance_id: string | null;
+  updated_at_ms: Int8 | null;
+}
+
+export interface NetworkSessionsCurrent {
+  connected_at_ms: Generated<Int8>;
+  network_session_id: string;
+  player_id: string;
+  proxy_server_id: string;
+  updated_at_ms: Int8 | null;
+}
+
 export interface PermissionNodes {
   category: Generated<PermissionCategory>;
   created_at_ms: Generated<Int8>;
@@ -491,25 +535,6 @@ export interface Players {
   mojang_id: string;
   orbs: Generated<Int8>;
   username: string;
-}
-
-export interface PlayerSessionEvents {
-  connected_at_ms: Generated<Int8>;
-  disconnect_reason: string | null;
-  disconnected_at_ms: Int8 | null;
-  id: Generated<string>;
-  meta: Generated<Json>;
-  player_id: string;
-  server_id: string;
-  updated_at_ms: Int8 | null;
-}
-
-export interface PlayerSessionsCurrent {
-  connected_at_ms: Generated<Int8>;
-  player_id: string;
-  server_id: string;
-  session_event_id: string;
-  updated_at_ms: Int8 | null;
 }
 
 export interface PrivilegedSubjects {
@@ -666,6 +691,18 @@ export interface ServerAccessPolicies {
   updated_at_ms: Int8 | null;
 }
 
+export interface ServerEvents {
+  created_at_ms: Generated<Int8>;
+  event_id: string;
+  id: Generated<string>;
+  payload: Generated<Json>;
+  processed_at_ms: Generated<Int8>;
+  processing_result: Generated<Json>;
+  sequence: Int8;
+  server_instance_id: string;
+  type: ServerEventType;
+}
+
 export interface ServerHeartbeatObservations {
   backend_server_count: number | null;
   extra: Generated<Json>;
@@ -680,9 +717,38 @@ export interface ServerHeartbeatObservations {
   observed_at_ms: Generated<Int8>;
   online_player_count: number | null;
   server_id: string;
+  server_instance_id: string | null;
   tps_15m: Numeric | null;
   tps_1m: Numeric | null;
   tps_5m: Numeric | null;
+}
+
+export interface ServerInstances {
+  created_at_ms: Generated<Int8>;
+  draining_at_ms: Int8 | null;
+  heartbeat_interval_ms: Int8 | null;
+  id: Generated<string>;
+  is_synthetic_backfill: Generated<boolean>;
+  last_event_sequence: Generated<Int8>;
+  last_heartbeat_at_ms: Int8 | null;
+  lost_at_ms: Int8 | null;
+  runtime_port: number | null;
+  server_id: string;
+  started_at_ms: Generated<Int8>;
+  state: Generated<ServerInstanceState>;
+  stopped_at_ms: Int8 | null;
+  superseded_at_ms: Int8 | null;
+  updated_at_ms: Int8 | null;
+  version: string | null;
+}
+
+export interface ServerInstanceTokens {
+  id: Generated<string>;
+  issued_at_ms: Generated<Int8>;
+  revoked_at_ms: Int8 | null;
+  revoked_reason: string | null;
+  server_instance_id: string;
+  token_hash: string;
 }
 
 export interface ServerLatestMetrics {
@@ -699,6 +765,7 @@ export interface ServerLatestMetrics {
   observed_at_ms: Int8;
   online_player_count: number | null;
   server_id: string;
+  server_instance_id: string | null;
   tps_15m: Numeric | null;
   tps_1m: Numeric | null;
   tps_5m: Numeric | null;
@@ -709,14 +776,10 @@ export interface Servers {
   created_at_ms: Generated<Int8>;
   environment: Generated<ServerEnv>;
   id: Generated<string>;
-  last_heartbeat_at_ms: Int8 | null;
-  last_started_at_ms: Int8 | null;
   last_updated_at_ms: Int8 | null;
   name: string;
   port: number | null;
-  status: Generated<ServerStatus>;
   type: Generated<ServerType>;
-  version: Generated<string>;
 }
 
 export interface ShopOfferings {
@@ -757,6 +820,8 @@ export interface DB {
   argus_sessions: ArgusSessions;
   argus_users: ArgusUsers;
   audit_logs: AuditLogs;
+  backend_sessions: BackendSessions;
+  backend_sessions_current: BackendSessionsCurrent;
   badges: Badges;
   bug_reports: BugReports;
   chat_channels: ChatChannels;
@@ -771,6 +836,8 @@ export interface DB {
   moderation_events: ModerationEvents;
   moderation_evidence: ModerationEvidence;
   moderation_resource_links: ModerationResourceLinks;
+  network_sessions: NetworkSessions;
+  network_sessions_current: NetworkSessionsCurrent;
   permission_nodes: PermissionNodes;
   permission_policies: PermissionPolicies;
   player_badges: PlayerBadges;
@@ -779,8 +846,6 @@ export interface DB {
   player_nicknames: PlayerNicknames;
   player_profiles: PlayerProfiles;
   player_ranks: PlayerRanks;
-  player_session_events: PlayerSessionEvents;
-  player_sessions_current: PlayerSessionsCurrent;
   players: Players;
   privileged_subjects: PrivilegedSubjects;
   punishment_appeals: PunishmentAppeals;
@@ -794,7 +859,10 @@ export interface DB {
   report_comments: ReportComments;
   reports: Reports;
   server_access_policies: ServerAccessPolicies;
+  server_events: ServerEvents;
   server_heartbeat_observations: ServerHeartbeatObservations;
+  server_instance_tokens: ServerInstanceTokens;
+  server_instances: ServerInstances;
   server_latest_metrics: ServerLatestMetrics;
   servers: Servers;
   shop_offerings: ShopOfferings;

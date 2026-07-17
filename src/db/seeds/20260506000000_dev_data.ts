@@ -62,6 +62,13 @@ const ids = {
     devPermission: dummyId5,
   },
 
+  networkSessions: {
+    refrizor: "50000000-0000-0000-0000-000000000001",
+    dummy: "50000000-0000-0000-0000-000000000002",
+    moderatorDummy: "50000000-0000-0000-0000-000000000003",
+    adminDummy: "50000000-0000-0000-0000-000000000004",
+  },
+
   permissions: {
     serverAccessDev2: dummyId,
     serverAccessAll: dummyId2,
@@ -616,40 +623,30 @@ const seed = {
           name: "seed-velocity",
           type: "velocity",
           environment: "development",
-          status: "offline",
-          version: "development",
         },
         {
           id: ids.servers.lobby,
           name: "seed-lobby",
           type: "paper",
           environment: "development",
-          status: "offline",
-          version: "development",
         },
         {
           id: ids.servers.lockdownMinigames,
           name: "Minigames (Lockdown)",
           type: "paper",
           environment: "development",
-          status: "offline",
-          version: "development",
         },
         {
           id: ids.servers.devMinRank,
           name: "Development server #1 (min rank)",
           type: "paper",
           environment: "development",
-          status: "offline",
-          version: "development",
         },
         {
           id: ids.servers.devPermission,
           name: "Development server #2 (min perm)",
           type: "paper",
           environment: "development",
-          status: "offline",
-          version: "development",
         },
       ])
       .execute();
@@ -1609,28 +1606,63 @@ const seed = {
     const nowMs = Date.now();
 
     await db
-      .insertInto("player_session_events")
+      .insertInto("network_sessions")
       .values([
         {
+          id: ids.networkSessions.refrizor,
           player_id: ids.players.refrizor,
-          server_id: ids.servers.lobby,
+          proxy_server_id: ids.servers.velocity,
           connected_at_ms: nowMs - 30 * 60 * 1000,
           disconnected_at_ms: nowMs - 10 * 60 * 1000,
         },
         {
+          id: ids.networkSessions.dummy,
           player_id: ids.players.dummy,
-          server_id: ids.servers.lobby,
+          proxy_server_id: ids.servers.velocity,
           connected_at_ms: nowMs - 24 * 60 * 1000,
         },
         {
+          id: ids.networkSessions.moderatorDummy,
           player_id: ids.players.moderatorDummy,
-          server_id: ids.servers.lobby,
+          proxy_server_id: ids.servers.velocity,
           connected_at_ms: nowMs - 18 * 60 * 1000,
         },
         {
+          id: ids.networkSessions.adminDummy,
           player_id: ids.players.adminDummy,
-          server_id: ids.servers.lockdownMinigames,
+          proxy_server_id: ids.servers.velocity,
           connected_at_ms: nowMs - 8 * 60 * 1000,
+        },
+      ])
+      .execute();
+
+    await db
+      .insertInto("backend_sessions")
+      .values([
+        {
+          network_session_id: ids.networkSessions.refrizor,
+          player_id: ids.players.refrizor,
+          backend_server_id: ids.servers.lobby,
+          joined_at_ms: nowMs - 30 * 60 * 1000,
+          left_at_ms: nowMs - 10 * 60 * 1000,
+        },
+        {
+          network_session_id: ids.networkSessions.dummy,
+          player_id: ids.players.dummy,
+          backend_server_id: ids.servers.lobby,
+          joined_at_ms: nowMs - 24 * 60 * 1000,
+        },
+        {
+          network_session_id: ids.networkSessions.moderatorDummy,
+          player_id: ids.players.moderatorDummy,
+          backend_server_id: ids.servers.lobby,
+          joined_at_ms: nowMs - 18 * 60 * 1000,
+        },
+        {
+          network_session_id: ids.networkSessions.adminDummy,
+          player_id: ids.players.adminDummy,
+          backend_server_id: ids.servers.lockdownMinigames,
+          joined_at_ms: nowMs - 8 * 60 * 1000,
         },
       ])
       .execute();
@@ -1832,19 +1864,6 @@ const seed = {
     await insertMetricObservations(db, metricObservations);
     await insertLatestMetrics(db, latestMetricObservations(metricObservations));
 
-    await sql`
-      UPDATE servers
-      SET
-        status = 'online',
-        last_heartbeat_at_ms = server_latest_metrics.observed_at_ms
-      FROM server_latest_metrics
-      WHERE server_latest_metrics.server_id = servers.id
-        AND servers.id IN (
-          ${ids.servers.velocity}::uuid,
-          ${ids.servers.lobby}::uuid,
-          ${ids.servers.lockdownMinigames}::uuid
-        )
-    `.execute(db);
   },
 } satisfies Seed;
 

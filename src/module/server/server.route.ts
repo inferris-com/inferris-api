@@ -5,27 +5,19 @@ import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.
 import type {
   AccessResponse,
   LockdownResponse,
-  PlayerSessionResponse,
-  ServerHeartbeatResponse,
   ServerResponse,
 } from "./server.response.types.js";
 import {
   type CreateLockdownBody,
   createLockdownBodySchema,
-  type CreatePlayerSessionBody,
-  createPlayerSessionBodySchema,
   type CreateServerBody,
   createServerBodySchema,
   type ReplaceServerAccessBody,
   replaceServerAccessBodySchema,
-  type ServerHeartbeatBody,
-  serverHeartbeatBodySchema,
   type ServerIdParamsSchema,
   serverIdParamsSchema,
   type ServerNameParamsSchema,
   serverNameParamsSchema,
-  type ServerPlayerSessionParamsSchema,
-  serverPlayerSessionParamsSchema,
   type UpdateLockdownBody,
   updateLockdownBodySchema,
   type UpdateServerBody,
@@ -73,33 +65,6 @@ export function createServerRouter(service: ServerService, authRepository: AuthR
       issuedByActorId: getRequestActorId(req) ?? "",
     });
     const body: ApiSuccess<LockdownResponse> = { data: server };
-
-    res.json(body);
-  };
-
-  const startPlayerSession: RequestHandler<
-    ServerIdParamsSchema,
-    unknown,
-    CreatePlayerSessionBody
-  > = async (req, res) => {
-    const session = await service.startPlayerSession(req.params.serverId, req.body);
-    const body: ApiSuccess<PlayerSessionResponse> = { data: session };
-
-    res.status(201).json(body);
-  };
-
-  const endPlayerSession: RequestHandler<ServerPlayerSessionParamsSchema> = async (req, res) => {
-    await service.endPlayerSession(req.params.serverId, req.params.mojangId);
-
-    res.status(204).send();
-  };
-
-  const heartbeat: RequestHandler<ServerIdParamsSchema, unknown, ServerHeartbeatBody> = async (
-    req,
-    res,
-  ) => {
-    const result = await service.heartbeat(req.params.serverId, req.body);
-    const body: ApiSuccess<ServerHeartbeatResponse> = { data: result };
 
     res.json(body);
   };
@@ -203,10 +168,6 @@ export function createServerRouter(service: ServerService, authRepository: AuthR
     argusRole: "moderator",
     privilegedRole: "moderator",
   });
-  const manageMinecraftSessions = authorize(authRepository, {
-    apiScopes: ["minecraft:sessions:manage"],
-  });
-
   router.post(
     "/",
     writeServers,
@@ -230,24 +191,6 @@ export function createServerRouter(service: ServerService, authRepository: AuthR
     validateRequest({ params: serverIdParamsSchema, body: createLockdownBodySchema }),
     createLockdown,
   );
-  router.post(
-    "/:serverId/player-sessions",
-    manageMinecraftSessions,
-    validateRequest({ params: serverIdParamsSchema, body: createPlayerSessionBodySchema }),
-    startPlayerSession,
-  );
-  router.delete(
-    "/:serverId/player-sessions/:mojangId",
-    manageMinecraftSessions,
-    validateRequest({ params: serverPlayerSessionParamsSchema }),
-    endPlayerSession,
-  );
-  router.post(
-    "/:serverId/heartbeat",
-    manageMinecraftSessions,
-    validateRequest({ params: serverIdParamsSchema, body: serverHeartbeatBodySchema }),
-    heartbeat,
-  );
   router.put(
     "/:serverId/access",
     writeServers,
@@ -269,11 +212,7 @@ export function createServerRouter(service: ServerService, authRepository: AuthR
     validateRequest({ params: serverIdParamsSchema, body: updateLockdownBodySchema }),
     patchLockdown,
   );
-  router.get(
-    "/lockdowns/global/active",
-    readServers,
-    getActiveGlobalLockdown,
-  );
+  router.get("/lockdowns/global/active", readServers, getActiveGlobalLockdown);
   router.get(
     "/by-name/:serverName",
     readServers,

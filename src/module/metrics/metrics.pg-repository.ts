@@ -109,9 +109,15 @@ export class MetricsPgRepository {
         s.name,
         s.type::text AS type,
         s.environment::text AS environment,
-        s.status::text AS status,
-        s.last_heartbeat_at_ms::text,
-        count(c.player_id)::int AS online_player_count,
+        CASE
+          WHEN count(si.id) FILTER (WHERE si.state IN ('active', 'draining')) > 0 THEN 'online'
+          ELSE 'offline'
+        END AS status,
+        max(si.last_heartbeat_at_ms)::text AS last_heartbeat_at_ms,
+        count(DISTINCT CASE
+          WHEN s.type = 'velocity' THEN nc.player_id
+          ELSE vc.player_id
+        END)::int AS online_player_count,
         lm.online_player_count AS reported_online_player_count,
         lm.max_players,
         lm.tps_1m,
@@ -125,8 +131,10 @@ export class MetricsPgRepository {
         lm.loaded_worlds,
         lm.backend_server_count
       FROM servers s
-      LEFT JOIN player_sessions_current c ON c.server_id = s.id
+      LEFT JOIN network_sessions_current nc ON nc.proxy_server_id = s.id
+      LEFT JOIN backend_sessions_current vc ON vc.backend_server_id = s.id
       LEFT JOIN server_latest_metrics lm ON lm.server_id = s.id
+      LEFT JOIN server_instances si ON si.server_id = s.id
       GROUP BY s.id, lm.server_id
       ORDER BY s.environment ASC, s.type ASC, s.name ASC
     `.execute(this.db);
@@ -144,9 +152,15 @@ export class MetricsPgRepository {
         s.name,
         s.type::text AS type,
         s.environment::text AS environment,
-        s.status::text AS status,
-        s.last_heartbeat_at_ms::text,
-        count(c.player_id)::int AS online_player_count,
+        CASE
+          WHEN count(si.id) FILTER (WHERE si.state IN ('active', 'draining')) > 0 THEN 'online'
+          ELSE 'offline'
+        END AS status,
+        max(si.last_heartbeat_at_ms)::text AS last_heartbeat_at_ms,
+        count(DISTINCT CASE
+          WHEN s.type = 'velocity' THEN nc.player_id
+          ELSE vc.player_id
+        END)::int AS online_player_count,
         lm.online_player_count AS reported_online_player_count,
         lm.max_players,
         lm.tps_1m,
@@ -160,8 +174,10 @@ export class MetricsPgRepository {
         lm.loaded_worlds,
         lm.backend_server_count
       FROM servers s
-      LEFT JOIN player_sessions_current c ON c.server_id = s.id
+      LEFT JOIN network_sessions_current nc ON nc.proxy_server_id = s.id
+      LEFT JOIN backend_sessions_current vc ON vc.backend_server_id = s.id
       LEFT JOIN server_latest_metrics lm ON lm.server_id = s.id
+      LEFT JOIN server_instances si ON si.server_id = s.id
       WHERE s.id = ${serverId}::uuid
       GROUP BY s.id, lm.server_id
     `.execute(this.db);
@@ -182,7 +198,7 @@ export class MetricsPgRepository {
       joins AS (
         SELECT floor(connected_at_ms / ${bucketSizeMs})::bigint * ${bucketSizeMs} AS bucket_start_ms,
                count(*)::int AS count
-        FROM player_session_events
+        FROM network_sessions
         WHERE connected_at_ms >= ${startMs}::bigint
           AND connected_at_ms <= ${nowMs}::bigint
         GROUP BY 1
@@ -190,7 +206,7 @@ export class MetricsPgRepository {
       disconnects AS (
         SELECT floor(disconnected_at_ms / ${bucketSizeMs})::bigint * ${bucketSizeMs} AS bucket_start_ms,
                count(*)::int AS count
-        FROM player_session_events
+        FROM network_sessions
         WHERE disconnected_at_ms IS NOT NULL
           AND disconnected_at_ms >= ${startMs}::bigint
           AND disconnected_at_ms <= ${nowMs}::bigint
@@ -249,7 +265,13 @@ export class MetricsPgRepository {
       joins AS (
         SELECT floor(connected_at_ms / ${bucketSizeMs})::bigint * ${bucketSizeMs} AS bucket_start_ms,
                count(*)::int AS count
-        FROM player_session_events
+        FROM (
+          SELECT proxy_server_id AS server_id, connected_at_ms
+          FROM network_sessions
+          UNION ALL
+          SELECT backend_server_id AS server_id, joined_at_ms AS connected_at_ms
+          FROM backend_sessions
+        ) sessions
         WHERE server_id = ${serverId}::uuid
           AND connected_at_ms >= ${startMs}::bigint
           AND connected_at_ms <= ${nowMs}::bigint
@@ -258,7 +280,13 @@ export class MetricsPgRepository {
       disconnects AS (
         SELECT floor(disconnected_at_ms / ${bucketSizeMs})::bigint * ${bucketSizeMs} AS bucket_start_ms,
                count(*)::int AS count
-        FROM player_session_events
+        FROM (
+          SELECT proxy_server_id AS server_id, disconnected_at_ms
+          FROM network_sessions
+          UNION ALL
+          SELECT backend_server_id AS server_id, left_at_ms AS disconnected_at_ms
+          FROM backend_sessions
+        ) sessions
         WHERE server_id = ${serverId}::uuid
           AND disconnected_at_ms IS NOT NULL
           AND disconnected_at_ms >= ${startMs}::bigint
@@ -303,7 +331,7 @@ export class MetricsPgRepository {
     const rows = await sql<AverageSessionRow>`
       SELECT avg((disconnected_at_ms - connected_at_ms) / 1000.0)
         AS average_completed_session_seconds
-      FROM player_session_events
+      FROM network_sessions
       WHERE disconnected_at_ms IS NOT NULL
         AND connected_at_ms >= ${startMs}::bigint
         AND connected_at_ms <= ${nowMs}::bigint

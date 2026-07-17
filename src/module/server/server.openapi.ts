@@ -11,19 +11,14 @@ import {
 import {
   accessResponseSchema,
   lockdownResponseSchema,
-  playerSessionResponseSchema,
-  serverHeartbeatResponseSchema,
   serverResponseSchema,
 } from "./server.response.types.js";
 import {
   createLockdownBodySchema,
-  createPlayerSessionBodySchema,
   createServerBodySchema,
   replaceServerAccessBodySchema,
-  serverHeartbeatBodySchema,
   serverIdParamsSchema,
   serverNameParamsSchema,
-  serverPlayerSessionParamsSchema,
   updateLockdownBodySchema,
   updateServerBodySchema,
 } from "./server.schemas.js";
@@ -77,43 +72,6 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
       body: { required: true, content: { "application/json": jsonBody(createLockdownBodySchema) } },
     },
     responses: { "200": successResponse(lockdownResponseSchema), ...standardErrorResponses },
-  });
-
-  registry.registerPath({
-    method: "post",
-    path: "/servers/{serverId}/player-sessions",
-    tags: ["Player Sessions"],
-    security: userOrServiceSecurity,
-    summary: "Start a Minecraft player session",
-    operationId: "startMinecraftPlayerSession",
-    request: {
-      params: serverIdParamsSchema,
-      body: {
-        required: true,
-        content: { "application/json": jsonBody(createPlayerSessionBodySchema) },
-      },
-    },
-    responses: {
-      "201": successResponse(playerSessionResponseSchema, "Player session started"),
-      ...standardErrorResponses,
-    },
-  });
-
-  registry.registerPath({
-    method: "post",
-    path: "/servers/{serverId}/heartbeat",
-    tags: ["Servers"],
-    security: userOrServiceSecurity,
-    summary: "Refresh server heartbeat and online Minecraft sessions",
-    operationId: "refreshServerHeartbeatAndOnlineMinecraftSessions",
-    request: {
-      params: serverIdParamsSchema,
-      body: {
-        required: true,
-        content: { "application/json": jsonBody(serverHeartbeatBodySchema) },
-      },
-    },
-    responses: { "200": successResponse(serverHeartbeatResponseSchema), ...standardErrorResponses },
   });
 
   registry.registerPath({
@@ -220,27 +178,17 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
 
   for (const [path, summary, operationId] of [
     ["/servers/{serverId}", "Delete a server", "deleteServer"],
-    [
-      "/servers/{serverId}/player-sessions/{mojangId}",
-      "End a Minecraft player session",
-      "endMinecraftPlayerSession",
-      "Player Sessions",
-    ],
-    ["/servers/{serverId}/lockdown", "Delete a server lockdown", "deleteServerLockdown", "Servers"],
-    ["/servers/{serverId}/access", "Delete a server access policy", "deleteServerAccessPolicy", "Servers"],
+    ["/servers/{serverId}/lockdown", "Delete a server lockdown", "deleteServerLockdown"],
+    ["/servers/{serverId}/access", "Delete a server access policy", "deleteServerAccessPolicy"],
   ] as const) {
     registry.registerPath({
       method: "delete",
       path,
-      tags: [operationId === "endMinecraftPlayerSession" ? "Player Sessions" : "Servers"],
+      tags: ["Servers"],
       security: userOrServiceSecurity,
       summary,
       operationId,
-      request: {
-        params: path.includes("player-sessions")
-          ? serverPlayerSessionParamsSchema
-          : serverIdParamsSchema,
-      },
+      request: { params: serverIdParamsSchema },
       responses: { "204": noContentResponse, ...standardErrorResponses },
     });
   }
