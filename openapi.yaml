@@ -1395,10 +1395,16 @@ components:
           type: "string"
         observedPlayerCount:
           type: "integer"
+        closedNetworkSessionCount:
+          type: "integer"
+        closedBackendSessionCount:
+          type: "integer"
       required:
         - "serverInstanceId"
         - "observedAtMs"
         - "observedPlayerCount"
+        - "closedNetworkSessionCount"
+        - "closedBackendSessionCount"
     ServerInstanceEventResponse:
       type: "object"
       properties:
@@ -8438,7 +8444,6 @@ paths:
                   type: "array"
                   items:
                     type: "string"
-                    minLength: 1
                   default:
                     []
               additionalProperties: false

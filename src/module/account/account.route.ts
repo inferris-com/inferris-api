@@ -15,9 +15,9 @@ import type { AccountService } from "./account.service.js";
 import type {
   AccountNotificationResponse,
   AccountResponse,
-  ArgusSessionResponse,
   PasswordChangeResponse,
 } from "./account.response-types.js";
+import type { ArgusSessionResponse } from "../auth/auth.response-types.js";
 
 export function createAccountRouter(service: AccountService): Router {
   const router = Router();
@@ -83,11 +83,7 @@ export function createAccountRouter(service: AccountService): Router {
   };
 
   router.get("/", getAccount);
-  router.patch(
-    "/password",
-    validateRequest({ body: changePasswordBodySchema }),
-    changePassword,
-  );
+  router.patch("/password", validateRequest({ body: changePasswordBodySchema }), changePassword);
   router.post(
     "/security-lock/change-password",
     validateRequest({ body: changePasswordBodySchema }),

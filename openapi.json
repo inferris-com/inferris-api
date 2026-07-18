@@ -1933,12 +1933,20 @@
           },
           "observedPlayerCount": {
             "type": "integer"
+          },
+          "closedNetworkSessionCount": {
+            "type": "integer"
+          },
+          "closedBackendSessionCount": {
+            "type": "integer"
           }
         },
         "required": [
           "serverInstanceId",
           "observedAtMs",
-          "observedPlayerCount"
+          "observedPlayerCount",
+          "closedNetworkSessionCount",
+          "closedBackendSessionCount"
         ]
       },
       "ServerInstanceEventResponse": {
@@ -12889,8 +12897,7 @@
                   "onlineMojangIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "minLength": 1
+                      "type": "string"
                     },
                     "default": []
                   }

@@ -112,6 +112,37 @@ describe("server instance routes", () => {
     });
   });
 
+  test("PUT /server-instances/:serverInstanceId/presence returns reconciliation counts", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.serverInstance.reconcilePresence.mockResolvedValue({
+      serverInstanceId: ids.chatMessage,
+      observedAtMs: "2000",
+      observedPlayerCount: 0,
+      closedNetworkSessionCount: 1,
+      closedBackendSessionCount: 0,
+    });
+
+    const response = await request
+      .put(`/server-instances/${ids.chatMessage}/presence`)
+      .set("Authorization", "Bearer instance-token")
+      .send({ observedAtMs: "2000", onlineMojangIds: [] });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        serverInstanceId: ids.chatMessage,
+        observedAtMs: "2000",
+        observedPlayerCount: 0,
+        closedNetworkSessionCount: 1,
+        closedBackendSessionCount: 0,
+      },
+    });
+    expect(dependencies.services.serverInstance.reconcilePresence).toHaveBeenCalledWith(
+      expect.objectContaining({ id: ids.chatMessage, serverId: ids.server }),
+      { observedAtMs: "2000", onlineMojangIds: [] },
+    );
+  });
+
   test("server instance token cannot report for a different path id", async () => {
     const { dependencies, request } = createTestApp();
 

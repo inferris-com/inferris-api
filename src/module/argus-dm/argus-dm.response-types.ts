@@ -1,13 +1,15 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
 
+import { accountRoleSchema } from "../account/account.schemas.js";
+
 extendZodWithOpenApi(z);
 
 export const argusDmParticipantResponseSchema = z
   .object({
     argusUserId: z.string().uuid(),
     username: z.string(),
-    role: z.enum(["moderator", "admin"]),
+    role: accountRoleSchema,
     invitedByArgusUserId: z.string().uuid().nullable(),
     joinedAtMs: z.string(),
     lastReadAtMs: z.string().nullable(),

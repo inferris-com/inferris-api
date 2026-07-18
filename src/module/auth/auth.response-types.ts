@@ -1,20 +1,14 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
-import type { ArgusAccountRole, UserPrivilegeRole } from "../../db/types.js";
-import {
-  argusAccountIdentityResponseSchema,
-  argusAccountSecurityLockSchema,
-  argusAccountStateSchema,
-} from "../argus-account/argus-account.schemas.js";
+
+import { accountIdentityResponseSchema } from "../account/account.schemas.js";
+import { staffPrivilegeRoleSchema } from "../staff-privilege/staff-privilege.schemas.js";
 
 extendZodWithOpenApi(z);
 
-export const authUserResponseSchema = z
-  .object({
-    ...argusAccountIdentityResponseSchema.shape,
-    privilegedRole: z
-      .enum(["administrator", "collaborator", "moderator", "none", "superadmin"])
-      .nullable(),
+export const authUserResponseSchema = accountIdentityResponseSchema
+  .extend({
+    privilegedRole: staffPrivilegeRoleSchema.nullable(),
   })
   .openapi("AuthUserResponse");
 
@@ -28,13 +22,19 @@ export const authTokenResponseSchema = z
   })
   .openapi("AuthTokenResponse");
 
-export type AuthUserResponse = z.infer<typeof authUserResponseSchema> & {
-  role: ArgusAccountRole;
-  privilegedRole: UserPrivilegeRole | null;
-};
+export const argusSessionResponseSchema = z
+  .object({
+    id: z.string().uuid(),
+    createdAtMs: z.number().int(),
+    lastSeenAtMs: z.number().int(),
+    expiresAtMs: z.number().int(),
+    revokedAtMs: z.number().int().nullable(),
+    isCurrent: z.boolean(),
+    ipAddress: z.string().nullable(),
+    userAgent: z.string().nullable(),
+  })
+  .openapi("ArgusSessionResponse");
 
-export type AuthTokenResponse = Omit<z.infer<typeof authTokenResponseSchema>, "user"> & {
-  user: AuthUserResponse;
-};
-
-export { argusAccountSecurityLockSchema, argusAccountStateSchema };
+export type AuthUserResponse = z.infer<typeof authUserResponseSchema>;
+export type AuthTokenResponse = z.infer<typeof authTokenResponseSchema>;
+export type ArgusSessionResponse = z.infer<typeof argusSessionResponseSchema>;

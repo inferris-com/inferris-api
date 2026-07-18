@@ -341,12 +341,46 @@ export class ServerPgRepository {
 
   async expireInactiveServers(inactiveBeforeMs: string): Promise<number> {
     return this.db.transaction().execute(async (trx) => {
+      await sql`
+        UPDATE network_sessions ns
+        SET disconnected_at_ms = get_unix_ms(),
+            disconnect_reason = CASE si.state
+              WHEN 'superseded' THEN 'proxy_superseded'
+              WHEN 'lost' THEN 'proxy_lost'
+              ELSE 'proxy_stopped'
+            END,
+            updated_at_ms = get_unix_ms()
+        FROM server_instances si
+        WHERE si.id = ns.proxy_server_instance_id
+          AND si.state IN ('stopped', 'lost', 'superseded')
+          AND ns.disconnected_at_ms IS NULL
+      `.execute(trx);
+
+      await sql`
+        UPDATE backend_sessions bs
+        SET left_at_ms = get_unix_ms(),
+            leave_reason = CASE si.state
+              WHEN 'superseded' THEN 'backend_superseded'
+              WHEN 'lost' THEN 'backend_lost'
+              ELSE 'backend_stopped'
+            END,
+            updated_at_ms = get_unix_ms()
+        FROM server_instances si
+        WHERE si.id = bs.backend_server_instance_id
+          AND si.state IN ('stopped', 'lost', 'superseded')
+          AND bs.left_at_ms IS NULL
+      `.execute(trx);
+
       const instances = await trx
         .selectFrom("server_instances")
         .innerJoin("servers", "servers.id", "server_instances.server_id")
         .select(["server_instances.id", "servers.type"])
         .where("server_instances.state", "in", ["active", "draining"])
-        .where(sql`coalesce(last_heartbeat_at_ms, started_at_ms, created_at_ms)`, "<=", inactiveBeforeMs)
+        .where(
+          sql`coalesce(server_instances.last_heartbeat_at_ms, server_instances.started_at_ms, server_instances.created_at_ms)`,
+          "<=",
+          inactiveBeforeMs,
+        )
         .execute();
       const proxyInstanceIds = instances
         .filter((instance) => instance.type === "velocity")

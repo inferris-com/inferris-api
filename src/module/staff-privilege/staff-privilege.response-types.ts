@@ -1,6 +1,7 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
-import type { UserPrivilegeRole } from "../../db/types.js";
+
+import { staffPrivilegeRoleSchema, staffPrivilegeStatusSchema } from "./staff-privilege.schemas.js";
 
 extendZodWithOpenApi(z);
 
@@ -8,8 +9,8 @@ export const staffPrivilegeResponseSchema = z
   .object({
     id: z.string().uuid(),
     actorId: z.string().uuid(),
-    status: z.string(),
-    role: z.enum(["none", "collaborator", "moderator", "administrator", "superadmin"]),
+    status: staffPrivilegeStatusSchema,
+    role: staffPrivilegeRoleSchema,
     title: z.string().nullable(),
     enrolledByActorId: z.string().uuid().nullable(),
     revokedByActorId: z.string().uuid().nullable(),
@@ -18,14 +19,4 @@ export const staffPrivilegeResponseSchema = z
   })
   .openapi("StaffPrivilegeResponse");
 
-export type StaffPrivilegeResponse = {
-  id: string;
-  actorId: string;
-  status: string;
-  role: UserPrivilegeRole;
-  title: string | null;
-  enrolledByActorId: string | null;
-  revokedByActorId: string | null;
-  createdAtMs: string;
-  updatedAtMs: string | null;
-};
+export type StaffPrivilegeResponse = z.infer<typeof staffPrivilegeResponseSchema>;

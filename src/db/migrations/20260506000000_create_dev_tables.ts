@@ -26,6 +26,8 @@ const types = [
   "server_lockdown_scope",
   "server_access_mode",
   "server_status",
+  "server_instance_state",
+  "server_event_type",
   "server_env",
   "server_type",
   "friend_request_status",
@@ -78,6 +80,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE TYPE principal_type AS ENUM (
     'argus_user',
     'minecraft_session',
+    'server_instance',
     'server_api_key',
     'service_actor_api_key',
     'user_api_key',
@@ -126,6 +129,22 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE TYPE server_status AS ENUM (
     'online',
     'offline'
+    );
+
+  CREATE TYPE server_instance_state AS ENUM (
+    'active',
+    'draining',
+    'stopped',
+    'lost',
+    'superseded'
+    );
+
+  CREATE TYPE server_event_type AS ENUM (
+    'SERVER_SHUTTING_DOWN',
+    'SERVER_STOPPED',
+    'NETWORK_SESSION_STARTED',
+    'BACKEND_CONNECTED',
+    'NETWORK_SESSION_ENDED'
     );
 
   CREATE TYPE server_access_mode AS ENUM (
@@ -333,12 +352,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     type                 server_type   NOT NULL DEFAULT 'unspecified',
 
     environment          server_env    NOT NULL DEFAULT 'development',
-    status               server_status NOT NULL DEFAULT 'offline',
     port                 INT           NULL CHECK (port BETWEEN 1 AND 65535),
-    version              TEXT          NOT NULL DEFAULT 'Unspecified version',
-
-    last_started_at_ms   BIGINT        NULL,
-    last_heartbeat_at_ms BIGINT        NULL,
 
     created_at_ms        BIGINT        NOT NULL DEFAULT get_unix_ms(),
     last_updated_at_ms   BIGINT        NULL
@@ -346,10 +360,66 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE INDEX idx_servers_type ON servers (type);
   CREATE INDEX idx_servers_environment ON servers (environment);
 
+  CREATE TABLE server_instances
+  (
+    id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    server_id             UUID NOT NULL REFERENCES servers (id) ON DELETE CASCADE,
+    state                 server_instance_state NOT NULL DEFAULT 'active',
+    runtime_port          INT NULL CHECK (runtime_port BETWEEN 1 AND 65535),
+    version               TEXT NULL,
+    started_at_ms         BIGINT NOT NULL DEFAULT get_unix_ms(),
+    draining_at_ms        BIGINT NULL,
+    stopped_at_ms         BIGINT NULL,
+    lost_at_ms            BIGINT NULL,
+    superseded_at_ms      BIGINT NULL,
+    last_heartbeat_at_ms  BIGINT NULL,
+    heartbeat_interval_ms BIGINT NULL CHECK (heartbeat_interval_ms IS NULL OR heartbeat_interval_ms > 0),
+    last_event_sequence   BIGINT NOT NULL DEFAULT 0,
+    is_synthetic_backfill BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at_ms         BIGINT NOT NULL DEFAULT get_unix_ms(),
+    updated_at_ms         BIGINT NULL
+  );
+  CREATE UNIQUE INDEX uq_server_instances_one_active_per_server
+    ON server_instances (server_id)
+    WHERE state IN ('active', 'draining');
+  CREATE INDEX idx_server_instances_server_started
+    ON server_instances (server_id, started_at_ms DESC);
+  CREATE INDEX idx_server_instances_state ON server_instances (state);
+
+  CREATE TABLE server_instance_tokens
+  (
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    server_instance_id UUID NOT NULL REFERENCES server_instances (id) ON DELETE CASCADE,
+    token_hash         TEXT NOT NULL UNIQUE,
+    issued_at_ms       BIGINT NOT NULL DEFAULT get_unix_ms(),
+    revoked_at_ms      BIGINT NULL,
+    revoked_reason     TEXT NULL
+  );
+  CREATE INDEX idx_server_instance_tokens_instance
+    ON server_instance_tokens (server_instance_id);
+
+  CREATE TABLE server_events
+  (
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    server_instance_id UUID NOT NULL REFERENCES server_instances (id) ON DELETE CASCADE,
+    event_id           TEXT NOT NULL,
+    sequence           BIGINT NOT NULL CHECK (sequence > 0),
+    type               server_event_type NOT NULL,
+    payload            JSONB NOT NULL DEFAULT '{}'::jsonb,
+    processing_result  JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at_ms      BIGINT NOT NULL DEFAULT get_unix_ms(),
+    processed_at_ms    BIGINT NOT NULL DEFAULT get_unix_ms(),
+    CONSTRAINT uq_server_events_instance_event UNIQUE (server_instance_id, event_id),
+    CONSTRAINT uq_server_events_instance_sequence UNIQUE (server_instance_id, sequence)
+  );
+  CREATE INDEX idx_server_events_instance_created
+    ON server_events (server_instance_id, created_at_ms DESC);
+
   CREATE TABLE server_heartbeat_observations
   (
     id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     server_id            UUID   NOT NULL REFERENCES servers (id) ON DELETE CASCADE,
+    server_instance_id   UUID   NULL REFERENCES server_instances (id) ON DELETE SET NULL,
     observed_at_ms       BIGINT NOT NULL DEFAULT get_unix_ms(),
 
     online_player_count  INT    NULL CHECK (online_player_count >= 0),
@@ -374,6 +444,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE TABLE server_latest_metrics
   (
     server_id            UUID PRIMARY KEY REFERENCES servers (id) ON DELETE CASCADE,
+    server_instance_id   UUID   NULL REFERENCES server_instances (id) ON DELETE SET NULL,
     observation_id       UUID   NOT NULL REFERENCES server_heartbeat_observations (id) ON DELETE CASCADE,
     observed_at_ms       BIGINT NOT NULL,
 
@@ -780,7 +851,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE INDEX idx_lockdowns_required_rank ON lockdowns (required_rank_key);
   CREATE INDEX idx_lockdowns_starts_at_ms ON lockdowns (starts_at_ms);
 
-  CREATE TABLE player_network_sessions
+  CREATE TABLE network_sessions
   (
     id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
@@ -790,6 +861,9 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     proxy_server_id    UUID   NOT NULL
       REFERENCES servers (id) ON DELETE RESTRICT,
 
+    proxy_server_instance_id UUID NULL
+      REFERENCES server_instances (id) ON DELETE SET NULL,
+
     connected_at_ms    BIGINT NOT NULL  DEFAULT get_unix_ms(),
     disconnected_at_ms BIGINT NULL,
 
@@ -797,25 +871,25 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     meta               JSONB  NOT NULL  DEFAULT '{}'::jsonb,
     updated_at_ms      BIGINT NULL,
 
-    CONSTRAINT chk_player_network_session_time_window
+    CONSTRAINT chk_network_session_time_window
       CHECK (disconnected_at_ms IS NULL OR disconnected_at_ms >= connected_at_ms)
   );
 -- Enforce: at most one OPEN network session per player (strong invariant)
-  CREATE UNIQUE INDEX uq_player_network_sessions_one_open_per_player
-    ON player_network_sessions (player_id)
+  CREATE UNIQUE INDEX uq_network_sessions_one_open_per_player
+    ON network_sessions (player_id)
     WHERE disconnected_at_ms IS NULL;
 -- Common access patterns
-  CREATE INDEX idx_player_network_sessions_player_connected_at
-    ON player_network_sessions (player_id, connected_at_ms DESC);
-  CREATE INDEX idx_player_network_sessions_proxy_connected_at
-    ON player_network_sessions (proxy_server_id, connected_at_ms DESC);
-  CREATE INDEX idx_player_network_sessions_connected_at
-    ON player_network_sessions (connected_at_ms DESC);
+  CREATE INDEX idx_network_sessions_player_connected_at
+    ON network_sessions (player_id, connected_at_ms DESC);
+  CREATE INDEX idx_network_sessions_proxy_connected_at
+    ON network_sessions (proxy_server_id, connected_at_ms DESC);
+  CREATE INDEX idx_network_sessions_connected_at
+    ON network_sessions (connected_at_ms DESC);
 
   -- ---------------------------------------------------------
 --  2) Current network sessions ("online now")
 -- ---------------------------------------------------------
-  CREATE TABLE player_network_sessions_current
+  CREATE TABLE network_sessions_current
   (
     player_id        UUID PRIMARY KEY
       REFERENCES players (id) ON DELETE CASCADE,
@@ -824,28 +898,31 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       REFERENCES servers (id) ON DELETE RESTRICT,
 
     network_session_id UUID NOT NULL UNIQUE
-      REFERENCES player_network_sessions (id) ON DELETE CASCADE,
+      REFERENCES network_sessions (id) ON DELETE CASCADE,
 
     connected_at_ms  BIGINT NOT NULL DEFAULT get_unix_ms(),
     updated_at_ms    BIGINT NULL
   );
-  CREATE INDEX idx_player_network_sessions_current_proxy
-    ON player_network_sessions_current (proxy_server_id);
-  CREATE INDEX idx_player_network_sessions_current_connected_at
-    ON player_network_sessions_current (connected_at_ms DESC);
+  CREATE INDEX idx_network_sessions_current_proxy
+    ON network_sessions_current (proxy_server_id);
+  CREATE INDEX idx_network_sessions_current_connected_at
+    ON network_sessions_current (connected_at_ms DESC);
 
-  CREATE TABLE player_server_visits
+  CREATE TABLE backend_sessions
   (
     id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     network_session_id UUID   NOT NULL
-      REFERENCES player_network_sessions (id) ON DELETE CASCADE,
+      REFERENCES network_sessions (id) ON DELETE CASCADE,
 
     player_id          UUID   NOT NULL
       REFERENCES players (id) ON DELETE CASCADE,
 
-    server_id          UUID   NOT NULL
+    backend_server_id  UUID   NOT NULL
       REFERENCES servers (id) ON DELETE RESTRICT,
+
+    backend_server_instance_id UUID NULL
+      REFERENCES server_instances (id) ON DELETE SET NULL,
 
     joined_at_ms       BIGINT NOT NULL DEFAULT get_unix_ms(),
     left_at_ms         BIGINT NULL,
@@ -854,41 +931,41 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     meta               JSONB  NOT NULL DEFAULT '{}'::jsonb,
     updated_at_ms      BIGINT NULL,
 
-    CONSTRAINT chk_player_server_visit_time_window
+    CONSTRAINT chk_backend_session_time_window
       CHECK (left_at_ms IS NULL OR left_at_ms >= joined_at_ms)
   );
 -- Enforce: at most one OPEN backend visit per network session
-  CREATE UNIQUE INDEX uq_player_server_visits_one_open_per_network_session
-    ON player_server_visits (network_session_id)
+  CREATE UNIQUE INDEX uq_backend_sessions_one_open_per_network_session
+    ON backend_sessions (network_session_id)
     WHERE left_at_ms IS NULL;
-  CREATE INDEX idx_player_server_visits_network_joined_at
-    ON player_server_visits (network_session_id, joined_at_ms DESC);
-  CREATE INDEX idx_player_server_visits_player_joined_at
-    ON player_server_visits (player_id, joined_at_ms DESC);
-  CREATE INDEX idx_player_server_visits_server_joined_at
-    ON player_server_visits (server_id, joined_at_ms DESC);
+  CREATE INDEX idx_backend_sessions_network_joined_at
+    ON backend_sessions (network_session_id, joined_at_ms DESC);
+  CREATE INDEX idx_backend_sessions_player_joined_at
+    ON backend_sessions (player_id, joined_at_ms DESC);
+  CREATE INDEX idx_backend_sessions_backend_server_joined_at
+    ON backend_sessions (backend_server_id, joined_at_ms DESC);
 
-  CREATE TABLE player_server_visits_current
+  CREATE TABLE backend_sessions_current
   (
     network_session_id UUID PRIMARY KEY
-      REFERENCES player_network_sessions (id) ON DELETE CASCADE,
+      REFERENCES network_sessions (id) ON DELETE CASCADE,
 
     player_id          UUID   NOT NULL UNIQUE
       REFERENCES players (id) ON DELETE CASCADE,
 
-    server_id          UUID   NOT NULL
+    backend_server_id  UUID   NOT NULL
       REFERENCES servers (id) ON DELETE RESTRICT,
 
-    server_visit_id    UUID   NOT NULL UNIQUE
-      REFERENCES player_server_visits (id) ON DELETE CASCADE,
+    backend_session_id UUID   NOT NULL UNIQUE
+      REFERENCES backend_sessions (id) ON DELETE CASCADE,
 
     joined_at_ms       BIGINT NOT NULL DEFAULT get_unix_ms(),
     updated_at_ms      BIGINT NULL
   );
-  CREATE INDEX idx_player_server_visits_current_server
-    ON player_server_visits_current (server_id);
-  CREATE INDEX idx_player_server_visits_current_joined_at
-    ON player_server_visits_current (joined_at_ms DESC);
+  CREATE INDEX idx_backend_sessions_current_backend_server
+    ON backend_sessions_current (backend_server_id);
+  CREATE INDEX idx_backend_sessions_current_joined_at
+    ON backend_sessions_current (joined_at_ms DESC);
 
   CREATE TABLE badges
   (
@@ -1789,7 +1866,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   -- ---------------------------------------------------------
 --  Trigger logic to keep player sessions
 -- ---------------------------------------------------------
-  CREATE OR REPLACE FUNCTION sync_player_network_sessions_current()
+  CREATE OR REPLACE FUNCTION sync_network_sessions_current()
     RETURNS TRIGGER
     LANGUAGE plpgsql
   AS
@@ -1802,14 +1879,14 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     IF (TG_OP = 'INSERT') THEN
       IF (NEW.disconnected_at_ms IS NULL) THEN
         -- If a current network session already exists, we treat it as a hard invariant violation
-        IF EXISTS (SELECT 1 FROM player_network_sessions_current c WHERE c.player_id = NEW.player_id) THEN
+        IF EXISTS (SELECT 1 FROM network_sessions_current c WHERE c.player_id = NEW.player_id) THEN
           RAISE EXCEPTION
-            'Invariant violation: player % already has an active network session in player_network_sessions_current',
+            'Invariant violation: player % already has an active network session in network_sessions_current',
             NEW.player_id
             USING ERRCODE = '23514'; -- check_violation
         END IF;
 
-        INSERT INTO player_network_sessions_current (player_id, proxy_server_id, network_session_id, connected_at_ms, updated_at_ms)
+        INSERT INTO network_sessions_current (player_id, proxy_server_id, network_session_id, connected_at_ms, updated_at_ms)
         VALUES (NEW.player_id, NEW.proxy_server_id, NEW.id, NEW.connected_at_ms, get_unix_ms());
       END IF;
 
@@ -1819,7 +1896,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     -- Case B: UPDATE that closes the network session (NULL -> NOT NULL)
     IF (TG_OP = 'UPDATE') THEN
       IF (OLD.disconnected_at_ms IS NULL AND NEW.disconnected_at_ms IS NOT NULL) THEN
-        UPDATE player_server_visits v
+        UPDATE backend_sessions v
         SET left_at_ms    = NEW.disconnected_at_ms,
             leave_reason  = COALESCE(v.leave_reason, 'network_disconnect'),
             updated_at_ms = get_unix_ms()
@@ -1827,10 +1904,10 @@ export async function up(db: Kysely<unknown>): Promise<void> {
           AND v.left_at_ms IS NULL;
 
         DELETE
-        FROM player_network_sessions_current c
+        FROM network_sessions_current c
         WHERE c.network_session_id = NEW.id;
       ELSIF (OLD.disconnected_at_ms IS NULL AND NEW.disconnected_at_ms IS NULL) THEN
-        UPDATE player_network_sessions_current c
+        UPDATE network_sessions_current c
         SET proxy_server_id = NEW.proxy_server_id,
             connected_at_ms = NEW.connected_at_ms,
             updated_at_ms   = get_unix_ms()
@@ -1844,7 +1921,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   END;
   $$;
 
-  CREATE OR REPLACE FUNCTION sync_player_server_visits_current()
+  CREATE OR REPLACE FUNCTION sync_backend_sessions_current()
     RETURNS TRIGGER
     LANGUAGE plpgsql
   AS
@@ -1856,17 +1933,17 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       IF (NEW.left_at_ms IS NULL) THEN
         IF EXISTS (
           SELECT 1
-          FROM player_server_visits_current c
+          FROM backend_sessions_current c
           WHERE c.network_session_id = NEW.network_session_id
         ) THEN
           RAISE EXCEPTION
-            'Invariant violation: network session % already has an active backend visit in player_server_visits_current',
+            'Invariant violation: network session % already has an active backend session in backend_sessions_current',
             NEW.network_session_id
             USING ERRCODE = '23514';
         END IF;
 
-        INSERT INTO player_server_visits_current (network_session_id, player_id, server_id, server_visit_id, joined_at_ms, updated_at_ms)
-        VALUES (NEW.network_session_id, NEW.player_id, NEW.server_id, NEW.id, NEW.joined_at_ms, get_unix_ms());
+        INSERT INTO backend_sessions_current (network_session_id, player_id, backend_server_id, backend_session_id, joined_at_ms, updated_at_ms)
+        VALUES (NEW.network_session_id, NEW.player_id, NEW.backend_server_id, NEW.id, NEW.joined_at_ms, get_unix_ms());
       END IF;
 
       RETURN NEW;
@@ -1875,14 +1952,14 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     IF (TG_OP = 'UPDATE') THEN
       IF (OLD.left_at_ms IS NULL AND NEW.left_at_ms IS NOT NULL) THEN
         DELETE
-        FROM player_server_visits_current c
-        WHERE c.server_visit_id = NEW.id;
+        FROM backend_sessions_current c
+        WHERE c.backend_session_id = NEW.id;
       ELSIF (OLD.left_at_ms IS NULL AND NEW.left_at_ms IS NULL) THEN
-        UPDATE player_server_visits_current c
-        SET server_id     = NEW.server_id,
-            joined_at_ms  = NEW.joined_at_ms,
-            updated_at_ms = get_unix_ms()
-        WHERE c.server_visit_id = NEW.id;
+        UPDATE backend_sessions_current c
+        SET backend_server_id = NEW.backend_server_id,
+            joined_at_ms      = NEW.joined_at_ms,
+            updated_at_ms     = get_unix_ms()
+        WHERE c.backend_session_id = NEW.id;
       END IF;
 
       RETURN NEW;
@@ -1892,40 +1969,40 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   END;
   $$;
 
-  DROP TRIGGER IF EXISTS trg_sync_player_network_sessions_current_ins ON player_network_sessions;
-  CREATE TRIGGER trg_sync_player_network_sessions_current_ins
+  DROP TRIGGER IF EXISTS trg_sync_network_sessions_current_ins ON network_sessions;
+  CREATE TRIGGER trg_sync_network_sessions_current_ins
     AFTER INSERT
-    ON player_network_sessions
+    ON network_sessions
     FOR EACH ROW
-  EXECUTE FUNCTION sync_player_network_sessions_current();
+  EXECUTE FUNCTION sync_network_sessions_current();
 
-  DROP TRIGGER IF EXISTS trg_sync_player_network_sessions_current_upd ON player_network_sessions;
-  CREATE TRIGGER trg_sync_player_network_sessions_current_upd
+  DROP TRIGGER IF EXISTS trg_sync_network_sessions_current_upd ON network_sessions;
+  CREATE TRIGGER trg_sync_network_sessions_current_upd
     BEFORE UPDATE
-    ON player_network_sessions
+    ON network_sessions
     FOR EACH ROW
-  EXECUTE FUNCTION sync_player_network_sessions_current();
+  EXECUTE FUNCTION sync_network_sessions_current();
 
-  DROP TRIGGER IF EXISTS trg_sync_player_server_visits_current_ins ON player_server_visits;
-  CREATE TRIGGER trg_sync_player_server_visits_current_ins
+  DROP TRIGGER IF EXISTS trg_sync_backend_sessions_current_ins ON backend_sessions;
+  CREATE TRIGGER trg_sync_backend_sessions_current_ins
     AFTER INSERT
-    ON player_server_visits
+    ON backend_sessions
     FOR EACH ROW
-  EXECUTE FUNCTION sync_player_server_visits_current();
+  EXECUTE FUNCTION sync_backend_sessions_current();
 
-  DROP TRIGGER IF EXISTS trg_sync_player_server_visits_current_upd ON player_server_visits;
-  CREATE TRIGGER trg_sync_player_server_visits_current_upd
+  DROP TRIGGER IF EXISTS trg_sync_backend_sessions_current_upd ON backend_sessions;
+  CREATE TRIGGER trg_sync_backend_sessions_current_upd
     BEFORE UPDATE
-    ON player_server_visits
+    ON backend_sessions
     FOR EACH ROW
-  EXECUTE FUNCTION sync_player_server_visits_current();
+  EXECUTE FUNCTION sync_backend_sessions_current();
 
   `.execute(db);
 }
 
 export async function down(db: Kysely<unknown>): Promise<void> {
-  await sql`DROP FUNCTION IF EXISTS sync_player_server_visits_current() CASCADE`.execute(db);
-  await sql`DROP FUNCTION IF EXISTS sync_player_network_sessions_current() CASCADE`.execute(db);
+  await sql`DROP FUNCTION IF EXISTS sync_backend_sessions_current() CASCADE`.execute(db);
+  await sql`DROP FUNCTION IF EXISTS sync_network_sessions_current() CASCADE`.execute(db);
 
   await sql`
     DO $$

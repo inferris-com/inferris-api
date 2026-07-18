@@ -5,6 +5,45 @@ import { createTestApp, ids } from "./app-test-utils.js";
 const previousSessionId = "11111111-1111-4111-8111-111111111111";
 
 describe("account routes", () => {
+  test("GET /account exposes the cached password-security cue", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.account.getAccount.mockResolvedValue({
+      id: "00000000-0000-4000-8000-000000000010",
+      username: "Admin",
+      email: "admin@example.com",
+      role: "admin",
+      actorId: ids.actor,
+      linkedActor: { id: ids.actor, name: "Developer", type: "user" },
+      privileged: {
+        id: "00000000-0000-4000-8000-000000000011",
+        role: "superadmin",
+        title: "Developer",
+        status: "active",
+      },
+      accountState: "active",
+      accountSecurityLock: null,
+      passwordSecurity: {
+        breached: true,
+        breachCount: 42,
+        checkedAtMs: 1_800_000_000_000,
+      },
+      createdAtMs: "1700000000000",
+      updatedAtMs: null,
+    });
+
+    const response = await request.get("/account").set("Authorization", "Bearer admin-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: expect.objectContaining({
+        passwordSecurity: {
+          breached: true,
+          breachCount: 42,
+          checkedAtMs: 1_800_000_000_000,
+        },
+      }),
+    });
+  });
   test("GET /account/sessions returns current and historical Argus sessions", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.account.listSessions.mockResolvedValue([
@@ -30,7 +69,9 @@ describe("account routes", () => {
       },
     ]);
 
-    const response = await request.get("/account/sessions").set("Authorization", "Bearer admin-token");
+    const response = await request
+      .get("/account/sessions")
+      .set("Authorization", "Bearer admin-token");
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({

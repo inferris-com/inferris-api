@@ -27,11 +27,6 @@ export class PlayerPgRepository implements PlayerRepository {
   async listPlayers({ limit, offset, username }: ListPlayersQuery) {
     return this.db
       .selectFrom("players")
-      .leftJoin("player_nicknames as active_nicknames", (join) =>
-        join
-          .onRef("active_nicknames.player_id", "=", "players.id")
-          .on("active_nicknames.is_active", "=", true),
-      )
       .select([
         "players.id",
         "players.mojang_id",
@@ -40,8 +35,6 @@ export class PlayerPgRepository implements PlayerRepository {
         "players.flags",
         "players.orbs",
         "players.active_channel_key",
-        "active_nicknames.nickname as active_nickname",
-        "active_nicknames.cover_rank_key as active_nickname_cover_rank_key",
       ])
       .$if(username !== undefined, (qb) => qb.where("players.username", "ilike", `%${username}%`))
       .where("players.deleted_at_ms", "is", null)
@@ -757,11 +750,7 @@ export class PlayerPgRepository implements PlayerRepository {
         .executeTakeFirst(),
       executor
         .selectFrom("player_ranks")
-        .innerJoin(
-          "groups",
-          "groups.key",
-          "player_ranks.group_key",
-        )
+        .innerJoin("groups", "groups.key", "player_ranks.group_key")
         .select(["group_key", "rank_key"])
         .where("player_id", "=", id)
         .orderBy("groups.priority", "desc")

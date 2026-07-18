@@ -3,6 +3,30 @@ import { describe, expect, test } from "@jest/globals";
 import { createTestApp, ids } from "./app-test-utils.js";
 
 describe("auth routes", () => {
+  test("POST /auth/login returns token data without embedding the account", async () => {
+    const { dependencies, request } = createTestApp();
+    dependencies.services.auth.login.mockResolvedValue({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+      expiresInSeconds: 900,
+    });
+
+    const response = await request.post("/auth/login").send({
+      usernameOrEmail: "Developer",
+      password: "dev",
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({
+      data: {
+        accessToken: "access-token",
+        refreshToken: "refresh-token",
+        tokenType: "Bearer",
+        expiresInSeconds: 900,
+      },
+    });
+  });
   test("GET /auth/me rejects missing credentials", async () => {
     const { request } = createTestApp();
 

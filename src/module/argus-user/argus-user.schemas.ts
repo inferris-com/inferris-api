@@ -1,17 +1,14 @@
 import z from "zod";
 
 import { paginationQuerySchema } from "../../shared/pagination.schemas.js";
-import {
-  argusAccountRoleSchema,
-  argusAccountStateSchema,
-} from "../argus-account/argus-account.schemas.js";
+import { accountRoleSchema, accountStateSchema } from "../account/account.schemas.js";
 
 export const argusUserParamsSchema = z.object({ userId: z.string().uuid() }).strict();
 
 export const listArgusUsersQuerySchema = paginationQuerySchema
   .extend({
-    role: argusAccountRoleSchema.optional(),
-    accountState: argusAccountStateSchema.optional(),
+    role: accountRoleSchema.optional(),
+    accountState: accountStateSchema.optional(),
   })
   .strict();
 
@@ -27,9 +24,9 @@ export const createArgusUserBodySchema = z
     username: z.string().trim().min(1).max(100),
     email: z.string().email().max(100),
     password: z.string().min(12).max(256).optional(),
-    role: argusAccountRoleSchema.default("moderator"),
+    role: accountRoleSchema.default("moderator"),
     actorId: z.string().uuid().nullable().optional(),
-    accountState: argusAccountStateSchema.default("active"),
+    accountState: accountStateSchema.default("active"),
   })
   .strict();
 

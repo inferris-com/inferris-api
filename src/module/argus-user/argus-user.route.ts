@@ -27,6 +27,12 @@ export function createArgusUserRouter(
   authRepository: AuthRepository,
 ): Router {
   const router = Router();
+
+  const readArgusUsers = authorize(authRepository, {
+    apiScopes: ["argus:read"],
+    argusRole: "moderator",
+    privilegedRole: "moderator",
+  });
   const manageArgusUsers = authorize(authRepository, {
     apiScopes: ["argus:write"],
     argusRole: "admin",
@@ -86,7 +92,7 @@ export function createArgusUserRouter(
 
   router.get(
     "/",
-    manageArgusUsers,
+    readArgusUsers,
     validateRequest({ query: listArgusUsersQuerySchema }) as unknown as RequestHandler,
     listUsers,
   );
@@ -98,7 +104,7 @@ export function createArgusUserRouter(
   );
   router.get(
     "/:userId",
-    manageArgusUsers,
+    readArgusUsers,
     validateRequest({ params: argusUserParamsSchema }),
     getUser,
   );

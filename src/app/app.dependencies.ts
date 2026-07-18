@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 
 import { db as defaultDb, type DbExecutor } from "../db/index.js";
+import { redis as defaultRedis, type RedisClient } from "../redis/index.js";
 import { AccountPgRepository } from "../module/account/account.pg-repository.js";
 import { AccountService } from "../module/account/account.service.js";
 import { ActorPgRepository } from "../module/actor/actor.pg-repository.js";
@@ -53,7 +54,7 @@ import { StaffPrivilegePgRepository } from "../module/staff-privilege/staff-priv
 import { StaffPrivilegeService } from "../module/staff-privilege/staff-privilege.service.js";
 import { WatchlistPgRepository } from "../module/watchlist/watchlist.pg-repository.js";
 import { WatchlistService } from "../module/watchlist/watchlist.service.js";
-import { redis as defaultRedis, type RedisClient } from "../redis/index.js";
+import { PasswordSecurityService } from "../module/password-security/password-security.service.js";
 
 /*
 This should work for now; might take another swing at it in the future
@@ -64,11 +65,11 @@ export type AppDependencies = {
   authenticateRequest: RequestHandler;
   services: {
     actor: ActorService;
+    auth: AuthService;
     account: AccountService;
     argusAlert: ArgusAlertService;
     argusDm: ArgusDmService;
     argusUser: ArgusUserService;
-    auth: AuthService;
     auditLog: AuditLogService;
     badge: BadgeService;
     catalog: CatalogService;
@@ -128,7 +129,9 @@ export function createAppDependencies({
   const staffPrivilegeRepository = new StaffPrivilegePgRepository(database);
   const watchlistRepository = new WatchlistPgRepository(database);
 
-  const authService = new AuthService(authRepository, redisClient);
+  // Explicit order
+  const passwordSecurity = new PasswordSecurityService(redisClient);
+  const authService = new AuthService(authRepository, redisClient, passwordSecurity);
   const playerService = new PlayerService(playerRepository);
 
   return {
@@ -136,11 +139,11 @@ export function createAppDependencies({
     authenticateRequest: authenticate(authService),
     services: {
       actor: new ActorService(actorRepository),
-      account: new AccountService(accountRepository, authService, redisClient),
+      auth: authService,
+      account: new AccountService(accountRepository, authService, passwordSecurity),
       argusAlert: new ArgusAlertService(argusAlertRepository),
       argusDm: new ArgusDmService(argusDmRepository),
       argusUser: new ArgusUserService(argusUserRepository),
-      auth: authService,
       auditLog: new AuditLogService(auditLogRepository),
       badge: new BadgeService(badgeRepository),
       catalog: new CatalogService(catalogRepository),

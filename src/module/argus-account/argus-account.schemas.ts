@@ -1,27 +1,17 @@
-import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
-import z from "zod";
+/**
+ * @deprecated Account schemas are owned by the account module.
+ * Import from ../account/account.schemas.js instead.
+ */
+export {
+  accountIdentityResponseSchema as argusAccountIdentityResponseSchema,
+  accountRoleSchema as argusAccountRoleSchema,
+  accountSecurityLockSchema as argusAccountSecurityLockSchema,
+  accountStateSchema as argusAccountStateSchema,
+} from "../account/account.schemas.js";
 
-extendZodWithOpenApi(z);
-
-export const argusAccountRoleSchema = z.enum(["moderator", "admin"]);
-
-export const argusAccountStateSchema = z.enum([
-  "active",
-  "suspended",
-  "disabled",
-  "verify_email",
-]);
-
-export const argusAccountSecurityLockSchema = z
-  .enum(["change_password", "reset_password"])
-  .nullable();
-
-export const argusAccountIdentityResponseSchema = z.object({
-  id: z.string().uuid(),
-  username: z.string(),
-  email: z.string().email(),
-  role: argusAccountRoleSchema,
-  actorId: z.string().uuid().nullable(),
-  accountState: argusAccountStateSchema,
-  accountSecurityLock: argusAccountSecurityLockSchema,
-});
+/**
+ * @deprecated Password-security schemas are owned by the password-security module.
+ * Import from ../password-security/password-security.schemas.js instead.
+ */
+export { passwordSecurityCueSchema } from "../password-security/password-security.schemas.js";
+export type { PasswordSecurityCue } from "../password-security/password-security.schemas.js";

@@ -43,6 +43,8 @@ export const serverInstancePresenceResponseSchema = z
     serverInstanceId: z.string().guid(),
     observedAtMs: z.string(),
     observedPlayerCount: z.number().int(),
+    closedNetworkSessionCount: z.number().int(),
+    closedBackendSessionCount: z.number().int(),
   })
   .openapi("ServerInstancePresenceResponse");
 
@@ -66,9 +68,7 @@ export const serverInstanceEventResponseSchema = z
 
 export type ServerInstanceResponse = z.infer<typeof serverInstanceResponseSchema>;
 export type RegisterServerInstanceResponse = z.infer<typeof registerServerInstanceResponseSchema>;
-export type ServerInstanceHeartbeatResponse = z.infer<
-  typeof serverInstanceHeartbeatResponseSchema
->;
+export type ServerInstanceHeartbeatResponse = z.infer<typeof serverInstanceHeartbeatResponseSchema>;
 export type ServerInstancePresenceResponse = z.infer<typeof serverInstancePresenceResponseSchema>;
 export type ServerInstanceMetricsResponse = z.infer<typeof serverInstanceMetricsResponseSchema>;
 export type ServerInstanceEventResponse = z.infer<typeof serverInstanceEventResponseSchema>;

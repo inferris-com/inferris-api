@@ -12,10 +12,7 @@ import type { CreatePlayerBody, ListPlayersQuery, UpdatePlayerBody } from "./pla
 export type PlayerSummaryRecord = Pick<
   Selectable<Players>,
   "id" | "mojang_id" | "actor_id" | "username" | "flags" | "orbs" | "active_channel_key"
-> & {
-  active_nickname: string | null;
-  active_nickname_cover_rank_key: string | null;
-};
+>;
 
 export type PlayerSearchRecord = Pick<
   Selectable<Players>,

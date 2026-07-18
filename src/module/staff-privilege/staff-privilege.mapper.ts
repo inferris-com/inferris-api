@@ -5,13 +5,17 @@ import type {
   CreateStaffPrivilegeBody,
   UpdateStaffPrivilegeBody,
 } from "./staff-privilege.schemas.js";
+import { staffPrivilegeRoleSchema, staffPrivilegeStatusSchema } from "./staff-privilege.schemas.js";
+import type { StaffPrivilegeResponse } from "./staff-privilege.response-types.js";
 
-export function toStaffPrivilegeResponse(row: Selectable<PrivilegedSubjects>) {
+export function toStaffPrivilegeResponse(
+  row: Selectable<PrivilegedSubjects>,
+): StaffPrivilegeResponse {
   return {
     id: row.id,
     actorId: row.actor_id,
-    status: row.status,
-    role: row.role,
+    status: staffPrivilegeStatusSchema.parse(row.status),
+    role: staffPrivilegeRoleSchema.parse(row.role),
     title: row.title,
     enrolledByActorId: row.enrolled_by_actor_id,
     revokedByActorId: row.revoked_by_actor_id,

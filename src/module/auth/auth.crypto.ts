@@ -3,14 +3,14 @@ import argon2 from "argon2";
 import { SignJWT, jwtVerify } from "jose";
 
 import { config } from "../../config.js";
-import type { ArgusAccountRole } from "../../db/types.js";
+import type { AccountRole } from "../account/account.schemas.js";
 
 const jwtSecret = new TextEncoder().encode(config.auth.jwtSecret);
 
 export type AccessTokenPayload = {
   sub: string;
   actorId: string | null;
-  role: ArgusAccountRole;
+  role: AccountRole;
   sessionId?: string;
   typ: "access";
 };
@@ -60,7 +60,10 @@ export function createApiKeyToken(keyId = randomUUID()): {
   };
 }
 
-export async function verifyPassword(passwordHash: string | null, password: string): Promise<boolean> {
+export async function verifyPassword(
+  passwordHash: string | null,
+  password: string,
+): Promise<boolean> {
   if (passwordHash == null) {
     return false;
   }

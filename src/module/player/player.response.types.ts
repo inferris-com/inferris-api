@@ -33,7 +33,6 @@ export const playerSummaryResponseSchema = z
     mojangId: z.string().uuid(),
     actorId: z.string().uuid(),
     username: z.string(),
-    activeNickname: playerNicknameSummaryResponseSchema.nullable(),
     flags: z.string(),
     orbs: z.string(),
     chatChannel: z.string(),
@@ -46,7 +45,6 @@ export const playerSearchResultResponseSchema = z
     mojangId: z.string().uuid(),
     actorId: z.string().uuid(),
     username: z.string(),
-    activeNickname: playerNicknameSummaryResponseSchema.nullable(),
     deletedAtMs: z.string().nullable(),
   })
   .openapi("PlayerSearchResultResponse");
@@ -76,17 +74,19 @@ export const playerResponseSchema = z
     id: z.string().uuid(),
     mojangId: z.string().uuid(),
     actorId: z.string().uuid(),
+
     username: z.string(),
-    activeNickname: playerNicknameSummaryResponseSchema.optional(),
     flags: z.string(),
     orbs: z.string(),
     chatChannel: z.string(),
+
     profile: playerProfileEmbeddedResponseSchema.nullable(),
     badges: z.array(z.number().int()),
     rankAssignments: z.array(playerRankSummaryResponseSchema),
+
     createdAtMs: z.string(),
     lastSeenAtMs: z.string().nullable(),
-    lastServerId: z.string().uuid().nullable(),
+    lastServerId: z.guid().nullable(),
   })
   .openapi("PlayerResponse");
 

@@ -10,9 +10,9 @@ import {
 import {
   accountNotificationResponseSchema,
   accountResponseSchema,
-  argusSessionResponseSchema,
   passwordChangeResponseSchema,
 } from "./account.response-types.js";
+import { argusSessionResponseSchema } from "../auth/auth.response-types.js";
 import {
   accountNotificationParamsSchema,
   accountSessionParamsSchema,
@@ -85,7 +85,10 @@ export function registerAccountOpenApi(registry: OpenAPIRegistry) {
     security: userSecurity,
     summary: "List current Argus account notifications",
     operationId: "listAccountNotifications",
-    responses: { "200": listResponse(accountNotificationResponseSchema), ...standardErrorResponses },
+    responses: {
+      "200": listResponse(accountNotificationResponseSchema),
+      ...standardErrorResponses,
+    },
   });
 
   registry.registerPath({

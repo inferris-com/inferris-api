@@ -2,15 +2,16 @@ import type { Request, RequestHandler } from "express";
 
 import { config } from "../../config.js";
 import { ForbiddenError, UnauthorizedError, ValidationError } from "../../error/app-error.js";
+import type { AccountRole } from "../account/account.schemas.js";
+import type { StaffPrivilegeRole } from "../staff-privilege/staff-privilege.schemas.js";
 import type { AuthRepository } from "./auth.repository.js";
 import type { AuthService } from "./auth.service.js";
 import { argusRoleRank, privilegedRoleRank, type ApiScope } from "./auth.types.js";
-import type { ArgusAccountRole, UserPrivilegeRole } from "../../db/types.js";
 
 type RoutePolicy = {
   apiScopes?: ApiScope[];
-  privilegedRole?: UserPrivilegeRole;
-  argusRole?: ArgusAccountRole;
+  privilegedRole?: StaffPrivilegeRole;
+  argusRole?: AccountRole;
 };
 
 type Credential = {

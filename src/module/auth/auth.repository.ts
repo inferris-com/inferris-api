@@ -1,15 +1,9 @@
 import { sql } from "kysely";
 
 import type { DbExecutor } from "../../db/index.js";
-import type {
-  ArgusAccountSecurityLock,
-  ArgusAccountRole,
-  ArgusAccountStatus,
-  Json,
-  Platform,
-  PrincipalType,
-  UserPrivilegeRole,
-} from "../../db/types.js";
+import type { Json, Platform, PrincipalType } from "../../db/types.js";
+import type { AccountRole, AccountSecurityLock, AccountState } from "../account/account.schemas.js";
+import type { StaffPrivilegeRole } from "../staff-privilege/staff-privilege.schemas.js";
 import type { ApiScope } from "./auth.types.js";
 
 export type ApiKeyAuthRecord = {
@@ -27,15 +21,15 @@ export type ArgusAuthRecord = {
   username: string;
   email: string;
   passwordHash: string | null;
-  role: ArgusAccountRole;
+  role: AccountRole;
   actorId: string | null;
-  accountState: ArgusAccountStatus;
-  accountSecurityLock: ArgusAccountSecurityLock | null;
+  accountState: AccountState;
+  accountSecurityLock: AccountSecurityLock | null;
 };
 
 export type PrivilegedRecord = {
   id: string;
-  role: UserPrivilegeRole;
+  role: StaffPrivilegeRole;
 };
 
 export type CurrentNetworkSessionRecord = {

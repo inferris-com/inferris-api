@@ -1,33 +1,30 @@
-import { createHash } from "node:crypto";
-
 import { NotFoundError, UnauthorizedError } from "../../error/app-error.js";
-import type { RedisClient } from "../../redis/index.js";
 import { hashPassword, verifyPassword } from "../auth/auth.crypto.js";
 import type { AuthService } from "../auth/auth.service.js";
 import type { AuthContext } from "../auth/auth.types.js";
+import type { PasswordSecurityService } from "../password-security/password-security.service.js";
 import { toAccountResponse } from "./account.mapper.js";
 import type { AccountPgRepository } from "./account.pg-repository.js";
 import type {
   AccountNotificationResponse,
   AccountResponse,
   PasswordChangeResponse,
-  PasswordSecurityCue,
 } from "./account.response-types.js";
 import type { ChangePasswordBody } from "./account.schemas.js";
 
 const passwordSecurityNotificationId = "password-security:breached";
-const passwordSecurityTtlSeconds = 60 * 60 * 24 * 30;
 
 export class AccountService {
   constructor(
     private readonly repo: AccountPgRepository,
     private readonly authService: AuthService,
-    private readonly redis: RedisClient,
+    private readonly passwordSecurityService: PasswordSecurityService,
   ) {}
 
   async getAccount(auth: AuthContext): Promise<AccountResponse> {
     const argusUserId = requireArgusUserId(auth);
     const account = await this.repo.findAccountById(argusUserId);
+    const securityClue = await this.passwordSecurityService.getPasswordSecurityCue(argusUserId);
 
     if (!account) {
       throw new NotFoundError({
@@ -36,7 +33,7 @@ export class AccountService {
       });
     }
 
-    return toAccountResponse(account, await this.getPasswordSecurityCue(argusUserId));
+    return toAccountResponse(account, securityClue);
   }
 
   async changePassword(
@@ -53,15 +50,13 @@ export class AccountService {
       });
     }
 
-    const passwordSecurity = await this.checkPasswordSecurity(input.newPassword);
+    // HIBP API breach check & update Redis
+    const passwordSecurity = await this.passwordSecurityService.refreshPasswordSecurityCue(
+      argusUserId,
+      input.newPassword,
+    );
 
     await this.repo.updatePassword(argusUserId, await hashPassword(input.newPassword));
-
-    if (passwordSecurity) {
-      await this.setPasswordSecurityCue(argusUserId, passwordSecurity);
-    } else {
-      await this.redis.del(passwordSecurityKey(argusUserId));
-    }
 
     return { passwordSecurity };
   }
@@ -80,7 +75,10 @@ export class AccountService {
       });
     }
 
-    const passwordSecurity = await this.checkPasswordSecurity(input.newPassword);
+    const passwordSecurity = await this.passwordSecurityService.refreshPasswordSecurityCue(
+      argusUserId,
+      input.newPassword,
+    );
 
     const passwordChanged = await this.repo.clearChangePasswordSecurityLock(
       argusUserId,
@@ -92,12 +90,6 @@ export class AccountService {
         code: "SECURITY_LOCK_NOT_FOUND",
         message: "No change-password security lock is active for this account.",
       });
-    }
-
-    if (passwordSecurity) {
-      await this.setPasswordSecurityCue(argusUserId, passwordSecurity);
-    } else {
-      await this.redis.del(passwordSecurityKey(argusUserId));
     }
 
     return { passwordSecurity };
@@ -126,7 +118,7 @@ export class AccountService {
     const argusUserId = requireArgusUserId(auth);
     const [accountNotifications, passwordSecurity] = await Promise.all([
       this.repo.listUnreadNotifications(argusUserId),
-      this.getPasswordSecurityCue(argusUserId),
+      this.passwordSecurityService.getPasswordSecurityCue(argusUserId),
     ]);
 
     const notifications: AccountNotificationResponse[] = accountNotifications.map(
@@ -159,7 +151,7 @@ export class AccountService {
     const argusUserId = requireArgusUserId(auth);
 
     if (notificationId === passwordSecurityNotificationId) {
-      await this.redis.del(passwordSecurityKey(argusUserId));
+      await this.passwordSecurityService.clearPasswordSecurityCue(argusUserId);
       return;
     }
 
@@ -172,58 +164,6 @@ export class AccountService {
       });
     }
   }
-
-  private async checkPasswordSecurity(password: string): Promise<PasswordSecurityCue | null> {
-    const sha1 = createHash("sha1").update(password).digest("hex").toUpperCase();
-    const prefix = sha1.slice(0, 5);
-    const suffix = sha1.slice(5);
-
-    try {
-      const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
-        headers: {
-          "User-Agent": "inferris-api",
-          "Add-Padding": "true",
-        },
-      });
-
-      if (!response.ok) {
-        return null;
-      }
-
-      const text = await response.text();
-      const match = text
-        .split("\n")
-        .map((line) => line.trim().split(":"))
-        .find(([candidate]) => candidate === suffix);
-
-      if (!match) {
-        return null;
-      }
-
-      return {
-        breached: true,
-        breachCount: Number.parseInt(match[1] ?? "0", 10),
-        checkedAtMs: Date.now(),
-      };
-    } catch {
-      return null;
-    }
-  }
-
-  private async getPasswordSecurityCue(argusUserId: string): Promise<PasswordSecurityCue | null> {
-    const raw = await this.redis.get(passwordSecurityKey(argusUserId));
-
-    return raw ? (JSON.parse(raw) as PasswordSecurityCue) : null;
-  }
-
-  private async setPasswordSecurityCue(
-    argusUserId: string,
-    cue: PasswordSecurityCue,
-  ): Promise<void> {
-    await this.redis.set(passwordSecurityKey(argusUserId), JSON.stringify(cue), {
-      EX: passwordSecurityTtlSeconds,
-    });
-  }
 }
 
 function requireArgusUserId(auth: AuthContext): string {
@@ -235,8 +175,4 @@ function requireArgusUserId(auth: AuthContext): string {
   }
 
   return auth.argus.userId;
-}
-
-function passwordSecurityKey(argusUserId: string): string {
-  return `account:password-security:${argusUserId}`;
 }

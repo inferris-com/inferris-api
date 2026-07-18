@@ -69,12 +69,12 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
   });
   const writePlayers = authorize(authRepository, {
     apiScopes: ["players:write"],
-    argusRole: "moderator",
+    argusRole: "admin",
   });
   const managePlayerStaffState = authorize(authRepository, {
     apiScopes: ["players:write"],
-    argusRole: "moderator",
-    privilegedRole: "moderator",
+    argusRole: "admin",
+    privilegedRole: "administrator",
   });
   const administerPlayers = authorize(authRepository, {
     apiScopes: ["players:write"],

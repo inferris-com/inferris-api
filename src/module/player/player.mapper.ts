@@ -1,4 +1,4 @@
-import { int8ToString, int8ToStringOrDefault, int8ToStringOrNull } from "../../shared/db/int8.js";
+import { int8ToString, int8ToStringOrNull } from "../../shared/db/int8.js";
 import type {
   PlayerBadgeRow,
   PlayerDetailsRecord,
@@ -24,14 +24,8 @@ export function toPlayerSummaryResponse(row: PlayerSummaryRecord): PlayerSummary
     mojangId: row.mojang_id,
     actorId: row.actor_id,
     username: row.username,
-    activeNickname: row.active_nickname
-      ? {
-          nickname: row.active_nickname,
-          coverRankKey: row.active_nickname_cover_rank_key,
-        }
-      : null,
-    flags: int8ToStringOrDefault(row.flags, "0"),
-    orbs: int8ToStringOrDefault(row.orbs, "0"),
+    flags: int8ToString(row.flags),
+    orbs: int8ToString(row.orbs),
     chatChannel: row.active_channel_key,
   };
 }
@@ -42,12 +36,6 @@ export function toPlayerSearchResultResponse(row: PlayerSearchRecord): PlayerSea
     mojangId: row.mojang_id,
     actorId: row.actor_id,
     username: row.username,
-    activeNickname: row.active_nickname
-      ? {
-          nickname: row.active_nickname,
-          coverRankKey: row.active_nickname_cover_rank_key,
-        }
-      : null,
     deletedAtMs: int8ToStringOrNull(row.deleted_at_ms),
   };
 }
@@ -60,16 +48,8 @@ export function toPlayerResponse(input: PlayerDetailsRecord): PlayerResponse {
     mojangId: player.mojang_id,
     actorId: player.actor_id,
     username: player.username,
-    ...(player.active_nickname
-      ? {
-          activeNickname: {
-            nickname: player.active_nickname,
-            coverRankKey: player.active_nickname_cover_rank_key,
-          },
-        }
-      : {}),
-    flags: int8ToStringOrDefault(player.flags, "0"),
-    orbs: int8ToStringOrDefault(player.orbs, "0"),
+    flags: int8ToString(player.flags),
+    orbs: int8ToString(player.orbs),
     chatChannel: player.active_channel_key,
 
     profile: profile
@@ -89,7 +69,7 @@ export function toPlayerResponse(input: PlayerDetailsRecord): PlayerResponse {
       rankKey: assignment.rank_key,
     })),
 
-    createdAtMs: int8ToStringOrDefault(player.created_at_ms, "0"),
+    createdAtMs: player.created_at_ms,
     lastSeenAtMs: int8ToStringOrNull(player.last_seen_at_ms),
     lastServerId: player.last_server_id,
   };

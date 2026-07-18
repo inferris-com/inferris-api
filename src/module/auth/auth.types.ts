@@ -1,9 +1,6 @@
-import type {
-  ArgusAccountRole,
-  Platform,
-  PrincipalType,
-  UserPrivilegeRole,
-} from "../../db/types.js";
+import type { Platform, PrincipalType } from "../../db/types.js";
+import type { AccountRole } from "../account/account.schemas.js";
+import type { StaffPrivilegeRole } from "../staff-privilege/staff-privilege.schemas.js";
 
 export type ApiScope =
   | "*"
@@ -16,7 +13,9 @@ export type ApiScope =
   | "servers:write"
   | "permissions:read"
   | "permissions:write"
+  | "staff:read"
   | "staff:write"
+  | "argus:read"
   | "argus:write"
   | "audit:read"
   | "chat:read"
@@ -45,7 +44,7 @@ export type AuthContext = {
   };
   argus?: {
     userId: string;
-    role: ArgusAccountRole;
+    role: AccountRole;
     sessionId?: string;
   };
   minecraftSession?: {
@@ -56,11 +55,11 @@ export type AuthContext = {
   };
   privileged?: {
     id: string;
-    role: UserPrivilegeRole;
+    role: StaffPrivilegeRole;
   };
 };
 
-export const privilegedRoleRank: Record<UserPrivilegeRole, number> = {
+export const privilegedRoleRank: Record<StaffPrivilegeRole, number> = {
   none: 0,
   collaborator: 1,
   moderator: 2,
@@ -68,7 +67,7 @@ export const privilegedRoleRank: Record<UserPrivilegeRole, number> = {
   superadmin: 4,
 };
 
-export const argusRoleRank: Record<ArgusAccountRole, number> = {
+export const argusRoleRank: Record<AccountRole, number> = {
   moderator: 1,
   admin: 2,
 };

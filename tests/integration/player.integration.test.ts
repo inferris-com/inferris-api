@@ -105,7 +105,7 @@ describe("player routes", () => {
 
     const response = await request
       .post("/players")
-      .set("Authorization", "Bearer moderator-token")
+      .set("Authorization", "Bearer admin-token")
       .send({ username: "MissingUuid" });
 
     expect(response.status).toBe(400);
@@ -174,7 +174,7 @@ describe("player routes", () => {
 
     const response = await request
       .put(`/players/${ids.player}/ranks/staff/moderator`)
-      .set("Authorization", "Bearer moderator-token")
+      .set("Authorization", "Bearer admin-token")
       .send({ source: "argus" });
 
     expect(response.status).toBe(200);
@@ -225,7 +225,7 @@ describe("player routes", () => {
 
     const response = await request
       .put(`/players/${ids.player}/ranks/staff/moderator`)
-      .set("Authorization", "Bearer moderator-token")
+      .set("Authorization", "Bearer admin-token")
       .send({ source: "argus", assignedByActorId: ids.actingActor });
 
     expect(response.status).toBe(400);

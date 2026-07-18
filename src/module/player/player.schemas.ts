@@ -103,6 +103,9 @@ export const updatePlayerBodySchema = z
     orbs: BigIntStringSchema.optional(),
 
     chatChannel: z.enum(["global", "staff", "testing"]).optional(),
+
+    lastSeenAtMs: BigIntStringSchema.optional().nullable(),
+    lastServerId: z.guid().optional().nullable(),
   })
   .strict()
   .refine((body) => Object.keys(body).length > 0, {

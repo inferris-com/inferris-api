@@ -7,17 +7,22 @@ import {
   createRefreshToken,
   hashApiKeySecret,
   hashMinecraftSessionToken,
-  hashServerInstanceToken,
   hashRefreshToken,
+  hashServerInstanceToken,
   parseApiKeyToken,
   signAccessToken,
   verifyAccessToken,
   verifyPassword,
 } from "./auth.crypto.js";
 import type { ArgusAuthRecord, AuthRepository } from "./auth.repository.js";
-import type { AuthTokenResponse, AuthUserResponse } from "./auth.response-types.js";
+import type {
+  ArgusSessionResponse,
+  AuthTokenResponse,
+  AuthUserResponse,
+} from "./auth.response-types.js";
 import type { LoginBody } from "./auth.schemas.js";
 import type { AuthContext } from "./auth.types.js";
+import type { PasswordSecurityService } from "../password-security/password-security.service.js";
 
 type RefreshSession = {
   argusUserId: string;
@@ -34,17 +39,6 @@ type ArgusSessionState = RefreshSession & {
 };
 
 type AuthUserRecord = Omit<ArgusAuthRecord, "passwordHash">;
-
-export type ArgusSessionResponse = {
-  id: string;
-  createdAtMs: number;
-  lastSeenAtMs: number;
-  expiresAtMs: number;
-  revokedAtMs: number | null;
-  isCurrent: boolean;
-  userAgent: string | null;
-  ipAddress: string | null;
-};
 
 export type SessionMeta = {
   userAgent?: string | null;
@@ -64,6 +58,7 @@ export class AuthService {
   constructor(
     private readonly repo: AuthRepository,
     private readonly redis: RedisClient,
+    private readonly passwordSecurityService: PasswordSecurityService,
   ) {}
 
   async authenticateApiKey(token: string): Promise<AuthContext | null> {
@@ -217,6 +212,8 @@ export class AuthService {
     } else if (user.accountState === "verify_email") {
       throw accountVerifyEmail();
     }
+
+    await this.passwordSecurityService.refreshPasswordSecurityCue(user.id, input.password);
 
     return this.issueTokenResponse(user, sessionMeta);
   }

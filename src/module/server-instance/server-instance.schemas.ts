@@ -51,7 +51,7 @@ export const serverInstanceHeartbeatBodySchema = z
 export const serverInstancePresenceBodySchema = z
   .object({
     observedAtMs: BigIntStringSchema.optional(),
-    onlineMojangIds: z.array(z.string().min(1)).default([]),
+    onlineMojangIds: z.array(z.string().guid()).default([]),
   })
   .strict();
 

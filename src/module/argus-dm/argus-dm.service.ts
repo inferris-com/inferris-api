@@ -1,5 +1,5 @@
+import type { AccountRole } from "../account/account.schemas.js";
 import { argusRoleRank } from "../auth/auth.types.js";
-import type { ArgusAccountRole } from "../../db/types.js";
 import {
   ArgusDmConversationNotFoundError,
   ArgusDmForbiddenError,
@@ -101,7 +101,7 @@ export class ArgusDmService {
     conversationId: string,
     input: UpdateArgusDmConversationBody,
     argusUserId: string,
-    role: ArgusAccountRole,
+    role: AccountRole,
   ): Promise<ArgusDmConversationResponse> {
     const conversation = await this.requireConversationParticipant(conversationId, argusUserId);
 
@@ -184,7 +184,7 @@ export class ArgusDmService {
     conversationId: string,
     messageId: string,
     argusUserId: string,
-    role: ArgusAccountRole,
+    role: AccountRole,
   ): Promise<void> {
     await this.requireConversationParticipant(conversationId, argusUserId);
 
@@ -302,7 +302,7 @@ function uniqueIds(ids: string[]): string[] {
 function canManageConversation(
   ownerArgusUserId: string | null,
   argusUserId: string,
-  role: ArgusAccountRole,
+  role: AccountRole,
 ): boolean {
   return ownerArgusUserId === argusUserId || argusRoleRank[role] >= argusRoleRank.admin;
 }

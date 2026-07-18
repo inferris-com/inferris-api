@@ -1,6 +1,7 @@
 import type { Selectable } from "kysely";
 
 import type { ArgusDmConversations, ArgusDmMessages } from "../../db/types.js";
+import type { AccountRole } from "../account/account.schemas.js";
 import { int8ToString, int8ToStringOrNull } from "../../shared/db/int8.js";
 import type {
   ArgusDmConversationResponse,
@@ -11,7 +12,7 @@ import type {
 export type ArgusDmParticipantRow = {
   argus_user_id: string;
   username: string;
-  role: "moderator" | "admin";
+  role: AccountRole;
   invited_by_argus_user_id: string | null;
   joined_at_ms: string | number | bigint;
   last_read_at_ms: string | number | bigint | null;

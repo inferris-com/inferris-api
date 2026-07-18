@@ -5,7 +5,9 @@ import type {
   ArgusAccountStatus,
   UserPrivilegeRole,
 } from "../../db/types.js";
-import type { PasswordSecurityCue } from "./account.response-types.js";
+import type { PasswordSecurityCue } from "../password-security/password-security.schemas.js";
+import { staffPrivilegeStatusSchema } from "../staff-privilege/staff-privilege.schemas.js";
+import type { AccountResponse } from "./account.response-types.js";
 
 export function toAccountResponse(
   row: {
@@ -26,7 +28,7 @@ export function toAccountResponse(
     privileged_status: string | null;
   },
   passwordSecurity: PasswordSecurityCue | null,
-) {
+): AccountResponse {
   return {
     id: row.id,
     username: row.username,
@@ -45,7 +47,7 @@ export function toAccountResponse(
           id: row.privileged_id,
           role: row.privileged_role ?? "none",
           title: row.privileged_title,
-          status: row.privileged_status ?? "active",
+          status: staffPrivilegeStatusSchema.parse(row.privileged_status ?? "active"),
         }
       : null,
     accountState: row.account_state,
