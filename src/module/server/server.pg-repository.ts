@@ -18,7 +18,7 @@ import type {
   UpdateServerBody,
 } from "./server.schemas.js";
 import type { CreateResult, DeleteResult } from "../../shared/results.types.js";
-import { toServerAccessPolicyUpdate } from "./server.mapper.js";
+import { toServerAccessPolicyUpdate, type ServerWithPresence } from "./server.mapper.js";
 
 export type CreateServerResult = CreateResult<Selectable<Servers>>;
 export type CreateLockdownResult = CreateResult<Selectable<Lockdowns>>;
@@ -26,6 +26,7 @@ export type CreatePolicyResult =
   | CreateResult<Selectable<ServerAccessPolicies>>
   | { status: "not_found" };
 export type DeleteLockdownResult = DeleteResult;
+type ServerPresenceStatus = "online" | "offline";
 
 type PlayerSessionIdentity = {
   playerId: string;
@@ -47,14 +48,21 @@ type BackendSessionRecord = PlayerSessionIdentity & {
 export class ServerPgRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
-  async listServers(): Promise<Selectable<Servers>[]> {
-    return this.db
-      .selectFrom("servers")
-      .selectAll()
-      .orderBy("environment", "asc")
-      .orderBy("type", "asc")
-      .orderBy("name", "asc")
-      .execute();
+  async listServers(): Promise<ServerWithPresence[]> {
+    const rows = await sql<Selectable<Servers> & { status: ServerPresenceStatus }>`
+      SELECT
+        s.*,
+        CASE
+          WHEN count(si.id) FILTER (WHERE si.state IN ('active', 'draining')) > 0 THEN 'online'
+          ELSE 'offline'
+        END AS status
+      FROM servers s
+      LEFT JOIN server_instances si ON si.server_id = s.id
+      GROUP BY s.id
+      ORDER BY s.environment ASC, s.type ASC, s.name ASC
+    `.execute(this.db);
+
+    return rows.rows;
   }
 
   async registerServer(input: CreateServerBody): Promise<Selectable<Servers>> {
@@ -520,7 +528,7 @@ export class ServerPgRepository {
     });
   }
 
-  async updateServerById(id: string, input: UpdateServerBody): Promise<Selectable<Servers> | null> {
+  async updateServerById(id: string, input: UpdateServerBody): Promise<ServerWithPresence | null> {
     return await this.db.transaction().execute(async (trx) => {
       const server = await this.findServerById(id);
 
@@ -565,7 +573,7 @@ export class ServerPgRepository {
         .returningAll()
         .executeTakeFirst();
 
-      return updatedServer ?? null;
+      return updatedServer ? { ...updatedServer, status: server.status ?? "offline" } : null;
     });
   }
 
@@ -661,52 +669,38 @@ export class ServerPgRepository {
     });
   }
 
-  async findServerById(id: string) {
-    return this.db.transaction().execute(async (trx) => {
-      const server = await trx
-        .selectFrom("servers")
-        .select([
-          "id",
-          "name",
-          "type",
-          "environment",
-          "port",
-          "created_at_ms",
-          "last_updated_at_ms",
-        ])
-        .where("id", "=", id)
-        .executeTakeFirst();
+  async findServerById(id: string): Promise<ServerWithPresence | null> {
+    const rows = await sql<Selectable<Servers> & { status: ServerPresenceStatus }>`
+      SELECT
+        s.*,
+        CASE
+          WHEN count(si.id) FILTER (WHERE si.state IN ('active', 'draining')) > 0 THEN 'online'
+          ELSE 'offline'
+        END AS status
+      FROM servers s
+      LEFT JOIN server_instances si ON si.server_id = s.id
+      WHERE s.id = ${id}::uuid
+      GROUP BY s.id
+    `.execute(this.db);
 
-      if (!server) {
-        return null;
-      }
-
-      return server;
-    });
+    return rows.rows[0] ?? null;
   }
 
-  async findServerByName(name: string) {
-    return this.db.transaction().execute(async (trx) => {
-      const server = await trx
-        .selectFrom("servers")
-        .select([
-          "id",
-          "name",
-          "type",
-          "environment",
-          "port",
-          "created_at_ms",
-          "last_updated_at_ms",
-        ])
-        .where("name", "=", name)
-        .executeTakeFirst();
+  async findServerByName(name: string): Promise<ServerWithPresence | null> {
+    const rows = await sql<Selectable<Servers> & { status: ServerPresenceStatus }>`
+      SELECT
+        s.*,
+        CASE
+          WHEN count(si.id) FILTER (WHERE si.state IN ('active', 'draining')) > 0 THEN 'online'
+          ELSE 'offline'
+        END AS status
+      FROM servers s
+      LEFT JOIN server_instances si ON si.server_id = s.id
+      WHERE s.name = ${name}
+      GROUP BY s.id
+    `.execute(this.db);
 
-      if (!server) {
-        return null;
-      }
-
-      return server;
-    });
+    return rows.rows[0] ?? null;
   }
 
   async findAccessPolicyByServerId(id: string) {

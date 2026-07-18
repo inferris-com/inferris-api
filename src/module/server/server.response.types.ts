@@ -21,6 +21,7 @@ export const serverResponseSchema = z
     name: z.string(),
     type: z.string(),
     environment: z.string(),
+    status: z.enum(["online", "offline"]),
     port: z.number().int().nullable(),
     createdAtMs: z.string(),
     lastUpdatedAtMs: z.string().nullable(),

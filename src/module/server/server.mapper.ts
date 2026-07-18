@@ -4,12 +4,17 @@ import type { AccessResponse, LockdownResponse, ServerResponse } from "./server.
 import { int8ToStringOrDefault, int8ToStringOrNull } from "../../shared/db/int8.js";
 import type { ReplaceServerAccessBody, UpdateLockdownBody } from "./server.schemas.js";
 
-export function toServerResponse(servers: Selectable<Servers>): ServerResponse {
+export type ServerWithPresence = Selectable<Servers> & {
+  status?: "online" | "offline";
+};
+
+export function toServerResponse(servers: ServerWithPresence): ServerResponse {
   return {
     id: servers.id,
     name: servers.name,
     type: servers.type,
     environment: servers.environment,
+    status: servers.status ?? "offline",
     port: servers.port,
 
     createdAtMs: int8ToStringOrDefault(servers.created_at_ms, "0"),
