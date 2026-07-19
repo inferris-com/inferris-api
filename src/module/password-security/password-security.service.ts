@@ -5,6 +5,7 @@ import {
   passwordSecurityCueSchema,
   type PasswordSecurityCue,
 } from "./password-security.schemas.js";
+import { config } from "../../config.js";
 
 const passwordSecurityTtlSeconds = 60 * 60 * 24 * 30;
 const passwordSecurityRequestTimeoutMs = 5_000;
@@ -21,6 +22,10 @@ export class PasswordSecurityService {
     password: string,
   ): Promise<PasswordSecurityCue | null> {
     await this.clearPasswordSecurityCue(accountId);
+
+    if(!config.argus.notifyDataBreach){
+      return null;
+    }
 
     const passwordSecurity = await this.checkPasswordSecurity(password);
 

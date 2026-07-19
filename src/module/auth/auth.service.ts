@@ -207,10 +207,18 @@ export class AuthService {
       throw invalidCredentials();
     }
 
-    if (user.accountState === "disabled") {
-      throw accountDisabled();
-    } else if (user.accountState === "verify_email") {
-      throw accountVerifyEmail();
+    const loginAllowed = config.argus.loginAllowedAccountStates.includes(user.accountState);
+
+    if (!loginAllowed) {
+      switch (user.accountState) {
+        case "verify_email":
+          throw accountVerifyEmail();
+        case "suspended":
+          throw accountSuspended();
+        case "disabled":
+        default:
+          throw accountDisabled();
+      }
     }
 
     await this.passwordSecurityService.refreshPasswordSecurityCue(user.id, input.password);
@@ -449,6 +457,13 @@ function accountDisabled(): UnauthorizedError {
   return new UnauthorizedError({
     code: "ACCOUNT_DISABLED",
     message: "Argus account is disabled.",
+  });
+}
+
+function accountSuspended(): UnauthorizedError {
+  return new UnauthorizedError({
+    code: "ACCOUNT_SUSPENDED",
+    message: "Argus account is suspended.",
   });
 }
 

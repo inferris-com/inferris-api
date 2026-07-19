@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import z from "zod";
+import { accountStateSchema } from "./module/account/account.schemas.js";
 
 const envSchema = z
   .object({
@@ -41,6 +42,12 @@ const envSchema = z
       .int()
       .positive()
       .default(60 * 60),
+    ARGUS_NOTIFY_DATA_BREACH: z.stringbool().default(true),
+    ARGUS_LOGIN_ALLOWED_ACCOUNT_STATES: z
+      .string()
+      .default("active,suspended")
+      .transform((value) => value.split(",").map((item) => item.trim()))
+      .pipe(z.array(accountStateSchema)),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== "production") {
@@ -66,6 +73,15 @@ const envSchema = z
         origin: "string",
         path: ["AUTH_API_KEY_PEPPER"],
         message: "Production AUTH_API_KEY_PEPPER must be at least 32 characters.",
+      });
+    }
+
+    if (!env.ARGUS_LOGIN_ALLOWED_ACCOUNT_STATES.includes("active")) {
+      ctx.addIssue({
+        code: "invalid_value",
+        values: ["active", "suspended", "disabled", "verify_email"],
+        path: ["ARGUS_LOGIN_ALLOWED_ACCOUNT_STATES"],
+        message: '"active" must be included in denied login account states.',
       });
     }
   });
@@ -97,6 +113,10 @@ export const config = {
     accessTokenTtlSeconds: env.AUTH_ACCESS_TOKEN_TTL_SECONDS,
     refreshTokenTtlSeconds: env.AUTH_REFRESH_TOKEN_TTL_SECONDS,
     apiKeyPepper: env.AUTH_API_KEY_PEPPER,
+  },
+  argus: {
+    notifyDataBreach: env.ARGUS_NOTIFY_DATA_BREACH,
+    loginAllowedAccountStates: env.ARGUS_LOGIN_ALLOWED_ACCOUNT_STATES,
   },
   minecraft: {
     sessionTtlSeconds: env.MINECRAFT_SESSION_TTL_SECONDS,

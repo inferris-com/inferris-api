@@ -11,6 +11,7 @@ import type {
   PasswordChangeResponse,
 } from "./account.response-types.js";
 import type { ChangePasswordBody } from "./account.schemas.js";
+import { config } from "../../config.js";
 
 const passwordSecurityNotificationId = "password-security:breached";
 
@@ -24,7 +25,10 @@ export class AccountService {
   async getAccount(auth: AuthContext): Promise<AccountResponse> {
     const argusUserId = requireArgusUserId(auth);
     const account = await this.repo.findAccountById(argusUserId);
-    const securityClue = await this.passwordSecurityService.getPasswordSecurityCue(argusUserId);
+    // Grab cue from Redis if notify data breach is enabled in config
+    const securityClue = config.argus.notifyDataBreach
+      ? await this.passwordSecurityService.getPasswordSecurityCue(argusUserId)
+      : null;
 
     if (!account) {
       throw new NotFoundError({
@@ -118,7 +122,9 @@ export class AccountService {
     const argusUserId = requireArgusUserId(auth);
     const [accountNotifications, passwordSecurity] = await Promise.all([
       this.repo.listUnreadNotifications(argusUserId),
-      this.passwordSecurityService.getPasswordSecurityCue(argusUserId),
+      config.argus.notifyDataBreach
+        ? this.passwordSecurityService.getPasswordSecurityCue(argusUserId)
+        : Promise.resolve(null),
     ]);
 
     const notifications: AccountNotificationResponse[] = accountNotifications.map(
@@ -151,6 +157,7 @@ export class AccountService {
     const argusUserId = requireArgusUserId(auth);
 
     if (notificationId === passwordSecurityNotificationId) {
+      // Remove cue from Redis
       await this.passwordSecurityService.clearPasswordSecurityCue(argusUserId);
       return;
     }
