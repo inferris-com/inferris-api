@@ -1,9 +1,20 @@
-import { createServerInstanceToken } from "../auth/auth.crypto.js";
+import { config } from "../../config.js";
+import type { RedisClient } from "../../redis/index.js";
+import { createMinecraftSessionToken, createServerInstanceToken } from "../auth/auth.crypto.js";
+import {
+  minecraftSessionPlayerKey,
+  minecraftSessionTokenKey,
+  type MinecraftSessionState,
+} from "../auth/auth.service.js";
+import type { AuthContext } from "../auth/auth.types.js";
 import type { PlayerService } from "../player/player.service.js";
 import {
+  InvalidServerEventPayloadError,
+  ServerInstanceInactiveError,
   ProxyInstanceRequiredError,
   ServerInstanceEventConflictError,
   ServerInstanceNotFoundError,
+  ServerInstanceRegistrationForbiddenError,
   ServerInstanceSequenceGapError,
 } from "./server-instance.errors.js";
 import { toServerInstanceResponse } from "./server-instance.mapper.js";
@@ -24,6 +35,8 @@ import type {
   ServerInstanceResponse,
 } from "./server-instance.response-types.js";
 
+type MinecraftSessionIssueInput = Omit<MinecraftSessionState, "issuedAtMs">;
+
 export type AuthenticatedServerInstance = {
   id: string;
   serverId: string;
@@ -35,14 +48,25 @@ export class ServerInstanceService {
   constructor(
     private readonly repo: ServerInstancePgRepository,
     private readonly players: PlayerService,
+    private readonly redis: RedisClient,
   ) {}
 
-  async registerInstance(input: RegisterServerInstanceBody): Promise<RegisterServerInstanceResponse> {
+  async registerInstance(
+    input: RegisterServerInstanceBody,
+    auth: AuthContext | undefined,
+  ): Promise<RegisterServerInstanceResponse> {
     const token = createServerInstanceToken();
-    const result = await this.repo.registerInstance(input, token.tokenHash);
+    const result = await this.repo.registerInstance(input, token.tokenHash, {
+      apiKeyId: auth?.apiKey?.id ?? null,
+      bypassServerBinding: auth?.apiKey === undefined,
+    });
 
     if (result.status === "not_found") {
       throw new ServerInstanceNotFoundError(input.serverId);
+    }
+
+    if (result.status === "forbidden") {
+      throw new ServerInstanceRegistrationForbiddenError();
     }
 
     return {
@@ -65,21 +89,54 @@ export class ServerInstanceService {
     auth: AuthenticatedServerInstance,
     input: ServerInstanceHeartbeatBody,
   ): Promise<ServerInstanceHeartbeatResponse> {
-    return this.repo.heartbeat(auth, input);
+    const result = await this.repo.heartbeat(auth, input);
+
+    if (result.status === "inactive") {
+      throw new ServerInstanceInactiveError();
+    }
+
+    return result;
   }
 
   async recordMetrics(
     auth: AuthenticatedServerInstance,
     input: ServerInstanceMetricsBody,
   ): Promise<ServerInstanceMetricsResponse> {
-    return this.repo.recordMetrics(auth, input);
+    const result = await this.repo.recordMetrics(auth, input);
+
+    if (result.status === "inactive") {
+      throw new ServerInstanceInactiveError();
+    }
+
+    return result;
   }
 
-  reconcilePresence(
+  async reconcilePresence(
     auth: AuthenticatedServerInstance,
     input: ServerInstancePresenceBody,
   ): Promise<ServerInstancePresenceResponse> {
-    return Promise.resolve(this.repo.reconcilePresence(auth, input));
+    const result = await this.repo.reconcilePresence(auth, input);
+
+    if (result.status === "inactive") {
+      throw new ServerInstanceInactiveError();
+    }
+
+    for (const session of result.closedSessions) {
+      await this.revokeMinecraftSession(session.playerId);
+    }
+
+    for (const session of result.observedSessions) {
+      await this.refreshMinecraftSession(session.playerId);
+    }
+
+    return {
+      serverInstanceId: result.serverInstanceId,
+      observedAtMs: result.observedAtMs,
+      idempotent: result.status === "stale",
+      observedPlayerCount: result.observedPlayerCount,
+      closedNetworkSessionCount: result.closedNetworkSessionCount,
+      closedBackendSessionCount: result.closedBackendSessionCount,
+    };
   }
 
   async processEvent(
@@ -102,12 +159,29 @@ export class ServerInstanceService {
       throw new ProxyInstanceRequiredError();
     }
 
+    if (result.status === "inactive") {
+      throw new ServerInstanceInactiveError();
+    }
+
+    if (result.status === "invalid") {
+      throw new InvalidServerEventPayloadError(result.message);
+    }
+
+    for (const session of result.closedSessions) {
+      await this.revokeMinecraftSession(session.playerId);
+    }
+
+    const minecraftSession = result.startedSession
+      ? await this.issueMinecraftSession(result.startedSession)
+      : undefined;
+
     return {
       serverInstanceId: result.serverInstanceId,
       eventId: result.eventId,
       sequence: result.sequence,
       type: result.type,
       idempotent: result.status === "idempotent",
+      ...(minecraftSession ? { minecraftSession } : {}),
     };
   }
 
@@ -143,7 +217,8 @@ export class ServerInstanceService {
     const player = await this.players.ensureMinecraftPlayerIdentity({
       mojangId,
       username,
-      serverId: stringPayload(payload.backendServerId) ?? stringPayload(payload.proxyServerId) ?? "",
+      serverId:
+        stringPayload(payload.backendServerId) ?? stringPayload(payload.proxyServerId) ?? "",
     });
 
     return {
@@ -151,6 +226,63 @@ export class ServerInstanceService {
       actorId: player.actor_id,
       mojangId: player.mojang_id,
     };
+  }
+
+  private async issueMinecraftSession(session: MinecraftSessionIssueInput) {
+    const existingTokenHash = await this.redis.get(minecraftSessionPlayerKey(session.playerId));
+    if (existingTokenHash) {
+      await this.redis.del(minecraftSessionTokenKey(existingTokenHash));
+    }
+
+    const token = createMinecraftSessionToken();
+    const issuedAtMs = Date.now();
+    const state: MinecraftSessionState = {
+      ...session,
+      issuedAtMs,
+    };
+
+    await this.redis.set(minecraftSessionTokenKey(token.tokenHash), JSON.stringify(state), {
+      EX: config.minecraft.sessionTtlSeconds,
+    });
+    await this.redis.set(minecraftSessionPlayerKey(session.playerId), token.tokenHash, {
+      EX: config.minecraft.sessionTtlSeconds,
+    });
+
+    return {
+      token: token.token,
+      expiresAtMs: (issuedAtMs + config.minecraft.sessionTtlSeconds * 1000).toString(),
+      playerId: session.playerId,
+      mojangId: session.mojangId,
+      proxyServerId: session.proxyServerId,
+      networkSessionId: session.networkSessionId,
+    };
+  }
+
+  private async refreshMinecraftSession(playerId: string): Promise<void> {
+    const tokenHash = await this.redis.get(minecraftSessionPlayerKey(playerId));
+
+    if (!tokenHash) {
+      return;
+    }
+
+    await this.redis.expire(
+      minecraftSessionPlayerKey(playerId),
+      config.minecraft.sessionTtlSeconds,
+    );
+    await this.redis.expire(
+      minecraftSessionTokenKey(tokenHash),
+      config.minecraft.sessionTtlSeconds,
+    );
+  }
+
+  private async revokeMinecraftSession(playerId: string): Promise<void> {
+    const tokenHash = await this.redis.get(minecraftSessionPlayerKey(playerId));
+
+    if (tokenHash) {
+      await this.redis.del(minecraftSessionTokenKey(tokenHash));
+    }
+
+    await this.redis.del(minecraftSessionPlayerKey(playerId));
   }
 }
 

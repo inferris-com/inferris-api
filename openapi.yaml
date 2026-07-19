@@ -20,6 +20,24 @@ components:
       bearerFormat: "JWT"
   schemas:
     AuthUserResponse:
+      allOf:
+        - "$ref": "#/components/schemas/AccountIdentityResponse"
+        - type: "object"
+          properties:
+            privilegedRole:
+              type:
+                - "string"
+                - "null"
+              enum:
+                - "none"
+                - "collaborator"
+                - "moderator"
+                - "administrator"
+                - "superadmin"
+                - null
+          required:
+            - "privilegedRole"
+    AccountIdentityResponse:
       type: "object"
       properties:
         id:
@@ -55,17 +73,6 @@ components:
             - "change_password"
             - "reset_password"
             - null
-        privilegedRole:
-          type:
-            - "string"
-            - "null"
-          enum:
-            - "administrator"
-            - "collaborator"
-            - "moderator"
-            - "none"
-            - "superadmin"
-            - null
       required:
         - "id"
         - "username"
@@ -74,7 +81,6 @@ components:
         - "actorId"
         - "accountState"
         - "accountSecurityLock"
-        - "privilegedRole"
     ApiErrorEnvelope:
       type: "object"
       properties:
@@ -115,107 +121,79 @@ components:
         - "expiresInSeconds"
         - "user"
     AccountResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-          format: "uuid"
-        username:
-          type: "string"
-        email:
-          type: "string"
-          format: "email"
-        role:
-          type: "string"
-          enum:
-            - "moderator"
-            - "admin"
-        actorId:
-          type:
-            - "string"
-            - "null"
-          format: "uuid"
-        accountState:
-          type: "string"
-          enum:
-            - "active"
-            - "suspended"
-            - "disabled"
-            - "verify_email"
-        accountSecurityLock:
-          type:
-            - "string"
-            - "null"
-          enum:
-            - "change_password"
-            - "reset_password"
-            - null
-        linkedActor:
-          type:
-            - "object"
-            - "null"
+      allOf:
+        - "$ref": "#/components/schemas/AccountIdentityResponse"
+        - type: "object"
           properties:
-            id:
+            linkedActor:
+              type:
+                - "object"
+                - "null"
+              properties:
+                id:
+                  type: "string"
+                  format: "uuid"
+                name:
+                  type:
+                    - "string"
+                    - "null"
+                type:
+                  type: "string"
+                  enum:
+                    - "system"
+                    - "application"
+                    - "user"
+                    - "unspecified"
+              required:
+                - "id"
+                - "name"
+                - "type"
+            privileged:
+              type:
+                - "object"
+                - "null"
+              properties:
+                id:
+                  type: "string"
+                  format: "uuid"
+                role:
+                  type: "string"
+                  enum:
+                    - "none"
+                    - "collaborator"
+                    - "moderator"
+                    - "administrator"
+                    - "superadmin"
+                title:
+                  type:
+                    - "string"
+                    - "null"
+                status:
+                  type: "string"
+                  enum:
+                    - "active"
+                    - "suspended"
+                    - "revoked"
+                    - "pending"
+              required:
+                - "id"
+                - "role"
+                - "title"
+                - "status"
+            passwordSecurity:
+              "$ref": "#/components/schemas/PasswordSecurityCue"
+            createdAtMs:
               type: "string"
-              format: "uuid"
-            name:
+            updatedAtMs:
               type:
                 - "string"
                 - "null"
-            type:
-              type: "string"
           required:
-            - "id"
-            - "name"
-            - "type"
-        privileged:
-          type:
-            - "object"
-            - "null"
-          properties:
-            id:
-              type: "string"
-              format: "uuid"
-            role:
-              type: "string"
-              enum:
-                - "none"
-                - "collaborator"
-                - "moderator"
-                - "administrator"
-                - "superadmin"
-            title:
-              type:
-                - "string"
-                - "null"
-            status:
-              type: "string"
-          required:
-            - "id"
-            - "role"
-            - "title"
-            - "status"
-        passwordSecurity:
-          "$ref": "#/components/schemas/PasswordSecurityCue"
-        createdAtMs:
-          type: "string"
-        updatedAtMs:
-          type:
-            - "string"
-            - "null"
-      required:
-        - "id"
-        - "username"
-        - "email"
-        - "role"
-        - "actorId"
-        - "accountState"
-        - "accountSecurityLock"
-        - "linkedActor"
-        - "privileged"
-        - "passwordSecurity"
-        - "createdAtMs"
-        - "updatedAtMs"
+            - "linkedActor"
+            - "privileged"
+            - "passwordSecurity"
+            - "createdAtMs"
+            - "updatedAtMs"
     PasswordSecurityCue:
       type:
         - "object"
@@ -227,8 +205,10 @@ components:
           type:
             - "integer"
             - "null"
+          minimum: 0
         checkedAtMs:
           type: "integer"
+          minimum: 0
       required:
         - "breached"
         - "breachCount"
@@ -518,57 +498,19 @@ components:
         - "deletedAtMs"
         - "deletedByArgusUserId"
     ArgusUserResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-          format: "uuid"
-        username:
-          type: "string"
-        email:
-          type: "string"
-          format: "email"
-        role:
-          type: "string"
-          enum:
-            - "moderator"
-            - "admin"
-        actorId:
-          type:
-            - "string"
-            - "null"
-          format: "uuid"
-        accountState:
-          type: "string"
-          enum:
-            - "active"
-            - "suspended"
-            - "disabled"
-            - "verify_email"
-        accountSecurityLock:
-          type:
-            - "string"
-            - "null"
-          enum:
-            - "change_password"
-            - "reset_password"
-            - null
-        createdAtMs:
-          type: "string"
-        updatedAtMs:
-          type:
-            - "string"
-            - "null"
-      required:
-        - "id"
-        - "username"
-        - "email"
-        - "role"
-        - "actorId"
-        - "accountState"
-        - "accountSecurityLock"
-        - "createdAtMs"
-        - "updatedAtMs"
+      allOf:
+        - "$ref": "#/components/schemas/AccountIdentityResponse"
+        - type: "object"
+          properties:
+            createdAtMs:
+              type: "string"
+            updatedAtMs:
+              type:
+                - "string"
+                - "null"
+          required:
+            - "createdAtMs"
+            - "updatedAtMs"
     AuditLogResponse:
       type: "object"
       properties:
@@ -715,8 +657,6 @@ components:
           format: "uuid"
         username:
           type: "string"
-        activeNickname:
-          "$ref": "#/components/schemas/PlayerNicknameSummaryResponse"
         flags:
           type: "string"
         orbs:
@@ -728,24 +668,9 @@ components:
         - "mojangId"
         - "actorId"
         - "username"
-        - "activeNickname"
         - "flags"
         - "orbs"
         - "chatChannel"
-    PlayerNicknameSummaryResponse:
-      type:
-        - "object"
-        - "null"
-      properties:
-        nickname:
-          type: "string"
-        coverRankKey:
-          type:
-            - "string"
-            - "null"
-      required:
-        - "nickname"
-        - "coverRankKey"
     PlayerSearchResultResponse:
       type: "object"
       properties:
@@ -760,8 +685,6 @@ components:
           format: "uuid"
         username:
           type: "string"
-        activeNickname:
-          "$ref": "#/components/schemas/PlayerNicknameSummaryResponse"
         deletedAtMs:
           type:
             - "string"
@@ -771,7 +694,6 @@ components:
         - "mojangId"
         - "actorId"
         - "username"
-        - "activeNickname"
         - "deletedAtMs"
     PlayerFlagDefinitionResponse:
       type: "object"
@@ -831,8 +753,6 @@ components:
           format: "uuid"
         username:
           type: "string"
-        activeNickname:
-          "$ref": "#/components/schemas/PlayerNicknameSummaryResponse"
         flags:
           type: "string"
         orbs:
@@ -859,7 +779,6 @@ components:
           type:
             - "string"
             - "null"
-          format: "uuid"
       required:
         - "id"
         - "mojangId"
@@ -1190,6 +1109,11 @@ components:
           type: "string"
         environment:
           type: "string"
+        status:
+          type: "string"
+          enum:
+            - "online"
+            - "offline"
         port:
           type:
             - "integer"
@@ -1205,6 +1129,7 @@ components:
         - "name"
         - "type"
         - "environment"
+        - "status"
         - "port"
         - "createdAtMs"
         - "lastUpdatedAtMs"
@@ -1393,6 +1318,8 @@ components:
           type: "string"
         observedAtMs:
           type: "string"
+        idempotent:
+          type: "boolean"
         observedPlayerCount:
           type: "integer"
         closedNetworkSessionCount:
@@ -1402,6 +1329,7 @@ components:
       required:
         - "serverInstanceId"
         - "observedAtMs"
+        - "idempotent"
         - "observedPlayerCount"
         - "closedNetworkSessionCount"
         - "closedBackendSessionCount"
@@ -1418,6 +1346,28 @@ components:
           type: "string"
         idempotent:
           type: "boolean"
+        minecraftSession:
+          type: "object"
+          properties:
+            token:
+              type: "string"
+            expiresAtMs:
+              type: "string"
+            playerId:
+              type: "string"
+            mojangId:
+              type: "string"
+            proxyServerId:
+              type: "string"
+            networkSessionId:
+              type: "string"
+          required:
+            - "token"
+            - "expiresAtMs"
+            - "playerId"
+            - "mojangId"
+            - "proxyServerId"
+            - "networkSessionId"
       required:
         - "serverInstanceId"
         - "eventId"
@@ -1435,6 +1385,11 @@ components:
           format: "uuid"
         status:
           type: "string"
+          enum:
+            - "active"
+            - "suspended"
+            - "revoked"
+            - "pending"
         role:
           type: "string"
           enum:
@@ -5882,6 +5837,13 @@ paths:
                     - "global"
                     - "staff"
                     - "testing"
+                lastSeenAtMs:
+                  type: "string"
+                  pattern: "^-?\\d+$"
+                lastServerId:
+                  type:
+                    - "string"
+                    - "null"
               additionalProperties: false
       responses:
         "200":
@@ -8135,6 +8097,10 @@ paths:
               properties:
                 serverId:
                   type: "string"
+                bootId:
+                  type: "string"
+                  minLength: 1
+                  maxLength: 120
                 runtimePort:
                   type:
                     - "integer"
@@ -8149,6 +8115,7 @@ paths:
                   exclusiveMinimum: 0
               required:
                 - "serverId"
+                - "bootId"
               additionalProperties: false
       responses:
         "201":
@@ -8440,12 +8407,15 @@ paths:
                 observedAtMs:
                   type: "string"
                   pattern: "^-?\\d+$"
+                snapshotSequence:
+                  type: "integer"
+                  exclusiveMinimum: 0
                 onlineMojangIds:
                   type: "array"
                   items:
                     type: "string"
-                  default:
-                    []
+              required:
+                - "snapshotSequence"
               additionalProperties: false
       responses:
         "200":
@@ -8503,37 +8473,175 @@ paths:
         content:
           "application/json":
             schema:
-              type: "object"
-              properties:
-                eventId:
-                  type: "string"
-                  minLength: 1
-                  maxLength: 120
-                sequence:
-                  type: "integer"
-                  exclusiveMinimum: 0
-                type:
-                  type: "string"
-                  enum:
-                    - "SERVER_SHUTTING_DOWN"
-                    - "SERVER_STOPPED"
-                    - "NETWORK_SESSION_STARTED"
-                    - "BACKEND_CONNECTED"
-                    - "NETWORK_SESSION_ENDED"
-                occurredAtMs:
-                  type: "string"
-                  pattern: "^-?\\d+$"
-                payload:
-                  type: "object"
-                  additionalProperties:
-                    {}
-                  default:
-                    {}
-              required:
-                - "eventId"
-                - "sequence"
-                - "type"
-              additionalProperties: false
+              oneOf:
+                - type: "object"
+                  properties:
+                    eventId:
+                      type: "string"
+                      minLength: 1
+                      maxLength: 120
+                    sequence:
+                      type: "integer"
+                      exclusiveMinimum: 0
+                    occurredAtMs:
+                      type: "string"
+                      pattern: "^-?\\d+$"
+                    type:
+                      type: "string"
+                      enum:
+                        - "SERVER_SHUTTING_DOWN"
+                    payload:
+                      type: "object"
+                      properties:
+                        {}
+                      additionalProperties: false
+                  required:
+                    - "eventId"
+                    - "sequence"
+                    - "occurredAtMs"
+                    - "type"
+                    - "payload"
+                  additionalProperties: false
+                - type: "object"
+                  properties:
+                    eventId:
+                      type: "string"
+                      minLength: 1
+                      maxLength: 120
+                    sequence:
+                      type: "integer"
+                      exclusiveMinimum: 0
+                    occurredAtMs:
+                      type: "string"
+                      pattern: "^-?\\d+$"
+                    type:
+                      type: "string"
+                      enum:
+                        - "SERVER_STOPPED"
+                    payload:
+                      type: "object"
+                      properties:
+                        {}
+                      additionalProperties: false
+                  required:
+                    - "eventId"
+                    - "sequence"
+                    - "occurredAtMs"
+                    - "type"
+                    - "payload"
+                  additionalProperties: false
+                - type: "object"
+                  properties:
+                    eventId:
+                      type: "string"
+                      minLength: 1
+                      maxLength: 120
+                    sequence:
+                      type: "integer"
+                      exclusiveMinimum: 0
+                    occurredAtMs:
+                      type: "string"
+                      pattern: "^-?\\d+$"
+                    type:
+                      type: "string"
+                      enum:
+                        - "NETWORK_SESSION_STARTED"
+                    payload:
+                      type: "object"
+                      properties:
+                        playerId:
+                          type: "string"
+                        actorId:
+                          type: "string"
+                        mojangId:
+                          type: "string"
+                        username:
+                          type: "string"
+                          minLength: 1
+                          maxLength: 32
+                        networkSessionId:
+                          type: "string"
+                      required:
+                        - "mojangId"
+                        - "username"
+                        - "networkSessionId"
+                      additionalProperties: false
+                  required:
+                    - "eventId"
+                    - "sequence"
+                    - "occurredAtMs"
+                    - "type"
+                    - "payload"
+                  additionalProperties: false
+                - type: "object"
+                  properties:
+                    eventId:
+                      type: "string"
+                      minLength: 1
+                      maxLength: 120
+                    sequence:
+                      type: "integer"
+                      exclusiveMinimum: 0
+                    occurredAtMs:
+                      type: "string"
+                      pattern: "^-?\\d+$"
+                    type:
+                      type: "string"
+                      enum:
+                        - "BACKEND_CONNECTED"
+                    payload:
+                      type: "object"
+                      properties:
+                        networkSessionId:
+                          type: "string"
+                        backendServerId:
+                          type: "string"
+                        backendServerInstanceId:
+                          type:
+                            - "string"
+                            - "null"
+                      required:
+                        - "networkSessionId"
+                        - "backendServerId"
+                      additionalProperties: false
+                  required:
+                    - "eventId"
+                    - "sequence"
+                    - "occurredAtMs"
+                    - "type"
+                    - "payload"
+                  additionalProperties: false
+                - type: "object"
+                  properties:
+                    eventId:
+                      type: "string"
+                      minLength: 1
+                      maxLength: 120
+                    sequence:
+                      type: "integer"
+                      exclusiveMinimum: 0
+                    occurredAtMs:
+                      type: "string"
+                      pattern: "^-?\\d+$"
+                    type:
+                      type: "string"
+                      enum:
+                        - "NETWORK_SESSION_ENDED"
+                    payload:
+                      type: "object"
+                      properties:
+                        networkSessionId:
+                          type: "string"
+                      required:
+                        - "networkSessionId"
+                      additionalProperties: false
+                  required:
+                    - "eventId"
+                    - "sequence"
+                    - "occurredAtMs"
+                    - "type"
+                    - "payload"
+                  additionalProperties: false
       responses:
         "201":
           description: "Event recorded"

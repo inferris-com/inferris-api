@@ -27,7 +27,10 @@ import {
   type ServerInstancePresenceBody,
   serverInstancePresenceBodySchema,
 } from "./server-instance.schemas.js";
-import type { AuthenticatedServerInstance, ServerInstanceService } from "./server-instance.service.js";
+import type {
+  AuthenticatedServerInstance,
+  ServerInstanceService,
+} from "./server-instance.service.js";
 
 export function createServerInstanceRouter(
   service: ServerInstanceService,
@@ -49,7 +52,7 @@ export function createServerInstanceRouter(
     req,
     res,
   ) => {
-    const instance = await service.registerInstance(req.body);
+    const instance = await service.registerInstance(req.body, req.auth);
     const body: ApiSuccess<RegisterServerInstanceResponse> = { data: instance };
 
     res.status(201).json(body);
@@ -74,10 +77,11 @@ export function createServerInstanceRouter(
     res.json(body);
   };
 
-  const metrics: RequestHandler<ServerInstanceIdParams, unknown, ServerInstanceMetricsBody> = async (
-    req,
-    res,
-  ) => {
+  const metrics: RequestHandler<
+    ServerInstanceIdParams,
+    unknown,
+    ServerInstanceMetricsBody
+  > = async (req, res) => {
     const auth = requireMatchingInstance(req.params.serverInstanceId, req.auth?.serverInstance);
     const result = await service.recordMetrics(auth, req.body);
     const body: ApiSuccess<ServerInstanceMetricsResponse> = { data: result };
@@ -132,7 +136,10 @@ export function createServerInstanceRouter(
   router.post(
     "/:serverInstanceId/metrics",
     requireServerInstance(),
-    validateRequest({ params: serverInstanceIdParamsSchema, body: serverInstanceMetricsBodySchema }),
+    validateRequest({
+      params: serverInstanceIdParamsSchema,
+      body: serverInstanceMetricsBodySchema,
+    }),
     metrics,
   );
   router.put(

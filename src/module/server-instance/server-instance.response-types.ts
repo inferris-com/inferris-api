@@ -42,6 +42,7 @@ export const serverInstancePresenceResponseSchema = z
   .object({
     serverInstanceId: z.string().guid(),
     observedAtMs: z.string(),
+    idempotent: z.boolean(),
     observedPlayerCount: z.number().int(),
     closedNetworkSessionCount: z.number().int(),
     closedBackendSessionCount: z.number().int(),
@@ -63,6 +64,16 @@ export const serverInstanceEventResponseSchema = z
     sequence: z.string(),
     type: z.string(),
     idempotent: z.boolean(),
+    minecraftSession: z
+      .object({
+        token: z.string(),
+        expiresAtMs: z.string(),
+        playerId: z.string().guid(),
+        mojangId: z.string().guid(),
+        proxyServerId: z.string().guid(),
+        networkSessionId: z.string().guid(),
+      })
+      .optional(),
   })
   .openapi("ServerInstanceEventResponse");
 

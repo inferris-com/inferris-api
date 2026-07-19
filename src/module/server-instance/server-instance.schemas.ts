@@ -11,6 +11,7 @@ export const serverInstanceIdParamsSchema = z
 export const registerServerInstanceBodySchema = z
   .object({
     serverId: z.string().guid(),
+    bootId: z.string().min(1).max(120),
     runtimePort: z.int().min(1).max(65535).nullable().optional(),
     version: z.string().max(100).optional(),
     heartbeatIntervalMs: z.int().positive().optional(),
@@ -51,9 +52,76 @@ export const serverInstanceHeartbeatBodySchema = z
 export const serverInstancePresenceBodySchema = z
   .object({
     observedAtMs: BigIntStringSchema.optional(),
-    onlineMojangIds: z.array(z.string().guid()).default([]),
+    snapshotSequence: z.int().positive(),
+    onlineMojangIds: z.array(z.string().guid()).optional(),
   })
   .strict();
+
+const emptyPayloadSchema = z.object({}).strict();
+const playerPayloadSchema = z
+  .object({
+    playerId: z.string().guid().optional(),
+    actorId: z.string().guid().optional(),
+    mojangId: z.string().guid(),
+    username: z.string().min(1).max(32),
+  })
+  .strict();
+const networkSessionStartedPayloadSchema = playerPayloadSchema
+  .extend({
+    networkSessionId: z.string().guid(),
+  })
+  .strict();
+const backendConnectedPayloadSchema = z
+  .object({
+    networkSessionId: z.string().guid(),
+    backendServerId: z.string().guid(),
+    backendServerInstanceId: z.string().guid().nullable().optional(),
+  })
+  .strict();
+const networkSessionEndedPayloadSchema = z
+  .object({
+    networkSessionId: z.string().guid(),
+  })
+  .strict();
+
+const serverEventBaseSchema = z.object({
+  eventId: z.string().min(1).max(120),
+  sequence: z.int().positive(),
+  occurredAtMs: BigIntStringSchema,
+});
+
+export const serverInstanceEventBodySchema = z.discriminatedUnion("type", [
+  serverEventBaseSchema
+    .extend({
+      type: z.literal("SERVER_SHUTTING_DOWN"),
+      payload: emptyPayloadSchema,
+    })
+    .strict(),
+  serverEventBaseSchema
+    .extend({
+      type: z.literal("SERVER_STOPPED"),
+      payload: emptyPayloadSchema,
+    })
+    .strict(),
+  serverEventBaseSchema
+    .extend({
+      type: z.literal("NETWORK_SESSION_STARTED"),
+      payload: networkSessionStartedPayloadSchema,
+    })
+    .strict(),
+  serverEventBaseSchema
+    .extend({
+      type: z.literal("BACKEND_CONNECTED"),
+      payload: backendConnectedPayloadSchema,
+    })
+    .strict(),
+  serverEventBaseSchema
+    .extend({
+      type: z.literal("NETWORK_SESSION_ENDED"),
+      payload: networkSessionEndedPayloadSchema,
+    })
+    .strict(),
+]);
 
 export const serverEventTypeSchema = z.enum([
   "SERVER_SHUTTING_DOWN",
@@ -62,16 +130,6 @@ export const serverEventTypeSchema = z.enum([
   "BACKEND_CONNECTED",
   "NETWORK_SESSION_ENDED",
 ]);
-
-export const serverInstanceEventBodySchema = z
-  .object({
-    eventId: z.string().min(1).max(120),
-    sequence: z.int().positive(),
-    type: serverEventTypeSchema,
-    occurredAtMs: BigIntStringSchema.optional(),
-    payload: z.record(z.string(), z.unknown()).default({}),
-  })
-  .strict();
 
 export type ServerInstanceIdParams = z.infer<typeof serverInstanceIdParamsSchema>;
 export type RegisterServerInstanceBody = z.infer<typeof registerServerInstanceBodySchema>;

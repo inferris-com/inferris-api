@@ -360,11 +360,12 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE INDEX idx_servers_type ON servers (type);
   CREATE INDEX idx_servers_environment ON servers (environment);
 
-  CREATE TABLE server_instances
-  (
-    id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    server_id             UUID NOT NULL REFERENCES servers (id) ON DELETE CASCADE,
-    state                 server_instance_state NOT NULL DEFAULT 'active',
+	  CREATE TABLE server_instances
+	  (
+	    id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	    server_id             UUID NOT NULL REFERENCES servers (id) ON DELETE CASCADE,
+	    boot_id               TEXT NOT NULL,
+	    state                 server_instance_state NOT NULL DEFAULT 'active',
     runtime_port          INT NULL CHECK (runtime_port BETWEEN 1 AND 65535),
     version               TEXT NULL,
     started_at_ms         BIGINT NOT NULL DEFAULT get_unix_ms(),
@@ -373,20 +374,24 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     lost_at_ms            BIGINT NULL,
     superseded_at_ms      BIGINT NULL,
     last_heartbeat_at_ms  BIGINT NULL,
-    heartbeat_interval_ms BIGINT NULL CHECK (heartbeat_interval_ms IS NULL OR heartbeat_interval_ms > 0),
-    last_event_sequence   BIGINT NOT NULL DEFAULT 0,
-    is_synthetic_backfill BOOLEAN NOT NULL DEFAULT FALSE,
+	    heartbeat_interval_ms BIGINT NULL CHECK (heartbeat_interval_ms IS NULL OR heartbeat_interval_ms > 0),
+	    last_event_sequence   BIGINT NOT NULL DEFAULT 0,
+	    last_presence_sequence BIGINT NULL CHECK (last_presence_sequence IS NULL OR last_presence_sequence > 0),
+	    last_presence_observed_at_ms BIGINT NULL,
+	    is_synthetic_backfill BOOLEAN NOT NULL DEFAULT FALSE,
     created_at_ms         BIGINT NOT NULL DEFAULT get_unix_ms(),
     updated_at_ms         BIGINT NULL
   );
-  CREATE UNIQUE INDEX uq_server_instances_one_active_per_server
-    ON server_instances (server_id)
-    WHERE state IN ('active', 'draining');
-  CREATE INDEX idx_server_instances_server_started
-    ON server_instances (server_id, started_at_ms DESC);
-  CREATE INDEX idx_server_instances_state ON server_instances (state);
+	  CREATE UNIQUE INDEX uq_server_instances_one_active_per_server
+	    ON server_instances (server_id)
+	    WHERE state IN ('active', 'draining');
+	  CREATE UNIQUE INDEX uq_server_instances_server_boot
+	    ON server_instances (server_id, boot_id);
+	  CREATE INDEX idx_server_instances_server_started
+	    ON server_instances (server_id, started_at_ms DESC);
+	  CREATE INDEX idx_server_instances_state ON server_instances (state);
 
-  CREATE TABLE server_instance_tokens
+	  CREATE TABLE server_instance_tokens
   (
     id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     server_instance_id UUID NOT NULL REFERENCES server_instances (id) ON DELETE CASCADE,
@@ -404,10 +409,11 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     server_instance_id UUID NOT NULL REFERENCES server_instances (id) ON DELETE CASCADE,
     event_id           TEXT NOT NULL,
     sequence           BIGINT NOT NULL CHECK (sequence > 0),
-    type               server_event_type NOT NULL,
-    payload            JSONB NOT NULL DEFAULT '{}'::jsonb,
-    processing_result  JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at_ms      BIGINT NOT NULL DEFAULT get_unix_ms(),
+	    type               server_event_type NOT NULL,
+	    payload            JSONB NOT NULL DEFAULT '{}'::jsonb,
+	    processing_result  JSONB NOT NULL DEFAULT '{}'::jsonb,
+	    occurred_at_ms     BIGINT NOT NULL,
+	    created_at_ms      BIGINT NOT NULL DEFAULT get_unix_ms(),
     processed_at_ms    BIGINT NOT NULL DEFAULT get_unix_ms(),
     CONSTRAINT uq_server_events_instance_event UNIQUE (server_instance_id, event_id),
     CONSTRAINT uq_server_events_instance_sequence UNIQUE (server_instance_id, sequence)
@@ -698,9 +704,17 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   );
   CREATE INDEX idx_api_keys_owner_actor ON api_keys (owner_actor_id);
   CREATE INDEX idx_api_keys_created_by_actor ON api_keys (created_by_actor_id);
-  CREATE INDEX idx_api_keys_active ON api_keys (created_at_ms DESC) WHERE is_active = TRUE;
+	  CREATE INDEX idx_api_keys_active ON api_keys (created_at_ms DESC) WHERE is_active = TRUE;
 
-  CREATE TABLE privileged_subjects
+	  CREATE TABLE server_registration_api_keys
+	  (
+	    api_key_id UUID NOT NULL REFERENCES api_keys (id) ON DELETE CASCADE,
+	    server_id  UUID NOT NULL REFERENCES servers (id) ON DELETE CASCADE,
+	    created_at_ms BIGINT NOT NULL DEFAULT get_unix_ms(),
+	    PRIMARY KEY (api_key_id, server_id)
+	  );
+
+	  CREATE TABLE privileged_subjects
   (
     id                   UUID PRIMARY KEY             DEFAULT gen_random_uuid(),
     actor_id             UUID                NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,

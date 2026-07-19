@@ -1,4 +1,9 @@
-import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from "../../error/app-error.js";
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "../../error/app-error.js";
 
 export class ServerInstanceNotFoundError extends NotFoundError {
   constructor(serverInstanceId: string) {
@@ -42,6 +47,24 @@ export class InvalidServerEventPayloadError extends ValidationError {
     super({
       code: "INVALID_SERVER_EVENT_PAYLOAD",
       message,
+    });
+  }
+}
+
+export class ServerInstanceInactiveError extends ForbiddenError {
+  constructor() {
+    super({
+      code: "SERVER_INSTANCE_INACTIVE",
+      message: "Server instance token is no longer active.",
+    });
+  }
+}
+
+export class ServerInstanceRegistrationForbiddenError extends ForbiddenError {
+  constructor() {
+    super({
+      code: "SERVER_INSTANCE_REGISTRATION_FORBIDDEN",
+      message: "Registration credential is not bound to the requested server.",
     });
   }
 }

@@ -651,6 +651,37 @@ const seed = {
       ])
       .execute();
 
+    await sql`
+	      INSERT INTO server_registration_api_keys (api_key_id, server_id)
+	      SELECT api_key_id::uuid, server_id::uuid
+	      FROM unnest(
+	        ${[
+            ids.api_keys.dev_super,
+            ids.api_keys.dev_super,
+            ids.api_keys.dev_super,
+            ids.api_keys.dev_super,
+            ids.api_keys.dev_super,
+            ids.api_keys.dev,
+            ids.api_keys.dev,
+            ids.api_keys.dev,
+            ids.api_keys.dev,
+            ids.api_keys.dev,
+          ]}::uuid[],
+	        ${[
+            ids.servers.velocity,
+            ids.servers.lobby,
+            ids.servers.lockdownMinigames,
+            ids.servers.devMinRank,
+            ids.servers.devPermission,
+            ids.servers.velocity,
+            ids.servers.lobby,
+            ids.servers.lockdownMinigames,
+            ids.servers.devMinRank,
+            ids.servers.devPermission,
+          ]}::uuid[]
+	      ) AS bindings(api_key_id, server_id)
+	    `.execute(db);
+
     await db
       .insertInto("server_access_policies")
       .values([
@@ -1863,7 +1894,6 @@ const seed = {
 
     await insertMetricObservations(db, metricObservations);
     await insertLatestMetrics(db, latestMetricObservations(metricObservations));
-
   },
 } satisfies Seed;
 

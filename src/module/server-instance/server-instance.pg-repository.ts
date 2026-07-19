@@ -31,27 +31,54 @@ export type ServerInstanceRow = {
 
 export type RegisterInstanceResult =
   | { status: "not_found" }
-  | { status: "created"; instance: ServerInstanceRow };
+  | { status: "forbidden" }
+  | { status: "created" | "idempotent"; instance: ServerInstanceRow };
 
-export type HeartbeatResult = {
-  serverInstanceId: string;
-  state: string;
-  lastHeartbeatAtMs: string;
+export type RegisterInstanceAuth = {
+  apiKeyId: string | null;
+  bypassServerBinding: boolean;
 };
 
-export type MetricsResult = {
-  serverInstanceId: string;
-  observationId: string;
-  observedAtMs: string;
+export type HeartbeatResult =
+  | {
+      status?: "active";
+      serverInstanceId: string;
+      state: string;
+      lastHeartbeatAtMs: string;
+    }
+  | { status: "inactive" };
+
+export type MetricsResult =
+  | {
+      status?: "active";
+      serverInstanceId: string;
+      observationId: string;
+      observedAtMs: string;
+    }
+  | { status: "inactive" };
+
+export type SessionIdentity = {
+  actorId: string;
+  playerId: string;
+  mojangId: string;
+  proxyServerId: string;
+  networkSessionId: string;
 };
 
-export type PresenceResult = {
-  serverInstanceId: string;
-  observedAtMs: string;
-  observedPlayerCount: number;
-  closedNetworkSessionCount: number;
-  closedBackendSessionCount: number;
-};
+export type PresenceResult =
+  | {
+      status: "inactive";
+    }
+  | {
+      status: "active" | "stale";
+      serverInstanceId: string;
+      observedAtMs: string;
+      observedPlayerCount: number;
+      closedNetworkSessionCount: number;
+      closedBackendSessionCount: number;
+      observedSessions: SessionIdentity[];
+      closedSessions: Pick<SessionIdentity, "playerId">[];
+    };
 
 export type EventResult =
   | {
@@ -60,10 +87,14 @@ export type EventResult =
       eventId: string;
       sequence: string;
       type: string;
+      startedSession?: SessionIdentity;
+      closedSessions: Pick<SessionIdentity, "playerId">[];
     }
   | { status: "sequence_gap"; expectedSequence: string }
   | { status: "conflict" }
-  | { status: "forbidden" };
+  | { status: "forbidden" }
+  | { status: "inactive" }
+  | { status: "invalid"; message: string };
 
 type InstanceIdentity = {
   id: string;
@@ -83,6 +114,7 @@ export class ServerInstancePgRepository {
   async registerInstance(
     input: RegisterServerInstanceBody,
     tokenHash: string,
+    auth: RegisterInstanceAuth = { apiKeyId: null, bypassServerBinding: true },
   ): Promise<RegisterInstanceResult> {
     return this.db.transaction().execute(async (trx) => {
       const server = await trx
@@ -93,6 +125,34 @@ export class ServerInstancePgRepository {
 
       if (!server) {
         return { status: "not_found" };
+      }
+
+      if (!auth.bypassServerBinding) {
+        const bound = await sql<{ ok: number }>`
+          SELECT 1 AS ok
+          FROM server_registration_api_keys
+          WHERE api_key_id = ${auth.apiKeyId}::uuid
+            AND server_id = ${input.serverId}::uuid
+          LIMIT 1
+        `.execute(trx);
+
+        if (!bound.rows[0]) {
+          return { status: "forbidden" };
+        }
+      }
+
+      const existingBoot = await this.findActiveInstanceByBootId(trx, input.serverId, input.bootId);
+
+      if (existingBoot) {
+        await trx
+          .insertInto("server_instance_tokens")
+          .values({
+            server_instance_id: existingBoot.id,
+            token_hash: tokenHash,
+          })
+          .execute();
+
+        return { status: "idempotent", instance: existingBoot };
       }
 
       const superseded = await sql<{ id: string; server_type: string }>`
@@ -148,6 +208,7 @@ export class ServerInstancePgRepository {
       const rows = await sql<ServerInstanceRow>`
         INSERT INTO server_instances (
           server_id,
+          boot_id,
           runtime_port,
           version,
           heartbeat_interval_ms,
@@ -155,6 +216,7 @@ export class ServerInstancePgRepository {
         )
         VALUES (
           ${input.serverId}::uuid,
+          ${input.bootId},
           ${input.runtimePort ?? null},
           ${input.version ?? null},
           ${input.heartbeatIntervalMs ?? null},
@@ -163,6 +225,7 @@ export class ServerInstancePgRepository {
         RETURNING
           id,
           server_id,
+          boot_id,
           (SELECT type::text FROM servers WHERE servers.id = server_instances.server_id) AS server_type,
           state::text,
           runtime_port,
@@ -230,16 +293,16 @@ export class ServerInstancePgRepository {
     instance: InstanceIdentity,
     input: ServerInstanceHeartbeatBody,
   ): Promise<HeartbeatResult> {
-    const observedAtMs = input.observedAtMs ?? Date.now().toString();
+    const receivedAtMs = Date.now().toString();
     const rows = await sql<{
       id: string;
       state: string;
       last_heartbeat_at_ms: string;
     }>`
       UPDATE server_instances
-      SET last_heartbeat_at_ms = ${observedAtMs}::bigint,
+      SET last_heartbeat_at_ms = GREATEST(COALESCE(last_heartbeat_at_ms, 0), ${receivedAtMs}::bigint),
           heartbeat_interval_ms = COALESCE(${input.heartbeatIntervalMs ?? null}::bigint, heartbeat_interval_ms),
-          runtime_port = ${input.runtimePort ?? null},
+          runtime_port = COALESCE(${input.runtimePort ?? null}, runtime_port),
           version = COALESCE(${input.version ?? null}, version),
           updated_at_ms = get_unix_ms()
       WHERE id = ${instance.id}::uuid
@@ -251,7 +314,7 @@ export class ServerInstancePgRepository {
     const row = rows.rows[0];
 
     if (!row) {
-      throw new Error("Server instance heartbeat did not update a row.");
+      return { status: "inactive" };
     }
 
     return {
@@ -266,10 +329,17 @@ export class ServerInstancePgRepository {
     input: ServerInstanceMetricsBody,
   ): Promise<MetricsResult> {
     const observedAtMs = input.observedAtMs ?? Date.now().toString();
-    const rows = await sql<{
-      id: string;
-      observed_at_ms: string;
-    }>`
+    return this.db.transaction().execute(async (trx) => {
+      const active = await this.lockActiveInstance(trx, instance);
+
+      if (!active) {
+        return { status: "inactive" };
+      }
+
+      const rows = await sql<{
+        id: string;
+        observed_at_ms: string;
+      }>`
       INSERT INTO server_heartbeat_observations (
         server_id,
         server_instance_id,
@@ -307,15 +377,15 @@ export class ServerInstancePgRepository {
         ${JSON.stringify(input.extra ?? {})}::jsonb
       )
       RETURNING id, observed_at_ms::text
-    `.execute(this.db);
+    `.execute(trx);
 
-    const observation = rows.rows[0];
+      const observation = rows.rows[0];
 
-    if (!observation) {
-      throw new Error("Server instance metric insert did not return a row.");
-    }
+      if (!observation) {
+        throw new Error("Server instance metric insert did not return a row.");
+      }
 
-    await sql`
+      await sql`
       INSERT INTO server_latest_metrics (
         server_id,
         server_instance_id,
@@ -374,13 +444,15 @@ export class ServerInstancePgRepository {
         backend_server_count = excluded.backend_server_count,
         extra = excluded.extra,
         updated_at_ms = excluded.updated_at_ms
-    `.execute(this.db);
+      WHERE server_latest_metrics.observed_at_ms <= excluded.observed_at_ms
+    `.execute(trx);
 
-    return {
-      serverInstanceId: instance.id,
-      observationId: observation.id,
-      observedAtMs: observation.observed_at_ms,
-    };
+      return {
+        serverInstanceId: instance.id,
+        observationId: observation.id,
+        observedAtMs: observation.observed_at_ms,
+      };
+    });
   }
 
   async reconcilePresence(
@@ -388,34 +460,69 @@ export class ServerInstancePgRepository {
     input: ServerInstancePresenceBody,
   ): Promise<PresenceResult> {
     const observedAtMs = input.observedAtMs ?? Date.now().toString();
-    const onlineMojangIds = unique(input.onlineMojangIds);
+    const onlineMojangIds = input.onlineMojangIds ? unique(input.onlineMojangIds) : null;
 
     return this.db.transaction().execute(async (trx) => {
+      const active = await this.lockActiveInstance(trx, instance);
+
+      if (!active) {
+        return { status: "inactive" };
+      }
+
+      const accepted = await this.acceptPresenceSnapshot(
+        trx,
+        instance.id,
+        input.snapshotSequence.toString(),
+        observedAtMs,
+      );
+
+      if (!accepted) {
+        return {
+          status: "stale",
+          serverInstanceId: instance.id,
+          observedAtMs,
+          observedPlayerCount: onlineMojangIds?.length ?? 0,
+          closedNetworkSessionCount: 0,
+          closedBackendSessionCount: 0,
+          observedSessions: [],
+          closedSessions: [],
+        };
+      }
+
+      const observedSessions = onlineMojangIds
+        ? await this.findObservedSessions(trx, instance, onlineMojangIds)
+        : [];
       const closedNetworkSessionCount =
-        instance.serverType === "velocity"
+        instance.serverType === "velocity" && onlineMojangIds
           ? await this.closeNetworkSessionsMissingFromPresence(
               trx,
-              instance.serverId,
+              instance.id,
               onlineMojangIds,
               observedAtMs,
             )
-          : 0;
+          : { count: 0, sessions: [] };
       const closedBackendSessionCount =
-        instance.serverType === "velocity"
-          ? 0
+        instance.serverType === "velocity" || !onlineMojangIds
+          ? { count: 0, sessions: [] }
           : await this.closeBackendSessionsMissingFromPresence(
               trx,
-              instance.serverId,
+              instance.id,
               onlineMojangIds,
               observedAtMs,
             );
 
       return {
+        status: "active",
         serverInstanceId: instance.id,
         observedAtMs,
-        observedPlayerCount: onlineMojangIds.length,
-        closedNetworkSessionCount,
-        closedBackendSessionCount,
+        observedPlayerCount: onlineMojangIds?.length ?? 0,
+        closedNetworkSessionCount: closedNetworkSessionCount.count,
+        closedBackendSessionCount: closedBackendSessionCount.count,
+        observedSessions,
+        closedSessions: [
+          ...closedNetworkSessionCount.sessions,
+          ...closedBackendSessionCount.sessions,
+        ],
       };
     });
   }
@@ -431,8 +538,9 @@ export class ServerInstancePgRepository {
         sequence: string;
         type: string;
         payload: unknown;
+        processing_result: Record<string, unknown>;
       }>`
-        SELECT event_id, sequence::text, type::text, payload
+        SELECT event_id, sequence::text, type::text, payload, processing_result
         FROM server_events
         WHERE server_instance_id = ${instance.id}::uuid
           AND (event_id = ${input.eventId} OR sequence = ${input.sequence}::bigint)
@@ -446,26 +554,41 @@ export class ServerInstancePgRepository {
           existingEvent.event_id === input.eventId &&
           existingEvent.sequence === input.sequence.toString() &&
           existingEvent.type === input.type &&
-          JSON.stringify(existingEvent.payload) === JSON.stringify(input.payload);
+          canonicalJson(existingEvent.payload) === canonicalJson(input.payload);
 
-        return sameEvent
-          ? {
-              status: "idempotent",
-              serverInstanceId: instance.id,
-              eventId: input.eventId,
-              sequence: input.sequence.toString(),
-              type: input.type,
-            }
-          : { status: "conflict" };
+        if (!sameEvent) {
+          return { status: "conflict" };
+        }
+
+        const prior = existingEvent.processing_result;
+
+        const startedSession = sessionIdentityPayload(prior.startedSession);
+
+        return {
+          status: "idempotent",
+          serverInstanceId: instance.id,
+          eventId: input.eventId,
+          sequence: input.sequence.toString(),
+          type: input.type,
+          closedSessions: playerIdListPayload(prior.closedSessions),
+          ...(startedSession ? { startedSession } : {}),
+        };
       }
 
       const cursorRows = await sql<{ last_event_sequence: string }>`
         SELECT last_event_sequence::text
         FROM server_instances
         WHERE id = ${instance.id}::uuid
+          AND server_id = ${instance.serverId}::uuid
+          AND state IN ('active', 'draining')
         FOR UPDATE
       `.execute(trx);
-      const expectedSequence = Number(cursorRows.rows[0]?.last_event_sequence ?? "0") + 1;
+      const cursor = cursorRows.rows[0];
+
+      if (!cursor) {
+        return { status: "inactive" };
+      }
+      const expectedSequence = Number(cursor.last_event_sequence) + 1;
 
       if (input.sequence !== expectedSequence) {
         return { status: "sequence_gap", expectedSequence: expectedSequence.toString() };
@@ -484,6 +607,13 @@ export class ServerInstancePgRepository {
         resolvePlayer,
       );
 
+      if (processingResult.invalid) {
+        return {
+          status: "invalid",
+          message: stringPayload(processingResult.reason) ?? "Invalid server event payload.",
+        };
+      }
+
       await sql`
         INSERT INTO server_events (
           server_instance_id,
@@ -491,7 +621,8 @@ export class ServerInstancePgRepository {
           sequence,
           type,
           payload,
-          processing_result
+          processing_result,
+          occurred_at_ms
         )
         VALUES (
           ${instance.id}::uuid,
@@ -499,7 +630,8 @@ export class ServerInstancePgRepository {
           ${input.sequence}::bigint,
           ${input.type}::server_event_type,
           ${JSON.stringify(eventPayload)}::jsonb,
-          ${JSON.stringify(processingResult)}::jsonb
+          ${JSON.stringify(processingResult)}::jsonb,
+          ${input.occurredAtMs}::bigint
         )
       `.execute(trx);
 
@@ -510,12 +642,16 @@ export class ServerInstancePgRepository {
         WHERE id = ${instance.id}::uuid
       `.execute(trx);
 
+      const startedSession = sessionIdentityPayload(processingResult.startedSession);
+
       return {
         status: "processed",
         serverInstanceId: instance.id,
         eventId: input.eventId,
         sequence: input.sequence.toString(),
         type: input.type,
+        closedSessions: playerIdListPayload(processingResult.closedSessions),
+        ...(startedSession ? { startedSession } : {}),
       };
     });
   }
@@ -535,53 +671,87 @@ export class ServerInstancePgRepository {
     }
 
     if (input.type === "SERVER_STOPPED") {
-      await this.markInstanceStopped(trx, instance, occurredAtMs);
-      return { state: "stopped" };
+      const closedSessions = await this.markInstanceStopped(trx, instance, occurredAtMs);
+      return { state: "stopped", closedSessions };
     }
 
     if (input.type === "NETWORK_SESSION_STARTED") {
       const player = await resolvePlayer(payload);
       if (!player) {
-        return { ignored: true, reason: "player_not_found" };
+        return { invalid: true, reason: "Player identity could not be resolved." };
       }
 
-      const networkSessionId = await this.startNetworkSession(trx, instance, player, occurredAtMs);
-      return { networkSessionId };
+      const networkSessionId = stringPayload(payload.networkSessionId);
+
+      if (!networkSessionId) {
+        return { invalid: true, reason: "Network session id is required." };
+      }
+
+      const result = await this.startNetworkSession(
+        trx,
+        instance,
+        player,
+        networkSessionId,
+        occurredAtMs,
+      );
+      return {
+        networkSessionId,
+        startedSession: {
+          actorId: player.actorId,
+          playerId: player.playerId,
+          mojangId: player.mojangId,
+          proxyServerId: instance.serverId,
+          networkSessionId,
+        },
+        closedSessions: result.closedSessions,
+      };
     }
 
     if (input.type === "BACKEND_CONNECTED") {
-      const player = await resolvePlayer(payload);
-      const networkSessionId =
-        stringPayload(payload.networkSessionId) ??
-        (player ? await this.findCurrentNetworkSessionId(trx, player.playerId) : null);
+      const networkSessionId = stringPayload(payload.networkSessionId);
       const backendServerId = stringPayload(payload.backendServerId);
 
       if (!networkSessionId || !backendServerId) {
-        return { ignored: true, reason: "network_session_or_backend_missing" };
+        return { invalid: true, reason: "Network session id and backend server id are required." };
       }
 
       const backendSessionId = await this.connectBackend(
         trx,
+        instance,
         networkSessionId,
         backendServerId,
         stringPayload(payload.backendServerInstanceId),
         occurredAtMs,
       );
 
+      if (!backendSessionId) {
+        return {
+          invalid: true,
+          reason: "Backend attribution or network session ownership is invalid.",
+        };
+      }
+
       return { networkSessionId, backendSessionId };
     }
 
-    const player = await resolvePlayer(payload);
-    const networkSessionId =
-      stringPayload(payload.networkSessionId) ??
-      (player ? await this.findCurrentNetworkSessionId(trx, player.playerId) : null);
+    const networkSessionId = stringPayload(payload.networkSessionId);
 
     if (!networkSessionId) {
-      return { ignored: true, reason: "network_session_missing" };
+      return { invalid: true, reason: "Network session id is required." };
     }
 
-    await this.endNetworkSession(trx, instance, networkSessionId, occurredAtMs);
-    return { networkSessionId };
+    const closedSessions = await this.endNetworkSession(
+      trx,
+      instance,
+      networkSessionId,
+      occurredAtMs,
+    );
+
+    if (closedSessions.length === 0) {
+      return { invalid: true, reason: "Network session is not owned by this proxy instance." };
+    }
+
+    return { networkSessionId, closedSessions };
   }
 
   private async markInstanceDraining(
@@ -603,7 +773,7 @@ export class ServerInstancePgRepository {
     trx: DbExecutor,
     instance: InstanceIdentity,
     occurredAtMs: string,
-  ): Promise<void> {
+  ): Promise<Pick<SessionIdentity, "playerId">[]> {
     await sql`
       UPDATE server_instances
       SET state = 'stopped',
@@ -622,9 +792,9 @@ export class ServerInstancePgRepository {
     `.execute(trx);
 
     if (instance.serverType === "velocity") {
-      await this.closeProxyOwnedSessions(trx, [instance.id], occurredAtMs, "proxy_stopped");
+      return this.closeProxyOwnedSessions(trx, [instance.id], occurredAtMs, "proxy_stopped");
     } else {
-      await this.closeBackendInstanceSessions(trx, [instance.id], occurredAtMs, "backend_stopped");
+      return this.closeBackendInstanceSessions(trx, [instance.id], occurredAtMs, "backend_stopped");
     }
   }
 
@@ -632,25 +802,29 @@ export class ServerInstancePgRepository {
     trx: DbExecutor,
     instance: InstanceIdentity,
     player: PlayerIdentity,
+    networkSessionId: string,
     occurredAtMs: string,
-  ): Promise<string> {
-    await sql`
+  ): Promise<{ closedSessions: Pick<SessionIdentity, "playerId">[] }> {
+    const closed = await sql<{ player_id: string }>`
       UPDATE network_sessions
       SET disconnected_at_ms = ${occurredAtMs}::bigint,
           disconnect_reason = 'replaced',
           updated_at_ms = get_unix_ms()
       WHERE player_id = ${player.playerId}::uuid
         AND disconnected_at_ms IS NULL
+      RETURNING player_id
     `.execute(trx);
 
     const rows = await sql<{ id: string }>`
       INSERT INTO network_sessions (
+        id,
         player_id,
         proxy_server_id,
         proxy_server_instance_id,
         connected_at_ms
       )
       VALUES (
+        ${networkSessionId}::uuid,
         ${player.playerId}::uuid,
         ${instance.serverId}::uuid,
         ${instance.id}::uuid,
@@ -672,22 +846,50 @@ export class ServerInstancePgRepository {
       throw new Error("Network session insert did not return a row.");
     }
 
-    return row.id;
+    return { closedSessions: closed.rows.map((closedRow) => ({ playerId: closedRow.player_id })) };
   }
 
   private async connectBackend(
     trx: DbExecutor,
+    instance: InstanceIdentity,
     networkSessionId: string,
     backendServerId: string,
     backendServerInstanceId: string | null,
     occurredAtMs: string,
-  ): Promise<string> {
+  ): Promise<string | null> {
+    const validBackend = await sql<{ ok: number }>`
+      SELECT 1 AS ok
+      FROM servers backend
+      LEFT JOIN server_instances bsi ON bsi.id = ${backendServerInstanceId}::uuid
+      WHERE backend.id = ${backendServerId}::uuid
+        AND backend.type <> 'velocity'
+        AND (
+          ${backendServerInstanceId}::uuid IS NULL
+          OR (
+            bsi.server_id = backend.id
+            AND bsi.state IN ('active', 'draining')
+          )
+        )
+      LIMIT 1
+    `.execute(trx);
+
+    if (!validBackend.rows[0]) {
+      return null;
+    }
+
     await sql`
       UPDATE backend_sessions
       SET left_at_ms = ${occurredAtMs}::bigint,
           leave_reason = 'transfer',
           updated_at_ms = get_unix_ms()
       WHERE network_session_id = ${networkSessionId}::uuid
+        AND EXISTS (
+          SELECT 1
+          FROM network_sessions ns
+          WHERE ns.id = ${networkSessionId}::uuid
+            AND ns.proxy_server_instance_id = ${instance.id}::uuid
+            AND ns.disconnected_at_ms IS NULL
+        )
         AND left_at_ms IS NULL
     `.execute(trx);
 
@@ -707,6 +909,7 @@ export class ServerInstancePgRepository {
         ${occurredAtMs}::bigint
       FROM network_sessions ns
       WHERE ns.id = ${networkSessionId}::uuid
+        AND ns.proxy_server_instance_id = ${instance.id}::uuid
         AND ns.disconnected_at_ms IS NULL
       RETURNING id
     `.execute(trx);
@@ -714,7 +917,7 @@ export class ServerInstancePgRepository {
     const row = rows.rows[0];
 
     if (!row) {
-      throw new Error("Backend session insert did not return a row.");
+      return null;
     }
 
     return row.id;
@@ -725,8 +928,8 @@ export class ServerInstancePgRepository {
     instance: InstanceIdentity,
     networkSessionId: string,
     occurredAtMs: string,
-  ): Promise<void> {
-    await sql`
+  ): Promise<Pick<SessionIdentity, "playerId">[]> {
+    const rows = await sql<{ player_id: string }>`
       UPDATE network_sessions
       SET disconnected_at_ms = ${occurredAtMs}::bigint,
           disconnect_reason = 'disconnect',
@@ -734,30 +937,19 @@ export class ServerInstancePgRepository {
       WHERE id = ${networkSessionId}::uuid
         AND proxy_server_instance_id = ${instance.id}::uuid
         AND disconnected_at_ms IS NULL
-    `.execute(trx);
-  }
-
-  private async findCurrentNetworkSessionId(
-    trx: DbExecutor,
-    playerId: string,
-  ): Promise<string | null> {
-    const rows = await sql<{ network_session_id: string }>`
-      SELECT network_session_id
-      FROM network_sessions_current
-      WHERE player_id = ${playerId}::uuid
-      LIMIT 1
+      RETURNING player_id
     `.execute(trx);
 
-    return rows.rows[0]?.network_session_id ?? null;
+    return rows.rows.map((row) => ({ playerId: row.player_id }));
   }
 
   private async closeNetworkSessionsMissingFromPresence(
     trx: DbExecutor,
-    proxyServerId: string,
+    proxyServerInstanceId: string,
     onlineMojangIds: string[],
     observedAtMs: string,
-  ): Promise<number> {
-    const result = await sql<{ closed_count: string | number }>`
+  ): Promise<{ count: number; sessions: Pick<SessionIdentity, "playerId">[] }> {
+    const result = await sql<{ player_id: string }>`
       WITH closed AS (
         UPDATE network_sessions ns
         SET disconnected_at_ms = ${observedAtMs}::bigint,
@@ -765,25 +957,29 @@ export class ServerInstancePgRepository {
             updated_at_ms = get_unix_ms()
         FROM players p
         WHERE p.id = ns.player_id
-          AND ns.proxy_server_id = ${proxyServerId}::uuid
+          AND ns.proxy_server_instance_id = ${proxyServerInstanceId}::uuid
           AND ns.disconnected_at_ms IS NULL
+          AND ns.connected_at_ms <= ${observedAtMs}::bigint
           AND NOT (p.mojang_id = ANY(${onlineMojangIds}::uuid[]))
-        RETURNING ns.id
+        RETURNING ns.player_id
       )
-      SELECT count(*)::int AS closed_count
+      SELECT player_id
       FROM closed
     `.execute(trx);
 
-    return Number(result.rows[0]?.closed_count ?? 0);
+    return {
+      count: result.rows.length,
+      sessions: result.rows.map((row) => ({ playerId: row.player_id })),
+    };
   }
 
   private async closeBackendSessionsMissingFromPresence(
     trx: DbExecutor,
-    backendServerId: string,
+    backendServerInstanceId: string,
     onlineMojangIds: string[],
     observedAtMs: string,
-  ): Promise<number> {
-    const result = await sql<{ closed_count: string | number }>`
+  ): Promise<{ count: number; sessions: Pick<SessionIdentity, "playerId">[] }> {
+    const result = await sql<{ player_id: string }>`
       WITH closed AS (
         UPDATE backend_sessions bs
         SET left_at_ms = ${observedAtMs}::bigint,
@@ -791,16 +987,20 @@ export class ServerInstancePgRepository {
             updated_at_ms = get_unix_ms()
         FROM players p
         WHERE p.id = bs.player_id
-          AND bs.backend_server_id = ${backendServerId}::uuid
+          AND bs.backend_server_instance_id = ${backendServerInstanceId}::uuid
           AND bs.left_at_ms IS NULL
+          AND bs.joined_at_ms <= ${observedAtMs}::bigint
           AND NOT (p.mojang_id = ANY(${onlineMojangIds}::uuid[]))
-        RETURNING bs.id
+        RETURNING bs.player_id
       )
-      SELECT count(*)::int AS closed_count
+      SELECT player_id
       FROM closed
     `.execute(trx);
 
-    return Number(result.rows[0]?.closed_count ?? 0);
+    return {
+      count: result.rows.length,
+      sessions: result.rows.map((row) => ({ playerId: row.player_id })),
+    };
   }
 
   private async closeProxyOwnedSessions(
@@ -808,19 +1008,22 @@ export class ServerInstancePgRepository {
     serverInstanceIds: string[],
     occurredAtMs: string,
     reason: string,
-  ): Promise<void> {
+  ): Promise<Pick<SessionIdentity, "playerId">[]> {
     if (serverInstanceIds.length === 0) {
-      return;
+      return [];
     }
 
-    await sql`
+    const rows = await sql<{ player_id: string }>`
       UPDATE network_sessions
       SET disconnected_at_ms = ${occurredAtMs === "get_unix_ms()" ? sql`get_unix_ms()` : sql`${occurredAtMs}::bigint`},
           disconnect_reason = ${reason},
           updated_at_ms = get_unix_ms()
       WHERE proxy_server_instance_id IN (${sql.join(serverInstanceIds)})
         AND disconnected_at_ms IS NULL
+      RETURNING player_id
     `.execute(trx);
+
+    return rows.rows.map((row) => ({ playerId: row.player_id }));
   }
 
   private async closeBackendInstanceSessions(
@@ -828,19 +1031,139 @@ export class ServerInstancePgRepository {
     serverInstanceIds: string[],
     occurredAtMs: string,
     reason: string,
-  ): Promise<void> {
+  ): Promise<Pick<SessionIdentity, "playerId">[]> {
     if (serverInstanceIds.length === 0) {
-      return;
+      return [];
     }
 
-    await sql`
+    const rows = await sql<{ player_id: string }>`
       UPDATE backend_sessions
       SET left_at_ms = ${occurredAtMs === "get_unix_ms()" ? sql`get_unix_ms()` : sql`${occurredAtMs}::bigint`},
           leave_reason = ${reason},
           updated_at_ms = get_unix_ms()
       WHERE backend_server_instance_id IN (${sql.join(serverInstanceIds)})
         AND left_at_ms IS NULL
+      RETURNING player_id
     `.execute(trx);
+
+    return rows.rows.map((row) => ({ playerId: row.player_id }));
+  }
+
+  private async lockActiveInstance(trx: DbExecutor, instance: InstanceIdentity): Promise<boolean> {
+    const rows = await sql<{ id: string }>`
+      SELECT id
+      FROM server_instances
+      WHERE id = ${instance.id}::uuid
+        AND server_id = ${instance.serverId}::uuid
+        AND state IN ('active', 'draining')
+      FOR UPDATE
+    `.execute(trx);
+
+    return rows.rows.length > 0;
+  }
+
+  private async acceptPresenceSnapshot(
+    trx: DbExecutor,
+    serverInstanceId: string,
+    snapshotSequence: string,
+    observedAtMs: string,
+  ): Promise<boolean> {
+    const rows = await sql<{ id: string }>`
+      UPDATE server_instances
+      SET last_presence_sequence = ${snapshotSequence}::bigint,
+          last_presence_observed_at_ms = ${observedAtMs}::bigint,
+          updated_at_ms = get_unix_ms()
+      WHERE id = ${serverInstanceId}::uuid
+        AND (
+          last_presence_sequence IS NULL
+          OR last_presence_sequence < ${snapshotSequence}::bigint
+          OR (
+            last_presence_sequence = ${snapshotSequence}::bigint
+            AND COALESCE(last_presence_observed_at_ms, 0) <= ${observedAtMs}::bigint
+          )
+        )
+      RETURNING id
+    `.execute(trx);
+
+    return rows.rows.length > 0;
+  }
+
+  private async findObservedSessions(
+    trx: DbExecutor,
+    instance: InstanceIdentity,
+    onlineMojangIds: string[],
+  ): Promise<SessionIdentity[]> {
+    if (onlineMojangIds.length === 0) {
+      return [];
+    }
+
+    const rows =
+      instance.serverType === "velocity"
+        ? await sql<SessionIdentity>`
+            SELECT
+              p.actor_id AS "actorId",
+              p.id AS "playerId",
+              p.mojang_id AS "mojangId",
+              ns.proxy_server_id AS "proxyServerId",
+              ns.id AS "networkSessionId"
+            FROM network_sessions ns
+            INNER JOIN players p ON p.id = ns.player_id
+            WHERE ns.proxy_server_instance_id = ${instance.id}::uuid
+              AND ns.disconnected_at_ms IS NULL
+              AND p.mojang_id = ANY(${onlineMojangIds}::uuid[])
+          `.execute(trx)
+        : await sql<SessionIdentity>`
+            SELECT
+              p.actor_id AS "actorId",
+              p.id AS "playerId",
+              p.mojang_id AS "mojangId",
+              ns.proxy_server_id AS "proxyServerId",
+              ns.id AS "networkSessionId"
+            FROM backend_sessions bs
+            INNER JOIN network_sessions ns ON ns.id = bs.network_session_id
+            INNER JOIN players p ON p.id = ns.player_id
+            WHERE bs.backend_server_instance_id = ${instance.id}::uuid
+              AND bs.left_at_ms IS NULL
+              AND ns.disconnected_at_ms IS NULL
+              AND p.mojang_id = ANY(${onlineMojangIds}::uuid[])
+          `.execute(trx);
+
+    return rows.rows;
+  }
+
+  private async findActiveInstanceByBootId(
+    trx: DbExecutor,
+    serverId: string,
+    bootId: string,
+  ): Promise<ServerInstanceRow | null> {
+    const rows = await sql<ServerInstanceRow>`
+      SELECT
+        si.id,
+        si.server_id,
+        s.type::text AS server_type,
+        si.state::text,
+        si.runtime_port,
+        si.version,
+        si.started_at_ms::text,
+        si.draining_at_ms::text,
+        si.stopped_at_ms::text,
+        si.lost_at_ms::text,
+        si.superseded_at_ms::text,
+        si.last_heartbeat_at_ms::text,
+        si.heartbeat_interval_ms::text,
+        si.last_event_sequence::text,
+        si.is_synthetic_backfill,
+        si.created_at_ms::text,
+        si.updated_at_ms::text
+      FROM server_instances si
+      INNER JOIN servers s ON s.id = si.server_id
+      WHERE si.server_id = ${serverId}::uuid
+        AND si.boot_id = ${bootId}
+        AND si.state IN ('active', 'draining')
+      LIMIT 1
+    `.execute(trx);
+
+    return rows.rows[0] ?? null;
   }
 }
 
@@ -858,4 +1181,54 @@ function stringPayload(value: unknown): string | null {
 
 function unique(values: string[]): string[] {
   return [...new Set(values)];
+}
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(canonicalJson).join(",")}]`;
+  }
+
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
+}
+
+function sessionIdentityPayload(value: unknown): SessionIdentity | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const payload = value as Record<string, unknown>;
+  const actorId = stringPayload(payload.actorId);
+  const playerId = stringPayload(payload.playerId);
+  const mojangId = stringPayload(payload.mojangId);
+  const proxyServerId = stringPayload(payload.proxyServerId);
+  const networkSessionId = stringPayload(payload.networkSessionId);
+
+  if (!actorId || !playerId || !mojangId || !proxyServerId || !networkSessionId) {
+    return undefined;
+  }
+
+  return { actorId, playerId, mojangId, proxyServerId, networkSessionId };
+}
+
+function playerIdListPayload(value: unknown): Pick<SessionIdentity, "playerId">[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((entry) => {
+    if (!entry || typeof entry !== "object") {
+      return [];
+    }
+
+    const playerId = stringPayload((entry as Record<string, unknown>).playerId);
+
+    return playerId ? [{ playerId }] : [];
+  });
 }

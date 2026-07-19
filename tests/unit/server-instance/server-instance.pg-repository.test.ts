@@ -38,6 +38,7 @@ describe("ServerInstancePgRepository", () => {
   test("registerInstance closes sessions owned by a superseded proxy instance", async () => {
     const { db, queries } = createRecordingDb([
       { rows: [{ id: serverId }] },
+      { rows: [] },
       { rows: [{ id: oldInstanceId, server_type: "velocity" }] },
       { rows: [] },
       { rows: [] },
@@ -47,7 +48,7 @@ describe("ServerInstancePgRepository", () => {
     const repo = new ServerInstancePgRepository(db);
 
     const result = await repo.registerInstance(
-      { serverId, heartbeatIntervalMs: 60_000 },
+      { serverId, bootId: "boot-1", heartbeatIntervalMs: 60_000 },
       "token-hash",
     );
 
@@ -68,6 +69,7 @@ describe("ServerInstancePgRepository", () => {
   test("registerInstance closes sessions owned by a superseded backend instance", async () => {
     const { db, queries } = createRecordingDb([
       { rows: [{ id: serverId }] },
+      { rows: [] },
       { rows: [{ id: oldInstanceId, server_type: "paper" }] },
       { rows: [] },
       { rows: [] },
@@ -76,7 +78,7 @@ describe("ServerInstancePgRepository", () => {
     ]);
     const repo = new ServerInstancePgRepository(db);
 
-    await repo.registerInstance({ serverId }, "token-hash");
+    await repo.registerInstance({ serverId, bootId: "boot-1" }, "token-hash");
 
     const closeBackendQuery = queries.find((query) =>
       query.sql.includes("UPDATE backend_sessions"),
@@ -87,13 +89,19 @@ describe("ServerInstancePgRepository", () => {
   });
 
   test("reconcilePresence closes proxy sessions absent from the observed player list", async () => {
-    const { db, queries } = createRecordingDb([{ rows: [{ closed_count: "2" }] }]);
+    const { db, queries } = createRecordingDb([
+      { rows: [{ id: instanceId }] },
+      { rows: [{ id: instanceId }] },
+      { rows: [] },
+      { rows: [{ player_id: "player-a" }, { player_id: "player-b" }] },
+    ]);
     const repo = new ServerInstancePgRepository(db);
 
     const result = await repo.reconcilePresence(
       { id: instanceId, serverId, serverType: "velocity", state: "active" },
       {
         observedAtMs: "2000",
+        snapshotSequence: 1,
         onlineMojangIds: [mojangIdA, mojangIdA, mojangIdB],
       },
     );
@@ -101,39 +109,96 @@ describe("ServerInstancePgRepository", () => {
     const closeQuery = queries.find((query) => query.sql.includes("UPDATE network_sessions"));
 
     expect(result).toEqual({
+      status: "active",
       serverInstanceId: instanceId,
       observedAtMs: "2000",
       observedPlayerCount: 2,
       closedNetworkSessionCount: 2,
       closedBackendSessionCount: 0,
+      observedSessions: [],
+      closedSessions: [{ playerId: "player-a" }, { playerId: "player-b" }],
     });
-    expect(closeQuery?.sql).toContain("ns.proxy_server_id");
+    expect(closeQuery?.sql).toContain("ns.proxy_server_instance_id");
     expect(closeQuery?.sql).toContain("uuid[]");
     expect(closeQuery?.sql).toContain("presence_absent");
     expect(closeQuery?.parameters).toContainEqual([mojangIdA, mojangIdB]);
   });
 
   test("reconcilePresence closes backend sessions absent from the observed player list", async () => {
-    const { db, queries } = createRecordingDb([{ rows: [{ closed_count: 1 }] }]);
+    const { db, queries } = createRecordingDb([
+      { rows: [{ id: instanceId }] },
+      { rows: [{ id: instanceId }] },
+      { rows: [{ player_id: "player-a" }] },
+    ]);
     const repo = new ServerInstancePgRepository(db);
 
     const result = await repo.reconcilePresence(
       { id: instanceId, serverId, serverType: "paper", state: "active" },
-      { observedAtMs: "3000", onlineMojangIds: [] },
+      { observedAtMs: "3000", snapshotSequence: 1, onlineMojangIds: [] },
     );
 
     const closeQuery = queries.find((query) => query.sql.includes("UPDATE backend_sessions"));
 
     expect(result).toEqual({
+      status: "active",
       serverInstanceId: instanceId,
       observedAtMs: "3000",
       observedPlayerCount: 0,
       closedNetworkSessionCount: 0,
       closedBackendSessionCount: 1,
+      observedSessions: [],
+      closedSessions: [{ playerId: "player-a" }],
     });
-    expect(closeQuery?.sql).toContain("bs.backend_server_id");
+    expect(closeQuery?.sql).toContain("bs.backend_server_instance_id");
     expect(closeQuery?.sql).toContain("uuid[]");
     expect(closeQuery?.sql).toContain("presence_absent");
     expect(closeQuery?.parameters).toContainEqual([]);
+  });
+
+  test("registerInstance with same bootId reuses the active instance without superseding", async () => {
+    const { db, queries } = createRecordingDb([
+      { rows: [{ id: serverId }] },
+      { rows: [serverInstanceRow()] },
+      { rows: [] },
+    ]);
+    const repo = new ServerInstancePgRepository(db);
+
+    const result = await repo.registerInstance({ serverId, bootId: "boot-1" }, "token-hash");
+
+    expect(result.status).toBe("idempotent");
+    expect(queries.some((query) => query.sql.includes("UPDATE server_instances"))).toBe(false);
+    expect(queries.some((query) => query.sql.includes("server_instance_tokens"))).toBe(true);
+  });
+
+  test("processEvent enforces proxy ownership and backend attribution for backend connections", async () => {
+    const networkSessionId = "00000000-0000-0000-0000-000000000006";
+    const backendServerId = "00000000-0000-0000-0000-000000000007";
+    const backendInstanceId = "00000000-0000-0000-0000-000000000008";
+    const { db, queries } = createRecordingDb([
+      { rows: [] },
+      { rows: [{ last_event_sequence: "0" }] },
+      { rows: [{ ok: 1 }] },
+      { rows: [] },
+      { rows: [{ id: "00000000-0000-0000-0000-000000000009" }] },
+      { rows: [] },
+      { rows: [] },
+    ]);
+    const repo = new ServerInstancePgRepository(db);
+
+    const result = await repo.processEvent(
+      { id: instanceId, serverId, serverType: "velocity", state: "active" },
+      {
+        eventId: "evt-1",
+        sequence: 1,
+        type: "BACKEND_CONNECTED",
+        occurredAtMs: "2000",
+        payload: { networkSessionId, backendServerId, backendServerInstanceId: backendInstanceId },
+      },
+      () => Promise.resolve(null),
+    );
+
+    expect(result.status).toBe("processed");
+    expect(queries.some((query) => query.sql.includes("ns.proxy_server_instance_id"))).toBe(true);
+    expect(queries.some((query) => query.sql.includes("bsi.server_id = backend.id"))).toBe(true);
   });
 });

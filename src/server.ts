@@ -45,8 +45,13 @@ export function createApp(dependencies = createAppDependencies()) {
   app.get("/livez", (_req, res) => {
     res.json({ ok: true });
   });
-  app.get("/readyz", (_req, res) => {
-    res.json({ ok: true });
+  app.get("/readyz", async (_req, res) => {
+    try {
+      await dependencies.health.ready();
+      res.json({ ok: true });
+    } catch {
+      res.status(503).json({ ok: false });
+    }
   });
   app.get("/openapi.json", (_req, res) => {
     res.json(openApiDocument);

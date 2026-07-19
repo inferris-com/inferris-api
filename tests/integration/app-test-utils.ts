@@ -222,6 +222,9 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       clearEntry: AsyncMock;
     };
   };
+  health: {
+    ready: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
+  };
 };
 
 const adminAuth: AuthContext = {
@@ -603,6 +606,9 @@ export function createTestDependencies(): TestDependencies {
         start: jest.fn(),
         stop: jest.fn(),
       },
+    },
+    health: {
+      ready: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue(undefined),
     },
   };
 

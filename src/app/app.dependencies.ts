@@ -1,4 +1,5 @@
 import type { RequestHandler } from "express";
+import { sql } from "kysely";
 
 import { db as defaultDb, type DbExecutor } from "../db/index.js";
 import { redis as defaultRedis, type RedisClient } from "../redis/index.js";
@@ -91,6 +92,9 @@ export type AppDependencies = {
   workers: {
     chatMessageFlush: ChatMessageFlushWorker;
   };
+  health: {
+    ready: () => Promise<void>;
+  };
 };
 
 type CreateAppDependenciesOptions = {
@@ -157,7 +161,11 @@ export function createAppDependencies({
       punishment: new PunishmentService(punishmentRepository, new PunishmentPublisher(redisClient)),
       rank: new RankService(rankRepository),
       report: new ReportService(reportRepository, new ReportPublisher(redisClient)),
-      serverInstance: new ServerInstanceService(serverInstanceRepository, playerService),
+      serverInstance: new ServerInstanceService(
+        serverInstanceRepository,
+        playerService,
+        redisClient,
+      ),
       server: new ServerService(serverRepository, redisClient, playerService),
       staffPrivilege: new StaffPrivilegeService(staffPrivilegeRepository),
       watchlist: new WatchlistService(watchlistRepository),
@@ -168,6 +176,11 @@ export function createAppDependencies({
         chatMessageBuffer,
         chatMessageRepository,
       ),
+    },
+    health: {
+      ready: async () => {
+        await Promise.all([sql`SELECT 1`.execute(database), redisClient.ping()]);
+      },
     },
   };
 }

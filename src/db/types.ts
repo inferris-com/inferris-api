@@ -695,6 +695,7 @@ export interface ServerEvents {
   created_at_ms: Generated<Int8>;
   event_id: string;
   id: Generated<string>;
+  occurred_at_ms: Int8;
   payload: Generated<Json>;
   processed_at_ms: Generated<Int8>;
   processing_result: Generated<Json>;
@@ -724,6 +725,7 @@ export interface ServerHeartbeatObservations {
 }
 
 export interface ServerInstances {
+  boot_id: string;
   created_at_ms: Generated<Int8>;
   draining_at_ms: Int8 | null;
   heartbeat_interval_ms: Int8 | null;
@@ -731,6 +733,8 @@ export interface ServerInstances {
   is_synthetic_backfill: Generated<boolean>;
   last_event_sequence: Generated<Int8>;
   last_heartbeat_at_ms: Int8 | null;
+  last_presence_observed_at_ms: Int8 | null;
+  last_presence_sequence: Int8 | null;
   lost_at_ms: Int8 | null;
   runtime_port: number | null;
   server_id: string;
@@ -770,6 +774,12 @@ export interface ServerLatestMetrics {
   tps_1m: Numeric | null;
   tps_5m: Numeric | null;
   updated_at_ms: Generated<Int8>;
+}
+
+export interface ServerRegistrationApiKeys {
+  api_key_id: string;
+  created_at_ms: Generated<Int8>;
+  server_id: string;
 }
 
 export interface Servers {
@@ -864,6 +874,7 @@ export interface DB {
   server_instance_tokens: ServerInstanceTokens;
   server_instances: ServerInstances;
   server_latest_metrics: ServerLatestMetrics;
+  server_registration_api_keys: ServerRegistrationApiKeys;
   servers: Servers;
   shop_offerings: ShopOfferings;
   virtual_transactions: VirtualTransactions;

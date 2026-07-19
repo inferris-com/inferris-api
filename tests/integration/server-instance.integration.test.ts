@@ -30,6 +30,7 @@ describe("server instance routes", () => {
       .set("Authorization", "ApiKey server-token")
       .send({
         serverId: ids.server,
+        bootId: "boot-1",
         runtimePort: 25565,
         version: "1.21.8",
         heartbeatIntervalMs: 30000,
@@ -43,12 +44,16 @@ describe("server instance routes", () => {
         token: "instance-token",
       },
     });
-    expect(dependencies.services.serverInstance.registerInstance).toHaveBeenCalledWith({
-      serverId: ids.server,
-      runtimePort: 25565,
-      version: "1.21.8",
-      heartbeatIntervalMs: 30000,
-    });
+    expect(dependencies.services.serverInstance.registerInstance).toHaveBeenCalledWith(
+      {
+        serverId: ids.server,
+        bootId: "boot-1",
+        runtimePort: 25565,
+        version: "1.21.8",
+        heartbeatIntervalMs: 30000,
+      },
+      expect.any(Object),
+    );
   });
 
   test("PUT /server-instances/:serverInstanceId/heartbeat uses matching instance token", async () => {
@@ -95,8 +100,9 @@ describe("server instance routes", () => {
         eventId: "evt-1",
         sequence: 1,
         type: "BACKEND_CONNECTED",
+        occurredAtMs: "2000",
         payload: {
-          mojangId: ids.player,
+          networkSessionId: ids.report,
           backendServerId: ids.argusDmConversation,
         },
       });
@@ -112,11 +118,32 @@ describe("server instance routes", () => {
     });
   });
 
+  test("POST /server-instances/:serverInstanceId/events rejects malformed canonical events", async () => {
+    const { dependencies, request } = createTestApp();
+
+    const response = await request
+      .post(`/server-instances/${ids.chatMessage}/events`)
+      .set("Authorization", "Bearer instance-token")
+      .send({
+        eventId: "evt-1",
+        sequence: 1,
+        type: "BACKEND_CONNECTED",
+        occurredAtMs: "2000",
+        payload: {
+          backendServerId: ids.argusDmConversation,
+        },
+      });
+
+    expect(response.status).toBe(400);
+    expect(dependencies.services.serverInstance.processEvent).not.toHaveBeenCalled();
+  });
+
   test("PUT /server-instances/:serverInstanceId/presence returns reconciliation counts", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.serverInstance.reconcilePresence.mockResolvedValue({
       serverInstanceId: ids.chatMessage,
       observedAtMs: "2000",
+      idempotent: false,
       observedPlayerCount: 0,
       closedNetworkSessionCount: 1,
       closedBackendSessionCount: 0,
@@ -125,13 +152,14 @@ describe("server instance routes", () => {
     const response = await request
       .put(`/server-instances/${ids.chatMessage}/presence`)
       .set("Authorization", "Bearer instance-token")
-      .send({ observedAtMs: "2000", onlineMojangIds: [] });
+      .send({ observedAtMs: "2000", snapshotSequence: 1, onlineMojangIds: [] });
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       data: {
         serverInstanceId: ids.chatMessage,
         observedAtMs: "2000",
+        idempotent: false,
         observedPlayerCount: 0,
         closedNetworkSessionCount: 1,
         closedBackendSessionCount: 0,
@@ -139,7 +167,7 @@ describe("server instance routes", () => {
     });
     expect(dependencies.services.serverInstance.reconcilePresence).toHaveBeenCalledWith(
       expect.objectContaining({ id: ids.chatMessage, serverId: ids.server }),
-      { observedAtMs: "2000", onlineMojangIds: [] },
+      { observedAtMs: "2000", snapshotSequence: 1, onlineMojangIds: [] },
     );
   });
 
