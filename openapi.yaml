@@ -1374,6 +1374,184 @@ components:
         - "sequence"
         - "type"
         - "idempotent"
+    ServerInstanceEventRequest:
+      oneOf:
+        - "$ref": "#/components/schemas/NetworkSessionStartedEventRequest"
+        - "$ref": "#/components/schemas/BackendConnectedEventRequest"
+        - "$ref": "#/components/schemas/NetworkSessionEndedEventRequest"
+        - "$ref": "#/components/schemas/ServerShuttingDownEventRequest"
+        - "$ref": "#/components/schemas/ServerStoppedEventRequest"
+      discriminator:
+        propertyName: "type"
+        mapping:
+          NETWORK_SESSION_STARTED: "#/components/schemas/NetworkSessionStartedEventRequest"
+          BACKEND_CONNECTED: "#/components/schemas/BackendConnectedEventRequest"
+          NETWORK_SESSION_ENDED: "#/components/schemas/NetworkSessionEndedEventRequest"
+          SERVER_SHUTTING_DOWN: "#/components/schemas/ServerShuttingDownEventRequest"
+          SERVER_STOPPED: "#/components/schemas/ServerStoppedEventRequest"
+    NetworkSessionStartedEventRequest:
+      type: "object"
+      properties:
+        eventId:
+          type: "string"
+          minLength: 1
+          maxLength: 120
+        sequence:
+          type: "integer"
+          exclusiveMinimum: 0
+        occurredAtMs:
+          type: "string"
+          pattern: "^-?\\d+$"
+        type:
+          type: "string"
+        payload:
+          type: "object"
+          properties:
+            playerId:
+              type: "string"
+            actorId:
+              type: "string"
+            mojangId:
+              type: "string"
+            username:
+              type: "string"
+              minLength: 1
+              maxLength: 32
+            networkSessionId:
+              type: "string"
+          required:
+            - "mojangId"
+            - "username"
+            - "networkSessionId"
+          additionalProperties: false
+      required:
+        - "eventId"
+        - "sequence"
+        - "occurredAtMs"
+        - "type"
+        - "payload"
+      additionalProperties: false
+    BackendConnectedEventRequest:
+      type: "object"
+      properties:
+        eventId:
+          type: "string"
+          minLength: 1
+          maxLength: 120
+        sequence:
+          type: "integer"
+          exclusiveMinimum: 0
+        occurredAtMs:
+          type: "string"
+          pattern: "^-?\\d+$"
+        type:
+          type: "string"
+        payload:
+          type: "object"
+          properties:
+            networkSessionId:
+              type: "string"
+            backendServerId:
+              type: "string"
+            backendServerInstanceId:
+              type:
+                - "string"
+                - "null"
+          required:
+            - "networkSessionId"
+            - "backendServerId"
+          additionalProperties: false
+      required:
+        - "eventId"
+        - "sequence"
+        - "occurredAtMs"
+        - "type"
+        - "payload"
+      additionalProperties: false
+    NetworkSessionEndedEventRequest:
+      type: "object"
+      properties:
+        eventId:
+          type: "string"
+          minLength: 1
+          maxLength: 120
+        sequence:
+          type: "integer"
+          exclusiveMinimum: 0
+        occurredAtMs:
+          type: "string"
+          pattern: "^-?\\d+$"
+        type:
+          type: "string"
+        payload:
+          type: "object"
+          properties:
+            networkSessionId:
+              type: "string"
+          required:
+            - "networkSessionId"
+          additionalProperties: false
+      required:
+        - "eventId"
+        - "sequence"
+        - "occurredAtMs"
+        - "type"
+        - "payload"
+      additionalProperties: false
+    ServerShuttingDownEventRequest:
+      type: "object"
+      properties:
+        eventId:
+          type: "string"
+          minLength: 1
+          maxLength: 120
+        sequence:
+          type: "integer"
+          exclusiveMinimum: 0
+        occurredAtMs:
+          type: "string"
+          pattern: "^-?\\d+$"
+        type:
+          type: "string"
+        payload:
+          type: "object"
+          properties:
+            {}
+          additionalProperties: false
+      required:
+        - "eventId"
+        - "sequence"
+        - "occurredAtMs"
+        - "type"
+        - "payload"
+      additionalProperties: false
+    ServerStoppedEventRequest:
+      type: "object"
+      properties:
+        eventId:
+          type: "string"
+          minLength: 1
+          maxLength: 120
+        sequence:
+          type: "integer"
+          exclusiveMinimum: 0
+        occurredAtMs:
+          type: "string"
+          pattern: "^-?\\d+$"
+        type:
+          type: "string"
+        payload:
+          type: "object"
+          properties:
+            {}
+          additionalProperties: false
+      required:
+        - "eventId"
+        - "sequence"
+        - "occurredAtMs"
+        - "type"
+        - "payload"
+      additionalProperties: false
     StaffPrivilegeResponse:
       type: "object"
       properties:
@@ -8473,175 +8651,7 @@ paths:
         content:
           "application/json":
             schema:
-              oneOf:
-                - type: "object"
-                  properties:
-                    eventId:
-                      type: "string"
-                      minLength: 1
-                      maxLength: 120
-                    sequence:
-                      type: "integer"
-                      exclusiveMinimum: 0
-                    occurredAtMs:
-                      type: "string"
-                      pattern: "^-?\\d+$"
-                    type:
-                      type: "string"
-                      enum:
-                        - "SERVER_SHUTTING_DOWN"
-                    payload:
-                      type: "object"
-                      properties:
-                        {}
-                      additionalProperties: false
-                  required:
-                    - "eventId"
-                    - "sequence"
-                    - "occurredAtMs"
-                    - "type"
-                    - "payload"
-                  additionalProperties: false
-                - type: "object"
-                  properties:
-                    eventId:
-                      type: "string"
-                      minLength: 1
-                      maxLength: 120
-                    sequence:
-                      type: "integer"
-                      exclusiveMinimum: 0
-                    occurredAtMs:
-                      type: "string"
-                      pattern: "^-?\\d+$"
-                    type:
-                      type: "string"
-                      enum:
-                        - "SERVER_STOPPED"
-                    payload:
-                      type: "object"
-                      properties:
-                        {}
-                      additionalProperties: false
-                  required:
-                    - "eventId"
-                    - "sequence"
-                    - "occurredAtMs"
-                    - "type"
-                    - "payload"
-                  additionalProperties: false
-                - type: "object"
-                  properties:
-                    eventId:
-                      type: "string"
-                      minLength: 1
-                      maxLength: 120
-                    sequence:
-                      type: "integer"
-                      exclusiveMinimum: 0
-                    occurredAtMs:
-                      type: "string"
-                      pattern: "^-?\\d+$"
-                    type:
-                      type: "string"
-                      enum:
-                        - "NETWORK_SESSION_STARTED"
-                    payload:
-                      type: "object"
-                      properties:
-                        playerId:
-                          type: "string"
-                        actorId:
-                          type: "string"
-                        mojangId:
-                          type: "string"
-                        username:
-                          type: "string"
-                          minLength: 1
-                          maxLength: 32
-                        networkSessionId:
-                          type: "string"
-                      required:
-                        - "mojangId"
-                        - "username"
-                        - "networkSessionId"
-                      additionalProperties: false
-                  required:
-                    - "eventId"
-                    - "sequence"
-                    - "occurredAtMs"
-                    - "type"
-                    - "payload"
-                  additionalProperties: false
-                - type: "object"
-                  properties:
-                    eventId:
-                      type: "string"
-                      minLength: 1
-                      maxLength: 120
-                    sequence:
-                      type: "integer"
-                      exclusiveMinimum: 0
-                    occurredAtMs:
-                      type: "string"
-                      pattern: "^-?\\d+$"
-                    type:
-                      type: "string"
-                      enum:
-                        - "BACKEND_CONNECTED"
-                    payload:
-                      type: "object"
-                      properties:
-                        networkSessionId:
-                          type: "string"
-                        backendServerId:
-                          type: "string"
-                        backendServerInstanceId:
-                          type:
-                            - "string"
-                            - "null"
-                      required:
-                        - "networkSessionId"
-                        - "backendServerId"
-                      additionalProperties: false
-                  required:
-                    - "eventId"
-                    - "sequence"
-                    - "occurredAtMs"
-                    - "type"
-                    - "payload"
-                  additionalProperties: false
-                - type: "object"
-                  properties:
-                    eventId:
-                      type: "string"
-                      minLength: 1
-                      maxLength: 120
-                    sequence:
-                      type: "integer"
-                      exclusiveMinimum: 0
-                    occurredAtMs:
-                      type: "string"
-                      pattern: "^-?\\d+$"
-                    type:
-                      type: "string"
-                      enum:
-                        - "NETWORK_SESSION_ENDED"
-                    payload:
-                      type: "object"
-                      properties:
-                        networkSessionId:
-                          type: "string"
-                      required:
-                        - "networkSessionId"
-                      additionalProperties: false
-                  required:
-                    - "eventId"
-                    - "sequence"
-                    - "occurredAtMs"
-                    - "type"
-                    - "payload"
-                  additionalProperties: false
+              "$ref": "#/components/schemas/ServerInstanceEventRequest"
       responses:
         "201":
           description: "Event recorded"

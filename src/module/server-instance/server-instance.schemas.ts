@@ -1,6 +1,9 @@
+import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
 
 import { BigIntStringSchema } from "../../shared/common.schemas.js";
+
+extendZodWithOpenApi(z);
 
 export const serverInstanceIdParamsSchema = z
   .object({
@@ -90,38 +93,59 @@ const serverEventBaseSchema = z.object({
   occurredAtMs: BigIntStringSchema,
 });
 
-export const serverInstanceEventBodySchema = z.discriminatedUnion("type", [
-  serverEventBaseSchema
-    .extend({
-      type: z.literal("SERVER_SHUTTING_DOWN"),
-      payload: emptyPayloadSchema,
-    })
-    .strict(),
-  serverEventBaseSchema
-    .extend({
-      type: z.literal("SERVER_STOPPED"),
-      payload: emptyPayloadSchema,
-    })
-    .strict(),
-  serverEventBaseSchema
-    .extend({
-      type: z.literal("NETWORK_SESSION_STARTED"),
-      payload: networkSessionStartedPayloadSchema,
-    })
-    .strict(),
-  serverEventBaseSchema
-    .extend({
-      type: z.literal("BACKEND_CONNECTED"),
-      payload: backendConnectedPayloadSchema,
-    })
-    .strict(),
-  serverEventBaseSchema
-    .extend({
-      type: z.literal("NETWORK_SESSION_ENDED"),
-      payload: networkSessionEndedPayloadSchema,
-    })
-    .strict(),
-]);
+function eventTypeLiteral<T extends ServerEventType>(type: T) {
+  return z.literal(type).openapi({ type: "string" });
+}
+
+export const networkSessionStartedEventRequestSchema = serverEventBaseSchema
+  .extend({
+    type: eventTypeLiteral("NETWORK_SESSION_STARTED"),
+    payload: networkSessionStartedPayloadSchema,
+  })
+  .strict()
+  .openapi("NetworkSessionStartedEventRequest");
+
+export const backendConnectedEventRequestSchema = serverEventBaseSchema
+  .extend({
+    type: eventTypeLiteral("BACKEND_CONNECTED"),
+    payload: backendConnectedPayloadSchema,
+  })
+  .strict()
+  .openapi("BackendConnectedEventRequest");
+
+export const networkSessionEndedEventRequestSchema = serverEventBaseSchema
+  .extend({
+    type: eventTypeLiteral("NETWORK_SESSION_ENDED"),
+    payload: networkSessionEndedPayloadSchema,
+  })
+  .strict()
+  .openapi("NetworkSessionEndedEventRequest");
+
+export const serverShuttingDownEventRequestSchema = serverEventBaseSchema
+  .extend({
+    type: eventTypeLiteral("SERVER_SHUTTING_DOWN"),
+    payload: emptyPayloadSchema,
+  })
+  .strict()
+  .openapi("ServerShuttingDownEventRequest");
+
+export const serverStoppedEventRequestSchema = serverEventBaseSchema
+  .extend({
+    type: eventTypeLiteral("SERVER_STOPPED"),
+    payload: emptyPayloadSchema,
+  })
+  .strict()
+  .openapi("ServerStoppedEventRequest");
+
+export const serverInstanceEventBodySchema = z
+  .discriminatedUnion("type", [
+    networkSessionStartedEventRequestSchema,
+    backendConnectedEventRequestSchema,
+    networkSessionEndedEventRequestSchema,
+    serverShuttingDownEventRequestSchema,
+    serverStoppedEventRequestSchema,
+  ])
+  .openapi("ServerInstanceEventRequest");
 
 export const serverEventTypeSchema = z.enum([
   "SERVER_SHUTTING_DOWN",

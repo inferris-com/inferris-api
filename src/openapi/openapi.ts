@@ -80,7 +80,7 @@ registerMetricsOpenApi(registry);
 
 const generator = new OpenApiGeneratorV31(registry.definitions);
 
-export const openApiDocument = generator.generateDocument({
+const generatedOpenApiDocument = generator.generateDocument({
   openapi: "3.1.0",
   info: {
     title: "Inferris API",
@@ -89,3 +89,33 @@ export const openApiDocument = generator.generateDocument({
   },
   servers: [{ url: "/" }],
 });
+
+stripServerInstanceEventTypeConsts(generatedOpenApiDocument as unknown as Record<string, unknown>);
+
+export const openApiDocument = generatedOpenApiDocument;
+
+function stripServerInstanceEventTypeConsts(document: Record<string, unknown>) {
+  const schemas = getRecord(getRecord(document.components)?.schemas);
+  if (schemas === undefined) {
+    return;
+  }
+
+  for (const schemaName of [
+    "NetworkSessionStartedEventRequest",
+    "BackendConnectedEventRequest",
+    "NetworkSessionEndedEventRequest",
+    "ServerShuttingDownEventRequest",
+    "ServerStoppedEventRequest",
+  ]) {
+    const schema = getRecord(schemas[schemaName]);
+    const properties = getRecord(schema?.properties);
+    const typeProperty = getRecord(properties?.type);
+    if (typeProperty !== undefined) {
+      delete typeProperty.const;
+    }
+  }
+}
+
+function getRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : undefined;
+}
