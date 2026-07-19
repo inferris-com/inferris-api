@@ -620,13 +620,13 @@ const seed = {
       .values([
         {
           id: ids.servers.velocity,
-          name: "seed-velocity",
+          name: "velocity",
           type: "velocity",
           environment: "development",
         },
         {
           id: ids.servers.lobby,
-          name: "seed-lobby",
+          name: "lobby",
           type: "paper",
           environment: "development",
         },
