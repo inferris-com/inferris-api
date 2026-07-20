@@ -144,7 +144,7 @@ export class ServerInstanceService {
     input: ServerInstanceEventBody,
   ): Promise<ServerInstanceEventResponse> {
     const result = await this.repo.processEvent(auth, input, (payload) =>
-      this.resolvePlayerIdentity(payload),
+      this.resolvePlayerIdentity(payload, auth.serverId),
     );
 
     if (result.status === "sequence_gap") {
@@ -185,7 +185,7 @@ export class ServerInstanceService {
     };
   }
 
-  private async resolvePlayerIdentity(payload: Record<string, unknown>) {
+  private async resolvePlayerIdentity(payload: Record<string, unknown>, serverId: string) {
     const mojangId = stringPayload(payload.mojangId);
     const username = stringPayload(payload.username);
 
@@ -218,7 +218,7 @@ export class ServerInstanceService {
       mojangId,
       username,
       serverId:
-        stringPayload(payload.backendServerId) ?? stringPayload(payload.proxyServerId) ?? "",
+        stringPayload(payload.backendServerId) ?? stringPayload(payload.proxyServerId) ?? serverId,
     });
 
     return {
