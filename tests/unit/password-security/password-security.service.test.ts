@@ -2,8 +2,8 @@ import { createHash } from "node:crypto";
 
 import { afterEach, describe, expect, jest, test } from "@jest/globals";
 
-import type { RedisClient } from "../../../src/redis/index.js";
-import { PasswordSecurityService } from "../../../src/module/password-security/password-security.service.js";
+import type { RedisClient } from "@/redis/index.js";
+import { PasswordSecurityService } from "@/module/argus/password-security/password-security.service.js";
 
 const accountId = "00000000-0000-4000-8000-000000000001";
 const redisKey = `account:password-security:${accountId}`;

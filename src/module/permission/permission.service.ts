@@ -1,16 +1,19 @@
-import type { PermissionPgRepository } from "./permission.pg-repository.js";
+import type { PermissionPgRepository } from "@/module/permission/permission.pg-repository.js";
 import type {
   CreatePermissionNodeBody,
   ListPermissionsQuery,
   ReplacePermissionRuleBody,
-} from "./permission.schemas.js";
+} from "@/module/permission/permission.schemas.js";
 import {
   PermissionKeyAlreadyExistsError,
   PermissionKeyNotFoundError,
   PermissionRuleNotFoundError,
-} from "./permission.errors.js";
-import { RankNotFoundError } from "../player/player.errors.js";
-import { toPermissionNodeResponse, toPermissionRuleResponse } from "./permission.mapper.js";
+} from "@/module/permission/permission.errors.js";
+import { RankNotFoundError } from "@/module/player/player.errors.js";
+import {
+  toPermissionNodeResponse,
+  toPermissionRuleResponse,
+} from "@/module/permission/permission.mapper.js";
 
 export class PermissionService {
   constructor(private readonly repo: PermissionPgRepository) {}

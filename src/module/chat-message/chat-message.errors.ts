@@ -1,4 +1,4 @@
-import { NotFoundError, ServiceUnavailableError, ValidationError } from "../../error/app-error.js";
+import { NotFoundError, ServiceUnavailableError, ValidationError } from "@/error/app-error.js";
 
 export class ChatActorNotFoundError extends NotFoundError {
   constructor(id: string) {

@@ -1,5 +1,5 @@
-import type { RedisClient } from "../../redis/index.js";
-import type { ReportResponse } from "./report.response-types.js";
+import type { RedisClient } from "@/redis/index.js";
+import type { ReportResponse } from "@/module/report/report.response-types.js";
 
 export const reportEventsChannel = "reports.events";
 

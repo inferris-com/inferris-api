@@ -1,11 +1,11 @@
 import { describe, expect, jest, test } from "@jest/globals";
 
-import type { RedisClient } from "../../../src/redis/index.js";
-import { hashPassword } from "../../../src/module/auth/auth.crypto.js";
-import type { AuthRepository } from "../../../src/module/auth/auth.repository.js";
-import { authTokenResponseSchema } from "../../../src/module/auth/auth.response-types.js";
-import { AuthService } from "../../../src/module/auth/auth.service.js";
-import type { PasswordSecurityService } from "../../../src/module/password-security/password-security.service.js";
+import type { RedisClient } from "@/redis/index.js";
+import { hashPassword } from "@/module/auth/auth.crypto.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import { authTokenResponseSchema } from "@/module/auth/auth.response-types.js";
+import { AuthService } from "@/module/auth/auth.service.js";
+import type { PasswordSecurityService } from "@/module/argus/password-security/password-security.service.js";
 
 const userId = "00000000-0000-4000-8000-000000000001";
 

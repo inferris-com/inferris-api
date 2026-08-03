@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { paginationQuerySchema } from "../../shared/pagination.schemas.js";
+import { paginationQuerySchema } from "@/shared/pagination.schemas.js";
 
 export const auditLogParamsSchema = z.object({ auditLogId: z.string().uuid() }).strict();
 

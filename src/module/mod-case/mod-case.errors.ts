@@ -1,4 +1,4 @@
-import { NotFoundError, ValidationError } from "../../error/app-error.js";
+import { NotFoundError, ValidationError } from "@/error/app-error.js";
 
 export class ModCaseNotFoundError extends NotFoundError {
   constructor(caseId: string) {

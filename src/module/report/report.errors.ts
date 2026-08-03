@@ -1,4 +1,4 @@
-import { ForbiddenError, NotFoundError, ValidationError } from "../../error/app-error.js";
+import { ForbiddenError, NotFoundError, ValidationError } from "@/error/app-error.js";
 
 export class ReportNotFoundError extends NotFoundError {
   constructor(reportId: string) {

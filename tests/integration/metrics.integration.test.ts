@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
-import { createTestApp, ids } from "./app-test-utils.js";
+import { createTestApp, ids } from "@tests/integration/app-test-utils.js";
 
 describe("metrics routes", () => {
   test("GET /metrics/overview returns metrics overview envelope", async () => {

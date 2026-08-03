@@ -7,7 +7,7 @@ import {
   noContentResponse,
   standardErrorResponses,
   successResponse,
-} from "../../openapi/openapi.helpers.js";
+} from "@/openapi/openapi.helpers.js";
 import {
   playerBadgeAssignmentResponseSchema,
   playerFlagBitmaskResponseSchema,
@@ -18,7 +18,7 @@ import {
   playerResponseSchema,
   playerSearchResultResponseSchema,
   playerSummaryResponseSchema,
-} from "./player.response.types.js";
+} from "@/module/player/player.response.types.js";
 import {
   assignPlayerNicknameBodySchema,
   createPlayerBadgeAssignmentBodySchema,
@@ -36,7 +36,7 @@ import {
   searchPlayersQuerySchema,
   updatePlayerBodySchema,
   updatePlayerProfileBodySchema,
-} from "./player.schemas.js";
+} from "@/module/player/player.schemas.js";
 
 export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

@@ -4,7 +4,7 @@ import {
   createChatMessageBatchBodySchema,
   createChatMessageBodySchema,
   listChatMessagesQuerySchema,
-} from "../../../src/module/chat-message/chat-message.schemas.js";
+} from "@/module/chat-message/chat-message.schemas.js";
 
 const actorId = "00000000-0000-0000-0000-000000000001";
 const playerId = "00000000-0000-0000-0000-000000000002";

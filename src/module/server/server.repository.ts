@@ -1,12 +1,12 @@
-import type { Servers } from "../../db/types.js";
-import type { AccessResponse, LockdownResponse } from "./server.response.types.js";
+import type { Servers } from "@/db/types.js";
+import type { AccessResponse, LockdownResponse } from "@/module/server/server.response.types.js";
 import type {
   CreateLockdownBody,
   CreateServerBody,
   ReplaceServerAccessBody,
   UpdateLockdownBody,
   UpdateServerBody,
-} from "./server.schemas.js";
+} from "@/module/server/server.schemas.js";
 
 export interface ServerRepository {
   findServerById(id: string): Promise<Servers | null>;

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
-import { createTestApp, ids } from "./app-test-utils.js";
+import { createTestApp, ids } from "@tests/integration/app-test-utils.js";
 
 describe("network session routes", () => {
   const networkSessionId = "11111111-1111-4111-8111-111111111111";

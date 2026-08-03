@@ -1,10 +1,14 @@
 import { sql } from "kysely";
 
-import type { DbExecutor } from "../../db/index.js";
-import type { Json, Platform, PrincipalType } from "../../db/types.js";
-import type { AccountRole, AccountSecurityLock, AccountState } from "../account/account.schemas.js";
-import type { StaffPrivilegeRole } from "../staff-privilege/staff-privilege.schemas.js";
-import type { ApiScope } from "./auth.types.js";
+import type { DbExecutor } from "@/db/index.js";
+import type { Json, Platform, PrincipalType } from "@/db/types.js";
+import type {
+  AccountRole,
+  AccountSecurityLock,
+  AccountState,
+} from "@/module/argus/account/account.schemas.js";
+import type { StaffPrivilegeRole } from "@/module/staff-privilege/staff-privilege.schemas.js";
+import type { ApiScope } from "@/module/auth/auth.types.js";
 
 export type ApiKeyAuthRecord = {
   id: string;

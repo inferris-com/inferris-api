@@ -3,20 +3,20 @@ import type { Server as HttpServer } from "node:http";
 import { pinoHttp } from "pino-http";
 import * as swaggerUi from "swagger-ui-express";
 
-import { createAppDependencies } from "./app/app.dependencies.js";
-import type { BackgroundRuntime } from "./app/background.runtime.js";
-import { createBackgroundRuntime } from "./app/background.runtime.js";
-import { registerAppRoutes } from "./app/app.routes.js";
-import { db } from "./db/index.js";
-import { errorHandler } from "./error/app-error.js";
-import { logger } from "./logger.js";
+import { createAppDependencies } from "@/app/app.dependencies.js";
+import type { BackgroundRuntime } from "@/app/background.runtime.js";
+import { createBackgroundRuntime } from "@/app/background.runtime.js";
+import { registerAppRoutes } from "@/app/app.routes.js";
+import { db } from "@/db/index.js";
+import { errorHandler } from "@/error/app-error.js";
+import { logger } from "@/logger.js";
 import {
   connectRedis,
   createRedisClient,
   disconnectRedis,
   type RedisClient,
-} from "./redis/index.js";
-import { openApiDocument } from "./openapi/openapi.js";
+} from "@/redis/index.js";
+import { openApiDocument } from "@/openapi/openapi.js";
 
 type ServerProps = {
   host?: string;

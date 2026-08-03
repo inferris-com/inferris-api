@@ -1,11 +1,11 @@
-import { config } from "../../config.js";
-import type { RedisClient } from "../../redis/index.js";
+import { config } from "@/config.js";
+import type { RedisClient } from "@/redis/index.js";
 import type {
   BufferedChatMessage,
   ChatMessageListFilters,
   ChatMessageRecord,
   ChatMessageWriteInput,
-} from "./chat-message.types.js";
+} from "@/module/chat-message/chat-message.types.js";
 
 const pendingPrefix = "chat:pending:";
 const dedupePrefix = "chat:dedupe:";

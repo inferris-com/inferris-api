@@ -1,5 +1,5 @@
-import { logger } from "../logger.js";
-import type { CronJob, CronJobHandle } from "./cron.types.js";
+import { logger } from "@/logger.js";
+import type { CronJob, CronJobHandle } from "@/cron/cron.types.js";
 
 export class CronScheduler {
   private readonly handles: CronJobHandle[] = [];

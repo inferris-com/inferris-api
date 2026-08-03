@@ -1,9 +1,12 @@
-import type { PermissionNodes, PermissionPolicies } from "../../db/types.js";
+import type { PermissionNodes, PermissionPolicies } from "@/db/types.js";
 import type {
   PermissionNodeResponse,
   PermissionRuleResponse,
-} from "./permission.response-types.js";
-import type { CreatePermissionNodeBody, ReplacePermissionRuleBody } from "./permission.schemas.js";
+} from "@/module/permission/permission.response-types.js";
+import type {
+  CreatePermissionNodeBody,
+  ReplacePermissionRuleBody,
+} from "@/module/permission/permission.schemas.js";
 import type { Insertable, Selectable, Updateable } from "kysely";
 
 export function toPermissionNodeResponse(row: Selectable<PermissionNodes>): PermissionNodeResponse {

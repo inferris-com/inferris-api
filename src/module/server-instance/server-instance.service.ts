@@ -1,13 +1,16 @@
-import { config } from "../../config.js";
-import type { RedisClient } from "../../redis/index.js";
-import { createMinecraftSessionToken, createServerInstanceToken } from "../auth/auth.crypto.js";
+import { config } from "@/config.js";
+import type { RedisClient } from "@/redis/index.js";
+import {
+  createMinecraftSessionToken,
+  createServerInstanceToken,
+} from "@/module/auth/auth.crypto.js";
 import {
   minecraftSessionPlayerKey,
   minecraftSessionTokenKey,
   type MinecraftSessionState,
-} from "../auth/auth.service.js";
-import type { AuthContext } from "../auth/auth.types.js";
-import type { PlayerService } from "../player/player.service.js";
+} from "@/module/auth/auth.service.js";
+import type { AuthContext } from "@/module/auth/auth.types.js";
+import type { PlayerService } from "@/module/player/player.service.js";
 import {
   InvalidServerEventPayloadError,
   ServerInstanceInactiveError,
@@ -16,16 +19,16 @@ import {
   ServerInstanceNotFoundError,
   ServerInstanceRegistrationForbiddenError,
   ServerInstanceSequenceGapError,
-} from "./server-instance.errors.js";
-import { toServerInstanceResponse } from "./server-instance.mapper.js";
-import type { ServerInstancePgRepository } from "./server-instance.pg-repository.js";
+} from "@/module/server-instance/server-instance.errors.js";
+import { toServerInstanceResponse } from "@/module/server-instance/server-instance.mapper.js";
+import type { ServerInstancePgRepository } from "@/module/server-instance/server-instance.pg-repository.js";
 import type {
   RegisterServerInstanceBody,
   ServerInstanceEventBody,
   ServerInstanceHeartbeatBody,
   ServerInstanceMetricsBody,
   ServerInstancePresenceBody,
-} from "./server-instance.schemas.js";
+} from "@/module/server-instance/server-instance.schemas.js";
 import type {
   RegisterServerInstanceResponse,
   ServerInstanceEventResponse,
@@ -33,7 +36,7 @@ import type {
   ServerInstanceMetricsResponse,
   ServerInstancePresenceResponse,
   ServerInstanceResponse,
-} from "./server-instance.response-types.js";
+} from "@/module/server-instance/server-instance.response-types.js";
 
 type MinecraftSessionIssueInput = Omit<MinecraftSessionState, "issuedAtMs">;
 

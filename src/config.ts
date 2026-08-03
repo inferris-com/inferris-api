@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import z from "zod";
-import { accountStateSchema } from "./module/account/account.schemas.js";
+import { accountStateSchema } from "@/module/argus/account/account.schemas.js";
 
 const envSchema = z
   .object({

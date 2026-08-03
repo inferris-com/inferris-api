@@ -1,6 +1,6 @@
 import type { Selectable } from "kysely";
-import type { Actors } from "../../db/types.js";
-import type { ActorResponse } from "./actor.response.types.js";
+import type { Actors } from "@/db/types.js";
+import type { ActorResponse } from "@/module/actor/actor.response.types.js";
 
 export function toActorResponse(actor: Selectable<Actors>): ActorResponse {
   const actorWithPlayer = actor as Selectable<Actors> & { player_id?: string | null };

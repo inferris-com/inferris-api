@@ -1,9 +1,13 @@
 import { type Kysely, type Selectable, sql } from "kysely";
-import type { Actors, ActorType, DB } from "../../db/types.js";
-import type { ListActorsQuery, SearchActorsQuery, UpdateActorBody } from "./actor.schemas.js";
-import type { DeleteResult } from "../../shared/results.types.js";
-import { isForeignKeyViolation } from "../../shared/db/pg-error.utils.js";
-import type { PaginatedResult } from "../../shared/pagination.schemas.js";
+import type { Actors, ActorType, DB } from "@/db/types.js";
+import type {
+  ListActorsQuery,
+  SearchActorsQuery,
+  UpdateActorBody,
+} from "@/module/actor/actor.schemas.js";
+import type { DeleteResult } from "@/shared/results.types.js";
+import { isForeignKeyViolation } from "@/shared/db/pg-error.utils.js";
+import type { PaginatedResult } from "@/shared/pagination.schemas.js";
 
 export class ActorPgRepository {
   constructor(private readonly db: Kysely<DB>) {}

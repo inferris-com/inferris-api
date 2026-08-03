@@ -1,6 +1,6 @@
 import type { Selectable } from "kysely";
 
-import type { AuditLogs } from "../../db/types.js";
+import type { AuditLogs } from "@/db/types.js";
 
 export function toAuditLogResponse(row: Selectable<AuditLogs>) {
   return {

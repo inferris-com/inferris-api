@@ -1,8 +1,11 @@
 import type { Selectable } from "kysely";
 
-import type { ModCaseActors, ModCases } from "../../db/types.js";
-import { int8ToString, int8ToStringOrNull } from "../../shared/db/int8.js";
-import type { ModCaseActorResponse, ModCaseResponse } from "./mod-case.response-types.js";
+import type { ModCaseActors, ModCases } from "@/db/types.js";
+import { int8ToString, int8ToStringOrNull } from "@/shared/db/int8.js";
+import type {
+  ModCaseActorResponse,
+  ModCaseResponse,
+} from "@/module/mod-case/mod-case.response-types.js";
 
 export function toModCaseResponse(row: Selectable<ModCases>): ModCaseResponse {
   return {

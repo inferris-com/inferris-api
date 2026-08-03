@@ -5,11 +5,8 @@ import {
   authorize,
   requireActor,
   requireMinecraftPermission,
-} from "../../../src/module/auth/auth.middleware.js";
-import {
-  parseApiScopes,
-  type AuthRepository,
-} from "../../../src/module/auth/auth.repository.js";
+} from "@/module/auth/auth.middleware.js";
+import { parseApiScopes, type AuthRepository } from "@/module/auth/auth.repository.js";
 
 describe("auth middleware", () => {
   test("parseApiScopes accepts legacy nested scope arrays", () => {

@@ -1,14 +1,14 @@
 import { sql } from "kysely";
 
-import type { DbExecutor } from "../../db/index.js";
+import type { DbExecutor } from "@/db/index.js";
 import type {
   MetricsOverviewResponse,
   NetworkMetricBucket,
   ServerMetricsResponse,
   ServerMetricBucket,
   ServerMetricSnapshot,
-} from "./metrics.response-types.js";
-import type { MetricsWindow } from "./metrics.schemas.js";
+} from "@/module/metrics/metrics.response-types.js";
+import type { MetricsWindow } from "@/module/metrics/metrics.schemas.js";
 
 const bucketSizeMs = 60_000;
 const staleAfterMs = 2 * 60_000;

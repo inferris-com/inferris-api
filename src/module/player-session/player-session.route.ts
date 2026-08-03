@@ -1,19 +1,19 @@
 import { type RequestHandler, Router } from "express";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiSuccess } from "../../shared/http/api-response.types.js";
-import type { PaginatedResponse } from "../../shared/pagination.schemas.js";
-import { authorize } from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import type { PlayerSessionResponse } from "./player-session.response-types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiSuccess } from "@/shared/http/api-response.types.js";
+import type { PaginatedResponse } from "@/shared/pagination.schemas.js";
+import { authorize } from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import type { PlayerSessionResponse } from "@/module/player-session/player-session.response-types.js";
 import {
   getPlayerSessionQuerySchema,
   listPlayerSessionsQuerySchema,
   type ListPlayerSessionsQuery,
   type NetworkSessionParams,
   networkSessionParamsSchema,
-} from "./player-session.schemas.js";
-import type { PlayerSessionService } from "./player-session.service.js";
+} from "@/module/player-session/player-session.schemas.js";
+import type { PlayerSessionService } from "@/module/player-session/player-session.service.js";
 
 type PlayerSessionListSuccess = {
   data: PlayerSessionResponse[];

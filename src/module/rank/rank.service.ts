@@ -1,8 +1,8 @@
-import { RankAlreadyExistsError, RankNotFoundError } from "./rank.errors.js";
-import { toRankResponse } from "./rank.mapper.js";
-import type { RankPgRepository } from "./rank.pg-repository.js";
-import type { RankResponse } from "./rank.response-types.js";
-import type { CreateRankBody, ListRanksQuery, UpdateRankBody } from "./rank.schemas.js";
+import { RankAlreadyExistsError, RankNotFoundError } from "@/module/rank/rank.errors.js";
+import { toRankResponse } from "@/module/rank/rank.mapper.js";
+import type { RankPgRepository } from "@/module/rank/rank.pg-repository.js";
+import type { RankResponse } from "@/module/rank/rank.response-types.js";
+import type { CreateRankBody, ListRanksQuery, UpdateRankBody } from "@/module/rank/rank.schemas.js";
 
 export class RankService {
   constructor(private readonly repo: RankPgRepository) {}

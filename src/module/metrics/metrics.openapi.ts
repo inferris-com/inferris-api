@@ -4,12 +4,12 @@ import {
   standardErrorResponses,
   successResponse,
   userOrServiceSecurity,
-} from "../../openapi/openapi.helpers.js";
+} from "@/openapi/openapi.helpers.js";
 import {
   metricsOverviewResponseSchema,
   serverMetricsResponseSchema,
-} from "./metrics.response-types.js";
-import { metricsQuerySchema, serverMetricsParamsSchema } from "./metrics.schemas.js";
+} from "@/module/metrics/metrics.response-types.js";
+import { metricsQuerySchema, serverMetricsParamsSchema } from "@/module/metrics/metrics.schemas.js";
 
 export function registerMetricsOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

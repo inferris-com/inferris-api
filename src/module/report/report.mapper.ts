@@ -1,8 +1,11 @@
 import type { Selectable } from "kysely";
 
-import type { ReportComments, Reports } from "../../db/types.js";
-import { int8ToString, int8ToStringOrNull } from "../../shared/db/int8.js";
-import type { ReportCommentResponse, ReportResponse } from "./report.response-types.js";
+import type { ReportComments, Reports } from "@/db/types.js";
+import { int8ToString, int8ToStringOrNull } from "@/shared/db/int8.js";
+import type {
+  ReportCommentResponse,
+  ReportResponse,
+} from "@/module/report/report.response-types.js";
 
 export function toReportResponse(row: Selectable<Reports>): ReportResponse {
   return {

@@ -1,4 +1,4 @@
-import type { WatchlistEntryResponse } from "./watchlist.response-types.js";
+import type { WatchlistEntryResponse } from "@/module/watchlist/watchlist.response-types.js";
 
 export type WatchlistEntryRecord = {
   id: number;

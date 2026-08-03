@@ -1,10 +1,10 @@
 import { type RequestHandler, Router } from "express";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
-import { auditMutation, authorize } from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import type { BadgeResponse } from "./badge.response-types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiListSuccess, ApiSuccess } from "@/shared/http/api-response.types.js";
+import { auditMutation, authorize } from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import type { BadgeResponse } from "@/module/badge/badge.response-types.js";
 import {
   badgeParamsSchema,
   createBadgeBodySchema,
@@ -14,12 +14,15 @@ import {
   type CreateBadgeBody,
   type ListBadgesQuery,
   type UpdateBadgeBody,
-} from "./badge.schemas.js";
-import type { BadgeService } from "./badge.service.js";
+} from "@/module/badge/badge.schemas.js";
+import type { BadgeService } from "@/module/badge/badge.service.js";
 
 export function createBadgeRouter(service: BadgeService, authRepository: AuthRepository): Router {
   const router = Router();
-  const readBadges = authorize(authRepository, { apiScopes: ["players:read"], argusRole: "moderator" });
+  const readBadges = authorize(authRepository, {
+    apiScopes: ["players:read"],
+    argusRole: "moderator",
+  });
   const writeBadges = authorize(authRepository, {
     apiScopes: ["players:write"],
     argusRole: "admin",

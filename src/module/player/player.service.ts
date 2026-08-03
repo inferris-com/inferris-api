@@ -5,7 +5,7 @@ import {
   PlayerNicknameNotFoundError,
   PlayerNotFoundError,
   RankNotFoundError,
-} from "./player.errors.js";
+} from "@/module/player/player.errors.js";
 import {
   encodePlayerFlags,
   toBitmaskResponse,
@@ -13,7 +13,7 @@ import {
   UnknownPlayerFlagError,
   type PlayerFlagBitmaskResponse,
   type PlayerFlagDefinitionResponse,
-} from "./player-flags.js";
+} from "@/module/player/player-flags.js";
 import {
   toPlayerBadgeAssignmentResponse,
   toPlayerNicknameResponse,
@@ -22,8 +22,8 @@ import {
   toPlayerResponse,
   toPlayerSearchResultResponse,
   toPlayerSummaryResponse,
-} from "./player.mapper.js";
-import type { DeletePlayerOptions } from "./player.repository.js";
+} from "@/module/player/player.mapper.js";
+import type { DeletePlayerOptions } from "@/module/player/player.repository.js";
 import type {
   PlayerBadgeAssignmentResponse,
   PlayerNicknameResponse,
@@ -32,7 +32,7 @@ import type {
   PlayerResponse,
   PlayerSearchResultResponse,
   PlayerSummaryResponse,
-} from "./player.response.types.js";
+} from "@/module/player/player.response.types.js";
 import type {
   CreatePlayerBody,
   CreatePlayerBadgeAssignmentBody,
@@ -45,9 +45,9 @@ import type {
   SearchPlayersQuery,
   UpdatePlayerBody,
   UpdateProfileBody,
-} from "./player.schemas.js";
-import type { PlayerPgRepository } from "./player.pg-repository.js";
-import { ValidationError } from "../../error/app-error.js";
+} from "@/module/player/player.schemas.js";
+import type { PlayerPgRepository } from "@/module/player/player.pg-repository.js";
+import { ValidationError } from "@/error/app-error.js";
 
 export class PlayerService {
   constructor(private readonly repository: PlayerPgRepository) {}

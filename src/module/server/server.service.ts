@@ -2,8 +2,12 @@ import {
   ServerAlreadyExistsError,
   ServerLockdownAlreadyExistsError,
   ServerNotFoundError,
-} from "./server.errors.js";
-import { toAccessResponse, toLockdownResponse, toServerResponse } from "./server.mapper.js";
+} from "@/module/server/server.errors.js";
+import {
+  toAccessResponse,
+  toLockdownResponse,
+  toServerResponse,
+} from "@/module/server/server.mapper.js";
 import type {
   AccessResponse,
   LockdownResponse,
@@ -11,8 +15,8 @@ import type {
   ServerHeartbeatResponse,
   BackendSessionResponse,
   ServerResponse,
-} from "./server.response.types.js";
-import type { ServerPgRepository } from "./server.pg-repository.js";
+} from "@/module/server/server.response.types.js";
+import type { ServerPgRepository } from "@/module/server/server.pg-repository.js";
 import type {
   AuthenticatedCreateLockdownBody,
   CreatePlayerSessionBody,
@@ -21,16 +25,16 @@ import type {
   ServerHeartbeatBody,
   UpdateLockdownBody,
   UpdateServerBody,
-} from "./server.schemas.js";
-import type { RedisClient } from "../../redis/index.js";
-import { config } from "../../config.js";
-import { createMinecraftSessionToken } from "../auth/auth.crypto.js";
+} from "@/module/server/server.schemas.js";
+import type { RedisClient } from "@/redis/index.js";
+import { config } from "@/config.js";
+import { createMinecraftSessionToken } from "@/module/auth/auth.crypto.js";
 import {
   minecraftSessionPlayerKey,
   minecraftSessionTokenKey,
   type MinecraftSessionState,
-} from "../auth/auth.service.js";
-import type { PlayerService } from "../player/player.service.js";
+} from "@/module/auth/auth.service.js";
+import type { PlayerService } from "@/module/player/player.service.js";
 
 export class ServerService {
   constructor(

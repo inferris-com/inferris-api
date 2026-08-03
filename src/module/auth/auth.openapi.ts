@@ -5,9 +5,16 @@ import {
   jsonBody,
   standardErrorResponses,
   successResponse,
-} from "../../openapi/openapi.helpers.js";
-import { authTokenResponseSchema, authUserResponseSchema } from "./auth.response-types.js";
-import { loginBodySchema, logoutBodySchema, refreshBodySchema } from "./auth.schemas.js";
+} from "@/openapi/openapi.helpers.js";
+import {
+  authTokenResponseSchema,
+  authUserResponseSchema,
+} from "@/module/auth/auth.response-types.js";
+import {
+  loginBodySchema,
+  logoutBodySchema,
+  refreshBodySchema,
+} from "@/module/auth/auth.schemas.js";
 
 export function registerAuthOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

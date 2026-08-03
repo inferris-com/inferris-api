@@ -3,6 +3,9 @@
     "target": "ES2024",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "lib": ["ESNext"],
     "types": ["node"],
     "rootDir": "src",

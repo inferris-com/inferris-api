@@ -1,14 +1,14 @@
 import { type Kysely, sql } from "kysely";
 
-import type { DB } from "../../db/types.js";
-import type { PaginatedResult } from "../../shared/pagination.schemas.js";
-import type { WatchlistEntryRecord } from "./watchlist.mapper.js";
+import type { DB } from "@/db/types.js";
+import type { PaginatedResult } from "@/shared/pagination.schemas.js";
+import type { WatchlistEntryRecord } from "@/module/watchlist/watchlist.mapper.js";
 import type {
   AddWatchlistBody,
   ClearWatchlistBody,
   GetActiveWatchlistQuery,
   ListWatchlistQuery,
-} from "./watchlist.schemas.js";
+} from "@/module/watchlist/watchlist.schemas.js";
 
 export type AddWatchlistInput = AddWatchlistBody & {
   subjectActorId: string;
@@ -209,10 +209,7 @@ export class WatchlistPgRepository {
   }
 }
 
-async function loadEntryById(
-  db: Kysely<DB>,
-  id: number,
-): Promise<WatchlistEntryRecord> {
+async function loadEntryById(db: Kysely<DB>, id: number): Promise<WatchlistEntryRecord> {
   return db
     .selectFrom("actor_watchlist_entries")
     .innerJoin("actors", "actors.id", "actor_watchlist_entries.subject_actor_id")
@@ -275,8 +272,6 @@ async function setWatchlistedFlag(
         ? sql`(players.flags | ${bit.toString()}::bigint)`
         : sql`(players.flags & ~${bit.toString()}::bigint)`,
     })
-    .where((eb) =>
-      eb("players.actor_id", "=", subjectActorId),
-    )
+    .where((eb) => eb("players.actor_id", "=", subjectActorId))
     .execute();
 }

@@ -1,8 +1,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
-import { openApiDocument } from "../src/openapi/openapi.js";
-import { logger } from "../src/logger.js";
+import { openApiDocument } from "@/openapi/openapi.js";
+import { logger } from "@/logger.js";
 
 const jsonOutputPath = resolve("openapi.json");
 const yamlOutputPath = resolve("openapi.yaml");

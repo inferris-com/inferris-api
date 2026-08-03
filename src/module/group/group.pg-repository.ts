@@ -1,8 +1,12 @@
 import { sql, type Kysely } from "kysely";
 
-import type { DB } from "../../db/types.js";
-import { toGroupInsert, toGroupUpdate } from "./group.mapper.js";
-import type { CreateGroupBody, ListGroupsQuery, UpdateGroupBody } from "./group.schemas.js";
+import type { DB } from "@/db/types.js";
+import { toGroupInsert, toGroupUpdate } from "@/module/group/group.mapper.js";
+import type {
+  CreateGroupBody,
+  ListGroupsQuery,
+  UpdateGroupBody,
+} from "@/module/group/group.schemas.js";
 
 export class GroupPgRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -40,7 +44,10 @@ export class GroupPgRepository {
   }
 
   async deleteGroup(groupKey: string): Promise<boolean> {
-    const result = await this.db.deleteFrom("groups").where("key", "=", groupKey).executeTakeFirst();
+    const result = await this.db
+      .deleteFrom("groups")
+      .where("key", "=", groupKey)
+      .executeTakeFirst();
 
     return result.numDeletedRows > 0n;
   }

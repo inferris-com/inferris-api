@@ -1,8 +1,8 @@
-import { config } from "../../config.js";
-import { logger } from "../../logger.js";
-import type { RedisClient } from "../../redis/index.js";
-import type { ChatMessagePgRepository } from "./chat-message.pg-repository.js";
-import type { ChatMessageRedisBuffer } from "./chat-message.redis-buffer.js";
+import { config } from "@/config.js";
+import { logger } from "@/logger.js";
+import type { RedisClient } from "@/redis/index.js";
+import type { ChatMessagePgRepository } from "@/module/chat-message/chat-message.pg-repository.js";
+import type { ChatMessageRedisBuffer } from "@/module/chat-message/chat-message.redis-buffer.js";
 
 const consumerGroup = "chat-pg-writers";
 const consumerName = `${config.name}-${process.pid}`;

@@ -1,13 +1,13 @@
 import { type Kysely, sql, type Selectable } from "kysely";
 
-import type { DB, ModCaseActors, ModCases } from "../../db/types.js";
-import type { PaginatedResult } from "../../shared/pagination.schemas.js";
+import type { DB, ModCaseActors, ModCases } from "@/db/types.js";
+import type { PaginatedResult } from "@/shared/pagination.schemas.js";
 import type {
   CreateModCaseActorBody,
   CreateModCaseBody,
   ListModCasesQuery,
   UpdateModCaseBody,
-} from "./mod-case.schemas.js";
+} from "@/module/mod-case/mod-case.schemas.js";
 
 export type CreateModCaseInput = CreateModCaseBody & {
   openedByActorId: string;

@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from "../../error/app-error.js";
+import { ConflictError, NotFoundError } from "@/error/app-error.js";
 
 export class ActorNotFoundError extends NotFoundError {
   readonly actorId: string;
@@ -14,7 +14,6 @@ export class ActorNotFoundError extends NotFoundError {
 }
 
 export class ActorsNotFoundError extends NotFoundError {
-
   constructor() {
     super({
       code: "ACTORS_NOT_FOUND",

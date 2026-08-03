@@ -7,12 +7,12 @@ import {
   noContentResponse,
   standardErrorResponses,
   successResponse,
-} from "../../openapi/openapi.helpers.js";
+} from "@/openapi/openapi.helpers.js";
 import {
   accessResponseSchema,
   lockdownResponseSchema,
   serverResponseSchema,
-} from "./server.response.types.js";
+} from "@/module/server/server.response.types.js";
 import {
   createLockdownBodySchema,
   createServerBodySchema,
@@ -21,7 +21,7 @@ import {
   serverNameParamsSchema,
   updateLockdownBodySchema,
   updateServerBodySchema,
-} from "./server.schemas.js";
+} from "@/module/server/server.schemas.js";
 
 export function registerServerOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

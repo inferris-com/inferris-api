@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
-import { createTestApp, ids } from "./app-test-utils.js";
+import { createTestApp, ids } from "@tests/integration/app-test-utils.js";
 
 describe("watchlist routes", () => {
   test("GET /watchlist forwards filters to the service", async () => {

@@ -1,4 +1,4 @@
-import type { Punishment, PunishmentLiftedCause } from "../../db/types.js";
+import type { Punishment, PunishmentLiftedCause } from "@/db/types.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
 

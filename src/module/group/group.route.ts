@@ -1,10 +1,10 @@
 import { type RequestHandler, Router } from "express";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
-import { auditMutation, authorize } from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import type { GroupResponse } from "./group.response-types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiListSuccess, ApiSuccess } from "@/shared/http/api-response.types.js";
+import { auditMutation, authorize } from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import type { GroupResponse } from "@/module/group/group.response-types.js";
 import {
   createGroupBodySchema,
   groupKeyParamsSchema,
@@ -14,12 +14,15 @@ import {
   type GroupKeyParams,
   type ListGroupsQuery,
   type UpdateGroupBody,
-} from "./group.schemas.js";
-import type { GroupService } from "./group.service.js";
+} from "@/module/group/group.schemas.js";
+import type { GroupService } from "@/module/group/group.service.js";
 
 export function createGroupRouter(service: GroupService, authRepository: AuthRepository): Router {
   const router = Router();
-  const readGroups = authorize(authRepository, { apiScopes: ["players:read"], argusRole: "moderator" });
+  const readGroups = authorize(authRepository, {
+    apiScopes: ["players:read"],
+    argusRole: "moderator",
+  });
   const writeGroups = authorize(authRepository, {
     apiScopes: ["players:write"],
     argusRole: "admin",
@@ -47,7 +50,10 @@ export function createGroupRouter(service: GroupService, authRepository: AuthRep
     res.status(201).json(body);
   };
 
-  const updateGroup: RequestHandler<GroupKeyParams, unknown, UpdateGroupBody> = async (req, res) => {
+  const updateGroup: RequestHandler<GroupKeyParams, unknown, UpdateGroupBody> = async (
+    req,
+    res,
+  ) => {
     const group = await service.updateGroup(req.params.groupKey, req.body);
     const body: ApiSuccess<GroupResponse> = { data: group };
     res.json(body);
@@ -64,12 +70,7 @@ export function createGroupRouter(service: GroupService, authRepository: AuthRep
     validateRequest({ query: listGroupsQuerySchema }) as unknown as RequestHandler,
     listGroups,
   );
-  router.get(
-    "/:groupKey",
-    readGroups,
-    validateRequest({ params: groupKeyParamsSchema }),
-    getGroup,
-  );
+  router.get("/:groupKey", readGroups, validateRequest({ params: groupKeyParamsSchema }), getGroup);
   router.post(
     "/",
     writeGroups,

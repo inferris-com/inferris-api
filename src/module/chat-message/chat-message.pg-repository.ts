@@ -1,11 +1,11 @@
 import { type Insertable, type Kysely, type Selectable, sql } from "kysely";
 
-import type { ChatMessages, DB, JsonValue } from "../../db/types.js";
+import type { ChatMessages, DB, JsonValue } from "@/db/types.js";
 import type {
   BufferedChatMessage,
   ChatMessageListFilters,
   ChatMessageRecord,
-} from "./chat-message.types.js";
+} from "@/module/chat-message/chat-message.types.js";
 
 type ChatMessageRow = Selectable<ChatMessages> & {
   player_id: string | null;
@@ -108,7 +108,10 @@ export class ChatMessagePgRepository {
         qb.where("chat_messages.created_at_ms", ">=", sql<string>`${filters.afterMs ?? 0}::bigint`),
       )
       .orderBy("chat_messages.created_at_ms", "desc")
-      .orderBy(sql<string>`coalesce(chat_messages.ingest_stream_id, chat_messages.id::text)`, "desc")
+      .orderBy(
+        sql<string>`coalesce(chat_messages.ingest_stream_id, chat_messages.id::text)`,
+        "desc",
+      )
       .limit(filters.limit)
       .execute();
 
@@ -123,20 +126,23 @@ export class ChatMessagePgRepository {
     await this.db
       .insertInto("chat_messages")
       .values(
-        messages.map((message) => ({
-          id: message.id,
-          actor_id: message.actorId,
-          producer_message_id: message.producerMessageId,
-          ingest_stream_id: message.ingestStreamId,
-          message: message.message,
-          channel_key: message.channelKey,
-          origin_server_id: message.originServerId,
-          verdict: message.verdict,
-          moderation_reason: message.moderationReason,
-          moderation_metadata: JSON.stringify(message.moderationMetadata ?? {}),
-          is_flagged: message.isFlagged,
-          created_at_ms: sql`${message.occurredAtMs}::bigint`,
-        }) as InsertChatMessageInput),
+        messages.map(
+          (message) =>
+            ({
+              id: message.id,
+              actor_id: message.actorId,
+              producer_message_id: message.producerMessageId,
+              ingest_stream_id: message.ingestStreamId,
+              message: message.message,
+              channel_key: message.channelKey,
+              origin_server_id: message.originServerId,
+              verdict: message.verdict,
+              moderation_reason: message.moderationReason,
+              moderation_metadata: JSON.stringify(message.moderationMetadata ?? {}),
+              is_flagged: message.isFlagged,
+              created_at_ms: sql`${message.occurredAtMs}::bigint`,
+            }) as InsertChatMessageInput,
+        ),
       )
       .onConflict((oc) => oc.columns(["origin_server_id", "producer_message_id"]).doNothing())
       .execute();

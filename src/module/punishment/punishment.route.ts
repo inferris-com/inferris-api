@@ -6,11 +6,11 @@ import {
   authorize,
   getRequestActorId,
   requireActor,
-} from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiSuccess } from "../../shared/http/api-response.types.js";
-import type { PunishmentResponse } from "./punishment.response-types.js";
+} from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiSuccess } from "@/shared/http/api-response.types.js";
+import type { PunishmentResponse } from "@/module/punishment/punishment.response-types.js";
 import {
   type CreatePunishmentBody,
   createPunishmentBodySchema,
@@ -22,8 +22,11 @@ import {
   punishmentIdParamsSchema,
   type RevokePunishmentBody,
   revokePunishmentBodySchema,
-} from "./punishment.schemas.js";
-import type { PunishmentListResponse, PunishmentService } from "./punishment.service.js";
+} from "@/module/punishment/punishment.schemas.js";
+import type {
+  PunishmentListResponse,
+  PunishmentService,
+} from "@/module/punishment/punishment.service.js";
 
 export function createPunishmentRouter(
   service: PunishmentService,

@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { config } from "../../config.js";
+import { config } from "@/config.js";
 
 const boolQuerySchema = z
   .union([z.boolean(), z.enum(["true", "false"])])

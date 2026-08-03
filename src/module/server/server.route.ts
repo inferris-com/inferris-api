@@ -1,12 +1,12 @@
 import { type RequestHandler, Router } from "express";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiListSuccess, ApiSuccess } from "@/shared/http/api-response.types.js";
 import type {
   AccessResponse,
   LockdownResponse,
   ServerResponse,
-} from "./server.response.types.js";
+} from "@/module/server/server.response.types.js";
 import {
   type CreateLockdownBody,
   createLockdownBodySchema,
@@ -22,15 +22,15 @@ import {
   updateLockdownBodySchema,
   type UpdateServerBody,
   updateServerBodySchema,
-} from "./server.schemas.js";
-import type { ServerService } from "./server.service.js";
+} from "@/module/server/server.schemas.js";
+import type { ServerService } from "@/module/server/server.service.js";
 import {
   auditMutation,
   authorize,
   getRequestActorId,
   requireActor,
-} from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
+} from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
 
 export function createServerRouter(service: ServerService, authRepository: AuthRepository): Router {
   const router = Router();

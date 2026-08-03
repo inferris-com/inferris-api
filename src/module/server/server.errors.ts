@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from "../../error/app-error.js";
+import { ConflictError, NotFoundError } from "@/error/app-error.js";
 
 export class ServerNotFoundError extends NotFoundError {
   readonly serverId: string;

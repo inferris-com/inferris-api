@@ -1,13 +1,13 @@
-import type { PaginatedResult } from "../../shared/pagination.schemas.js";
-import { StaffPrivilegeNotFoundError } from "./staff-privilege.errors.js";
-import { toStaffPrivilegeResponse } from "./staff-privilege.mapper.js";
-import type { StaffPrivilegePgRepository } from "./staff-privilege.pg-repository.js";
-import type { StaffPrivilegeResponse } from "./staff-privilege.response-types.js";
+import type { PaginatedResult } from "@/shared/pagination.schemas.js";
+import { StaffPrivilegeNotFoundError } from "@/module/staff-privilege/staff-privilege.errors.js";
+import { toStaffPrivilegeResponse } from "@/module/staff-privilege/staff-privilege.mapper.js";
+import type { StaffPrivilegePgRepository } from "@/module/staff-privilege/staff-privilege.pg-repository.js";
+import type { StaffPrivilegeResponse } from "@/module/staff-privilege/staff-privilege.response-types.js";
 import type {
   CreateStaffPrivilegeBody,
   ListStaffPrivilegesQuery,
   UpdateStaffPrivilegeBody,
-} from "./staff-privilege.schemas.js";
+} from "@/module/staff-privilege/staff-privilege.schemas.js";
 
 export class StaffPrivilegeService {
   constructor(private readonly repo: StaffPrivilegePgRepository) {}

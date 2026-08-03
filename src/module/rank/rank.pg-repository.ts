@@ -1,8 +1,8 @@
 import { sql, type Kysely } from "kysely";
 
-import type { DB } from "../../db/types.js";
-import { toRankInsert, toRankUpdate } from "./rank.mapper.js";
-import type { CreateRankBody, ListRanksQuery, UpdateRankBody } from "./rank.schemas.js";
+import type { DB } from "@/db/types.js";
+import { toRankInsert, toRankUpdate } from "@/module/rank/rank.mapper.js";
+import type { CreateRankBody, ListRanksQuery, UpdateRankBody } from "@/module/rank/rank.schemas.js";
 
 export class RankPgRepository {
   constructor(private readonly db: Kysely<DB>) {}

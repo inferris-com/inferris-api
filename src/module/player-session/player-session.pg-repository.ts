@@ -1,9 +1,12 @@
 import type { Kysely } from "kysely";
 
-import type { DB } from "../../db/types.js";
-import type { PaginatedResult } from "../../shared/pagination.schemas.js";
-import type { BackendSessionRow, PlayerSessionRow } from "./player-session.mapper.js";
-import type { ListPlayerSessionsQuery } from "./player-session.schemas.js";
+import type { DB } from "@/db/types.js";
+import type { PaginatedResult } from "@/shared/pagination.schemas.js";
+import type {
+  BackendSessionRow,
+  PlayerSessionRow,
+} from "@/module/player-session/player-session.mapper.js";
+import type { ListPlayerSessionsQuery } from "@/module/player-session/player-session.schemas.js";
 
 export class PlayerSessionPgRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -16,17 +19,9 @@ export class PlayerSessionPgRepository {
     const baseQuery = this.db
       .selectFrom("network_sessions")
       .innerJoin("players", "players.id", "network_sessions.player_id")
-      .innerJoin(
-        "servers as proxy_servers",
-        "proxy_servers.id",
-        "network_sessions.proxy_server_id",
-      )
+      .innerJoin("servers as proxy_servers", "proxy_servers.id", "network_sessions.proxy_server_id")
       .leftJoin("network_sessions_current", (join) =>
-        join.onRef(
-          "network_sessions_current.network_session_id",
-          "=",
-          "network_sessions.id",
-        ),
+        join.onRef("network_sessions_current.network_session_id", "=", "network_sessions.id"),
       )
       .leftJoin(
         "backend_sessions_current",
@@ -139,11 +134,7 @@ export class PlayerSessionPgRepository {
           "network_sessions.proxy_server_id",
         )
         .leftJoin("network_sessions_current", (join) =>
-          join.onRef(
-            "network_sessions_current.network_session_id",
-            "=",
-            "network_sessions.id",
-          ),
+          join.onRef("network_sessions_current.network_session_id", "=", "network_sessions.id"),
         )
         .leftJoin(
           "backend_sessions_current",
@@ -197,7 +188,11 @@ export class PlayerSessionPgRepository {
 
     return this.db
       .selectFrom("backend_sessions")
-      .innerJoin("servers as backend_servers", "backend_servers.id", "backend_sessions.backend_server_id")
+      .innerJoin(
+        "servers as backend_servers",
+        "backend_servers.id",
+        "backend_sessions.backend_server_id",
+      )
       .leftJoin("backend_sessions_current", (join) =>
         join.onRef("backend_sessions_current.backend_session_id", "=", "backend_sessions.id"),
       )

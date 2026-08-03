@@ -1,11 +1,11 @@
 import { type RequestHandler, Router } from "express";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiSuccess } from "../../shared/http/api-response.types.js";
-import type { PaginatedResponse } from "../../shared/pagination.schemas.js";
-import { auditMutation, authorize, getRequestActorId } from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import type { StaffPrivilegeResponse } from "./staff-privilege.response-types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiSuccess } from "@/shared/http/api-response.types.js";
+import type { PaginatedResponse } from "@/shared/pagination.schemas.js";
+import { auditMutation, authorize, getRequestActorId } from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import type { StaffPrivilegeResponse } from "@/module/staff-privilege/staff-privilege.response-types.js";
 import {
   createStaffPrivilegeBodySchema,
   listStaffPrivilegesQuerySchema,
@@ -17,8 +17,8 @@ import {
   type StaffPrivilegeActorParams,
   type StaffPrivilegeParams,
   type UpdateStaffPrivilegeBody,
-} from "./staff-privilege.schemas.js";
-import type { StaffPrivilegeService } from "./staff-privilege.service.js";
+} from "@/module/staff-privilege/staff-privilege.schemas.js";
+import type { StaffPrivilegeService } from "@/module/staff-privilege/staff-privilege.service.js";
 
 type StaffPrivilegeListSuccess = { data: StaffPrivilegeResponse[]; meta: PaginatedResponse };
 
@@ -37,7 +37,12 @@ export function createStaffPrivilegeRouter(
     const result = await service.listPrivileges(req.query as unknown as ListStaffPrivilegesQuery);
     const body: StaffPrivilegeListSuccess = {
       data: result.rows,
-      meta: { count: result.rows.length, total: result.total, limit: result.limit, offset: result.offset },
+      meta: {
+        count: result.rows.length,
+        total: result.total,
+        limit: result.limit,
+        offset: result.offset,
+      },
     };
     res.json(body);
   };
@@ -50,12 +55,15 @@ export function createStaffPrivilegeRouter(
     const privileges = await service.listPrivilegesByActorId(req.params.actorId);
     res.json({ data: privileges, meta: { count: privileges.length } });
   };
-  const createPrivilege: RequestHandler<Record<string, never>, unknown, CreateStaffPrivilegeBody> =
-    async (req, res) => {
-      const privilege = await service.createPrivilege(req.body, getRequestActorId(req));
-      const body: ApiSuccess<StaffPrivilegeResponse> = { data: privilege };
-      res.status(201).json(body);
-    };
+  const createPrivilege: RequestHandler<
+    Record<string, never>,
+    unknown,
+    CreateStaffPrivilegeBody
+  > = async (req, res) => {
+    const privilege = await service.createPrivilege(req.body, getRequestActorId(req));
+    const body: ApiSuccess<StaffPrivilegeResponse> = { data: privilege };
+    res.status(201).json(body);
+  };
   const updatePrivilege: RequestHandler<
     StaffPrivilegeParams,
     unknown,

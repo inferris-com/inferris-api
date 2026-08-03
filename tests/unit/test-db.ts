@@ -1,6 +1,6 @@
 import { Kysely, PostgresDialect } from "kysely";
 
-import type { DB } from "../../src/db/types.js";
+import type { DB } from "@/db/types.js";
 
 type QueuedResult = {
   rows?: unknown[];

@@ -1,6 +1,6 @@
 import { describe, expect, jest, test } from "@jest/globals";
 
-import { ServerInstanceService } from "../../../src/module/server-instance/server-instance.service.js";
+import { ServerInstanceService } from "@/module/server-instance/server-instance.service.js";
 
 const serverId = "00000000-0000-0000-0000-000000000001";
 const instanceId = "00000000-0000-0000-0000-000000000002";

@@ -3,7 +3,7 @@ import {
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from "../../error/app-error.js";
+} from "@/error/app-error.js";
 
 export class ServerInstanceNotFoundError extends NotFoundError {
   constructor(serverInstanceId: string) {

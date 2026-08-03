@@ -1,7 +1,7 @@
 import { describe, expect, test } from "@jest/globals";
 
-import { ServerNotFoundError } from "../../src/module/server/server.errors.js";
-import { createTestApp, ids } from "./app-test-utils.js";
+import { ServerNotFoundError } from "@/module/server/server.errors.js";
+import { createTestApp, ids } from "@tests/integration/app-test-utils.js";
 
 describe("server and lockdown routes", () => {
   test("GET /servers returns list envelope for plugin cache warmup", async () => {

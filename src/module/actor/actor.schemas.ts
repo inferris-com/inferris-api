@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BigIntStringSchema } from "../../shared/common.schemas.js";
+import { BigIntStringSchema } from "@/shared/common.schemas.js";
 
 export const actorTypeSchema = z.enum(["system", "application", "user", "unspecified"]);
 

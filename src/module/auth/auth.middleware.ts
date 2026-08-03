@@ -1,12 +1,12 @@
 import type { Request, RequestHandler } from "express";
 
-import { config } from "../../config.js";
-import { ForbiddenError, UnauthorizedError, ValidationError } from "../../error/app-error.js";
-import type { AccountRole } from "../account/account.schemas.js";
-import type { StaffPrivilegeRole } from "../staff-privilege/staff-privilege.schemas.js";
-import type { AuthRepository } from "./auth.repository.js";
-import type { AuthService } from "./auth.service.js";
-import { argusRoleRank, privilegedRoleRank, type ApiScope } from "./auth.types.js";
+import { config } from "@/config.js";
+import { ForbiddenError, UnauthorizedError, ValidationError } from "@/error/app-error.js";
+import type { AccountRole } from "@/module/argus/account/account.schemas.js";
+import type { StaffPrivilegeRole } from "@/module/staff-privilege/staff-privilege.schemas.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import type { AuthService } from "@/module/auth/auth.service.js";
+import { argusRoleRank, privilegedRoleRank, type ApiScope } from "@/module/auth/auth.types.js";
 
 type RoutePolicy = {
   apiScopes?: ApiScope[];

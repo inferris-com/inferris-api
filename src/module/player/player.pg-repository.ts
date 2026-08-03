@@ -1,14 +1,14 @@
 import { type Kysely, sql } from "kysely";
 
-import type { DB } from "../../db/types.js";
-import type { PlayerFlagDefinition } from "./player-flags.js";
+import type { DB } from "@/db/types.js";
+import type { PlayerFlagDefinition } from "@/module/player/player-flags.js";
 import type {
   CreatePlayerResult,
   DeletePlayerOptions,
   PlayerDetailsRecord,
   PlayerProfileRow,
   PlayerRepository,
-} from "./player.repository.js";
+} from "@/module/player/player.repository.js";
 import type {
   CreatePlayerBody,
   CreatePlayerBadgeAssignmentBody,
@@ -17,9 +17,9 @@ import type {
   SearchPlayersQuery,
   UpdatePlayerBody,
   UpdateProfileBody,
-} from "./player.schemas.js";
-import type { DbExecutor } from "../../db/index.js";
-import { isPgErrorCode, PgErrorCode } from "../../shared/db/pg-error.utils.js";
+} from "@/module/player/player.schemas.js";
+import type { DbExecutor } from "@/db/index.js";
+import { isPgErrorCode, PgErrorCode } from "@/shared/db/pg-error.utils.js";
 
 export class PlayerPgRepository implements PlayerRepository {
   constructor(private readonly db: Kysely<DB>) {}

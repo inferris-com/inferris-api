@@ -1,13 +1,16 @@
 import type { Kysely, Selectable } from "kysely";
-import type { DB, PermissionNodes, PermissionPolicies } from "../../db/types.js";
-import type { DbExecutor } from "../../db/index.js";
+import type { DB, PermissionNodes, PermissionPolicies } from "@/db/types.js";
+import type { DbExecutor } from "@/db/index.js";
 import type {
   CreatePermissionNodeBody,
   ListPermissionsQuery,
   ReplacePermissionRuleBody,
-} from "./permission.schemas.js";
-import type { CreateResult } from "../../shared/results.types.js";
-import { toPermissionNodeCreate, toPermissionRuleUpdate } from "./permission.mapper.js";
+} from "@/module/permission/permission.schemas.js";
+import type { CreateResult } from "@/shared/results.types.js";
+import {
+  toPermissionNodeCreate,
+  toPermissionRuleUpdate,
+} from "@/module/permission/permission.mapper.js";
 
 type CreatePermissionNodeResult = CreateResult<Selectable<PermissionNodes>>;
 type ReplacePermissionRuleResult =
@@ -103,7 +106,9 @@ export class PermissionPgRepository {
       .selectFrom("permission_nodes")
       .selectAll()
       .$if(query.includeInactive !== true, (qb) => qb.where("is_active", "=", true))
-      .$if(query.category !== undefined, (qb) => qb.where("category", "=", query.category ?? "general"))
+      .$if(query.category !== undefined, (qb) =>
+        qb.where("category", "=", query.category ?? "general"),
+      )
       .orderBy("category", "asc")
       .orderBy("key", "asc")
       .execute();

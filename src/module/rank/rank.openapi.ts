@@ -7,14 +7,14 @@ import {
   standardErrorResponses,
   successResponse,
   userOrServiceSecurity,
-} from "../../openapi/openapi.helpers.js";
-import { rankResponseSchema } from "./rank.response-types.js";
+} from "@/openapi/openapi.helpers.js";
+import { rankResponseSchema } from "@/module/rank/rank.response-types.js";
 import {
   createRankBodySchema,
   listRanksQuerySchema,
   rankKeyParamsSchema,
   updateRankBodySchema,
-} from "./rank.schemas.js";
+} from "@/module/rank/rank.schemas.js";
 
 export function registerRankOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

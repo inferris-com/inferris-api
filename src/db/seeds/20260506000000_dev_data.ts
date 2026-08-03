@@ -1,8 +1,8 @@
 import { type Kysely, sql } from "kysely";
 import type { Seed } from "kysely-ctl";
 
-import type { DB } from "../types.js";
-import { hashApiKeySecret } from "../../module/auth/auth.crypto.js";
+import type { DB } from "@/db/types.js";
+import { hashApiKeySecret } from "@/module/auth/auth.crypto.js";
 
 const dummyId = "00000000-0000-0000-0000-000000000001";
 const dummyId2 = "00000000-0000-0000-0000-000000000002";

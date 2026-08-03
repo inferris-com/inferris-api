@@ -1,17 +1,20 @@
 import { type RequestHandler, Router } from "express";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiSuccess } from "../../shared/http/api-response.types.js";
-import { authorize } from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import type { MetricsOverviewResponse, ServerMetricsResponse } from "./metrics.response-types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiSuccess } from "@/shared/http/api-response.types.js";
+import { authorize } from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import type {
+  MetricsOverviewResponse,
+  ServerMetricsResponse,
+} from "@/module/metrics/metrics.response-types.js";
 import {
   metricsQuerySchema,
   type MetricsQuery,
   serverMetricsParamsSchema,
   type ServerMetricsParams,
-} from "./metrics.schemas.js";
-import type { MetricsService } from "./metrics.service.js";
+} from "@/module/metrics/metrics.schemas.js";
+import type { MetricsService } from "@/module/metrics/metrics.service.js";
 
 export function createMetricsRouter(
   service: MetricsService,

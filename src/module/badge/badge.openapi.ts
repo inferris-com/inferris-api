@@ -7,14 +7,14 @@ import {
   standardErrorResponses,
   successResponse,
   userOrServiceSecurity,
-} from "../../openapi/openapi.helpers.js";
-import { badgeResponseSchema } from "./badge.response-types.js";
+} from "@/openapi/openapi.helpers.js";
+import { badgeResponseSchema } from "@/module/badge/badge.response-types.js";
 import {
   badgeParamsSchema,
   createBadgeBodySchema,
   listBadgesQuerySchema,
   updateBadgeBodySchema,
-} from "./badge.schemas.js";
+} from "@/module/badge/badge.schemas.js";
 
 export function registerBadgeOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

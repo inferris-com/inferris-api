@@ -1,16 +1,16 @@
 import { type RequestHandler, Router } from "express";
 import type { ParamsDictionary } from "express-serve-static-core";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiSuccess } from "../../shared/http/api-response.types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiSuccess } from "@/shared/http/api-response.types.js";
 import {
   auditMutation,
   authorize,
   getRequestActorId,
   requireActor,
-} from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import type { WatchlistEntryResponse } from "./watchlist.response-types.js";
+} from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import type { WatchlistEntryResponse } from "@/module/watchlist/watchlist.response-types.js";
 import {
   type AddWatchlistBody,
   addWatchlistBodySchema,
@@ -19,8 +19,11 @@ import {
   getActiveWatchlistQuerySchema,
   type ListWatchlistQuery,
   listWatchlistQuerySchema,
-} from "./watchlist.schemas.js";
-import type { WatchlistListResponse, WatchlistService } from "./watchlist.service.js";
+} from "@/module/watchlist/watchlist.schemas.js";
+import type {
+  WatchlistListResponse,
+  WatchlistService,
+} from "@/module/watchlist/watchlist.service.js";
 
 export function createWatchlistRouter(
   service: WatchlistService,

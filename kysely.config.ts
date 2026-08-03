@@ -1,7 +1,7 @@
 import { defineConfig } from "kysely-ctl";
 import { Pool } from "pg";
 
-import { config } from "./src/config.js";
+import { config } from "@/config.js";
 
 export default defineConfig({
   dialect: "pg",

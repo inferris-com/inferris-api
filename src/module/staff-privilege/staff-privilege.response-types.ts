@@ -1,7 +1,10 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
 
-import { staffPrivilegeRoleSchema, staffPrivilegeStatusSchema } from "./staff-privilege.schemas.js";
+import {
+  staffPrivilegeRoleSchema,
+  staffPrivilegeStatusSchema,
+} from "@/module/staff-privilege/staff-privilege.schemas.js";
 
 extendZodWithOpenApi(z);
 

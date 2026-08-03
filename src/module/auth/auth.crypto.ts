@@ -2,8 +2,8 @@ import { createHmac, createHash, randomBytes, randomUUID, timingSafeEqual } from
 import argon2 from "argon2";
 import { SignJWT, jwtVerify } from "jose";
 
-import { config } from "../../config.js";
-import type { AccountRole } from "../account/account.schemas.js";
+import { config } from "@/config.js";
+import type { AccountRole } from "@/module/argus/account/account.schemas.js";
 
 const jwtSecret = new TextEncoder().encode(config.auth.jwtSecret);
 

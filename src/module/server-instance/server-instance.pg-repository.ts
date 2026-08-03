@@ -1,13 +1,13 @@
 import { sql } from "kysely";
 
-import type { DbExecutor } from "../../db/index.js";
+import type { DbExecutor } from "@/db/index.js";
 import type {
   RegisterServerInstanceBody,
   ServerInstanceEventBody,
   ServerInstanceHeartbeatBody,
   ServerInstanceMetricsBody,
   ServerInstancePresenceBody,
-} from "./server-instance.schemas.js";
+} from "@/module/server-instance/server-instance.schemas.js";
 
 export type ServerInstanceRow = {
   id: string;

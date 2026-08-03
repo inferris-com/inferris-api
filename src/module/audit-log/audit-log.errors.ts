@@ -1,4 +1,4 @@
-import { NotFoundError } from "../../error/app-error.js";
+import { NotFoundError } from "@/error/app-error.js";
 
 export class AuditLogNotFoundError extends NotFoundError {
   constructor(auditLogId: string) {

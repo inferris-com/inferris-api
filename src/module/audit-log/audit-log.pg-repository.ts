@@ -1,8 +1,8 @@
 import type { Kysely, Selectable } from "kysely";
 
-import type { AuditLogs, DB } from "../../db/types.js";
-import type { PaginatedResult } from "../../shared/pagination.schemas.js";
-import type { ListAuditLogsQuery } from "./audit-log.schemas.js";
+import type { AuditLogs, DB } from "@/db/types.js";
+import type { PaginatedResult } from "@/shared/pagination.schemas.js";
+import type { ListAuditLogsQuery } from "@/module/audit-log/audit-log.schemas.js";
 
 export class AuditLogPgRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -17,7 +17,9 @@ export class AuditLogPgRepository {
       .$if(query.principalType !== undefined, (qb) =>
         qb.where("principal_type", "=", query.principalType ?? "unknown"),
       )
-      .$if(query.platform !== undefined, (qb) => qb.where("platform", "=", query.platform ?? "other"))
+      .$if(query.platform !== undefined, (qb) =>
+        qb.where("platform", "=", query.platform ?? "other"),
+      )
       .$if(query.action !== undefined, (qb) => qb.where("action", "ilike", `%${query.action}%`))
       .$if(query.targetType !== undefined, (qb) =>
         qb.where("target_type", "=", query.targetType ?? ""),

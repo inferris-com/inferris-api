@@ -1,7 +1,7 @@
 import type { Selectable } from "kysely";
 
-import type { Badges } from "../../db/types.js";
-import type { CreateBadgeBody, UpdateBadgeBody } from "./badge.schemas.js";
+import type { Badges } from "@/db/types.js";
+import type { CreateBadgeBody, UpdateBadgeBody } from "@/module/badge/badge.schemas.js";
 
 export function toBadgeResponse(row: Selectable<Badges>) {
   return {

@@ -3,8 +3,8 @@ import { describe, expect, test } from "@jest/globals";
 import {
   ServerInstancePgRepository,
   type ServerInstanceRow,
-} from "../../../src/module/server-instance/server-instance.pg-repository.js";
-import { createRecordingDb } from "../test-db.js";
+} from "@/module/server-instance/server-instance.pg-repository.js";
+import { createRecordingDb } from "@tests/unit/test-db.js";
 
 const serverId = "00000000-0000-0000-0000-000000000001";
 const instanceId = "00000000-0000-0000-0000-000000000002";

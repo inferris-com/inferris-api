@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { BigIntStringSchema } from "../../shared/common.schemas.js";
+import { BigIntStringSchema } from "@/shared/common.schemas.js";
 
 const nullableNumberSchema = z.number().nullable();
 const nullableBigIntStringSchema = BigIntStringSchema.nullable();

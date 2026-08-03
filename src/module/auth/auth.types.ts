@@ -1,6 +1,6 @@
-import type { Platform, PrincipalType } from "../../db/types.js";
-import type { AccountRole } from "../account/account.schemas.js";
-import type { StaffPrivilegeRole } from "../staff-privilege/staff-privilege.schemas.js";
+import type { Platform, PrincipalType } from "@/db/types.js";
+import type { AccountRole } from "@/module/argus/account/account.schemas.js";
+import type { StaffPrivilegeRole } from "@/module/staff-privilege/staff-privilege.schemas.js";
 
 export type ApiScope =
   | "*"

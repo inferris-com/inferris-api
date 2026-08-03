@@ -7,7 +7,7 @@ import type {
   ServerEnv,
   Servers,
   ServerType,
-} from "../../db/types.js";
+} from "@/db/types.js";
 import type {
   AuthenticatedCreateLockdownBody,
   CreateServerBody,
@@ -16,9 +16,12 @@ import type {
   ServerHeartbeatMetrics,
   UpdateLockdownBody,
   UpdateServerBody,
-} from "./server.schemas.js";
-import type { CreateResult, DeleteResult } from "../../shared/results.types.js";
-import { toServerAccessPolicyUpdate, type ServerWithPresence } from "./server.mapper.js";
+} from "@/module/server/server.schemas.js";
+import type { CreateResult, DeleteResult } from "@/shared/results.types.js";
+import {
+  toServerAccessPolicyUpdate,
+  type ServerWithPresence,
+} from "@/module/server/server.mapper.js";
 
 export type CreateServerResult = CreateResult<Selectable<Servers>>;
 export type CreateLockdownResult = CreateResult<Selectable<Lockdowns>>;

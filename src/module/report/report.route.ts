@@ -1,17 +1,20 @@
 import { type RequestHandler, Router } from "express";
 import type { ParamsDictionary } from "express-serve-static-core";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
-import { argusRoleRank, privilegedRoleRank } from "../auth/auth.types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiListSuccess, ApiSuccess } from "@/shared/http/api-response.types.js";
+import { argusRoleRank, privilegedRoleRank } from "@/module/auth/auth.types.js";
 import {
   auditMutation,
   authorize,
   getRequestActorId,
   requireActor,
-} from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import type { ReportCommentResponse, ReportResponse } from "./report.response-types.js";
+} from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import type {
+  ReportCommentResponse,
+  ReportResponse,
+} from "@/module/report/report.response-types.js";
 import {
   type CreateReportBody,
   createReportBodySchema,
@@ -29,8 +32,8 @@ import {
   updateReportCommentBodySchema,
   type UpdateReportBody,
   updateReportBodySchema,
-} from "./report.schemas.js";
-import type { ReportListResponse, ReportService } from "./report.service.js";
+} from "@/module/report/report.schemas.js";
+import type { ReportListResponse, ReportService } from "@/module/report/report.service.js";
 
 export function createReportRouter(service: ReportService, authRepository: AuthRepository): Router {
   const router = Router();

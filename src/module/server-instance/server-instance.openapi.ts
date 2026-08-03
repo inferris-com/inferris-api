@@ -5,7 +5,7 @@ import {
   standardErrorResponses,
   successResponse,
   userOrServiceSecurity,
-} from "../../openapi/openapi.helpers.js";
+} from "@/openapi/openapi.helpers.js";
 import {
   registerServerInstanceResponseSchema,
   serverInstanceEventResponseSchema,
@@ -13,7 +13,7 @@ import {
   serverInstanceMetricsResponseSchema,
   serverInstancePresenceResponseSchema,
   serverInstanceResponseSchema,
-} from "./server-instance.response-types.js";
+} from "@/module/server-instance/server-instance.response-types.js";
 import {
   registerServerInstanceBodySchema,
   serverInstanceEventBodySchema,
@@ -21,7 +21,7 @@ import {
   serverInstanceIdParamsSchema,
   serverInstanceMetricsBodySchema,
   serverInstancePresenceBodySchema,
-} from "./server-instance.schemas.js";
+} from "@/module/server-instance/server-instance.schemas.js";
 
 const serverInstanceSecurity = [{ bearerAuth: [] }];
 

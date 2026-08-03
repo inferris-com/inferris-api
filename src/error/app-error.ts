@@ -1,5 +1,5 @@
 import type { ErrorRequestHandler, NextFunction, Request, Response } from "express";
-import { config } from "../config.js";
+import { config } from "@/config.js";
 
 export const appErrorKinds = {
   validation: 400,

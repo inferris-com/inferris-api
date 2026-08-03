@@ -1,29 +1,29 @@
 import { randomUUID } from "node:crypto";
 
-import { config } from "../../config.js";
-import { ValidationError } from "../../error/app-error.js";
+import { config } from "@/config.js";
+import { ValidationError } from "@/error/app-error.js";
 import {
   ChatActorNotFoundError,
   ChatBatchTooLargeError,
   ChatChannelNotFoundError,
   ChatRedisUnavailableError,
   ChatServerNotFoundError,
-} from "./chat-message.errors.js";
-import { toChatMessageResponse } from "./chat-message.mapper.js";
-import type { ChatMessagePgRepository } from "./chat-message.pg-repository.js";
-import type { ChatMessageRedisBuffer } from "./chat-message.redis-buffer.js";
-import type { ChatMessageResponse } from "./chat-message.response-types.js";
+} from "@/module/chat-message/chat-message.errors.js";
+import { toChatMessageResponse } from "@/module/chat-message/chat-message.mapper.js";
+import type { ChatMessagePgRepository } from "@/module/chat-message/chat-message.pg-repository.js";
+import type { ChatMessageRedisBuffer } from "@/module/chat-message/chat-message.redis-buffer.js";
+import type { ChatMessageResponse } from "@/module/chat-message/chat-message.response-types.js";
 import type {
   CreateChatMessageBatchBody,
   CreateChatMessageBody,
   ListChatMessagesQuery,
-} from "./chat-message.schemas.js";
+} from "@/module/chat-message/chat-message.schemas.js";
 import type {
   ChatMessageListFilters,
   ChatMessageCursor,
   ChatMessageRecord,
   ChatMessageWriteInput,
-} from "./chat-message.types.js";
+} from "@/module/chat-message/chat-message.types.js";
 
 export type ChatMessageListResponse = {
   data: ChatMessageResponse[];

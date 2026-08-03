@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from "../../error/app-error.js";
+import { ConflictError, NotFoundError } from "@/error/app-error.js";
 
 export class WatchlistActorNotFoundError extends NotFoundError {
   constructor(id: string) {

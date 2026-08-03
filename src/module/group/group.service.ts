@@ -1,8 +1,12 @@
-import { GroupAlreadyExistsError, GroupNotFoundError } from "./group.errors.js";
-import { toGroupResponse } from "./group.mapper.js";
-import type { GroupPgRepository } from "./group.pg-repository.js";
-import type { GroupResponse } from "./group.response-types.js";
-import type { CreateGroupBody, ListGroupsQuery, UpdateGroupBody } from "./group.schemas.js";
+import { GroupAlreadyExistsError, GroupNotFoundError } from "@/module/group/group.errors.js";
+import { toGroupResponse } from "@/module/group/group.mapper.js";
+import type { GroupPgRepository } from "@/module/group/group.pg-repository.js";
+import type { GroupResponse } from "@/module/group/group.response-types.js";
+import type {
+  CreateGroupBody,
+  ListGroupsQuery,
+  UpdateGroupBody,
+} from "@/module/group/group.schemas.js";
 
 export class GroupService {
   constructor(private readonly repo: GroupPgRepository) {}

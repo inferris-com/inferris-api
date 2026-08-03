@@ -1,7 +1,19 @@
-import { toBadgeResponse, toGroupResponse, toRankResponse } from "./catalog.mapper.js";
-import type { CatalogPgRepository } from "./catalog.pg-repository.js";
-import type { BadgeResponse, GroupResponse, RankResponse } from "./catalog.response-types.js";
-import type { ListBadgesQuery, ListGroupsQuery, ListRanksQuery } from "./catalog.schemas.js";
+import {
+  toBadgeResponse,
+  toGroupResponse,
+  toRankResponse,
+} from "@/module/catalog/catalog.mapper.js";
+import type { CatalogPgRepository } from "@/module/catalog/catalog.pg-repository.js";
+import type {
+  BadgeResponse,
+  GroupResponse,
+  RankResponse,
+} from "@/module/catalog/catalog.response-types.js";
+import type {
+  ListBadgesQuery,
+  ListGroupsQuery,
+  ListRanksQuery,
+} from "@/module/catalog/catalog.schemas.js";
 
 export class CatalogService {
   constructor(private readonly repo: CatalogPgRepository) {}

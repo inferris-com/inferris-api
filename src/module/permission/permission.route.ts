@@ -1,8 +1,8 @@
 import { type RequestHandler, Router } from "express";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiSuccess } from "../../shared/http/api-response.types.js";
-import type { PermissionService } from "./permission.service.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiSuccess } from "@/shared/http/api-response.types.js";
+import type { PermissionService } from "@/module/permission/permission.service.js";
 import {
   type CreatePermissionNodeBody,
   createPermissionNodeBodySchema,
@@ -14,14 +14,14 @@ import {
   permissionRuleParamsSchema,
   type ReplacePermissionRuleBody,
   replacePermissionRuleBodySchema,
-} from "./permission.schemas.js";
+} from "@/module/permission/permission.schemas.js";
 import type {
   PermissionNodeResponse,
   PermissionRuleResponse,
-} from "./permission.response-types.js";
+} from "@/module/permission/permission.response-types.js";
 import type { ParamsDictionary } from "express-serve-static-core";
-import { auditMutation, authorize } from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
+import { auditMutation, authorize } from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
 
 export function createPermissionRouter(
   service: PermissionService,

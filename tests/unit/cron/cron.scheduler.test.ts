@@ -1,7 +1,7 @@
 import { describe, expect, jest, test } from "@jest/globals";
 
-import { CronScheduler } from "../../../src/cron/cron.scheduler.js";
-import type { CronJob } from "../../../src/cron/cron.types.js";
+import { CronScheduler } from "@/cron/cron.scheduler.js";
+import type { CronJob } from "@/cron/cron.types.js";
 
 describe("CronScheduler", () => {
   test("runs jobs once when started", () => {

@@ -1,13 +1,13 @@
 import { type Kysely, sql, type Selectable } from "kysely";
 
-import type { DB, ReportComments, Reports } from "../../db/types.js";
-import type { PaginatedResult } from "../../shared/pagination.schemas.js";
+import type { DB, ReportComments, Reports } from "@/db/types.js";
+import type { PaginatedResult } from "@/shared/pagination.schemas.js";
 import type {
   CreateReportBody,
   CreateReportCommentBody,
   ListReportsQuery,
   UpdateReportBody,
-} from "./report.schemas.js";
+} from "@/module/report/report.schemas.js";
 
 export type CreateReportInput = CreateReportBody & {
   code: string;

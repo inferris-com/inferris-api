@@ -1,23 +1,26 @@
 import { randomInt } from "node:crypto";
 
-import { PgErrorCode, isPgErrorCode } from "../../shared/db/pg-error.utils.js";
+import { PgErrorCode, isPgErrorCode } from "@/shared/db/pg-error.utils.js";
 import {
   ReportActorNotFoundError,
   ReportCommentForbiddenError,
   ReportCommentNotFoundError,
   ReportNotFoundError,
-} from "./report.errors.js";
-import { toReportCommentResponse, toReportResponse } from "./report.mapper.js";
-import type { ReportPgRepository } from "./report.pg-repository.js";
-import type { ReportPublisher } from "./report.publisher.js";
-import type { ReportCommentResponse, ReportResponse } from "./report.response-types.js";
+} from "@/module/report/report.errors.js";
+import { toReportCommentResponse, toReportResponse } from "@/module/report/report.mapper.js";
+import type { ReportPgRepository } from "@/module/report/report.pg-repository.js";
+import type { ReportPublisher } from "@/module/report/report.publisher.js";
+import type {
+  ReportCommentResponse,
+  ReportResponse,
+} from "@/module/report/report.response-types.js";
 import type {
   CreateReportBody,
   CreateReportCommentBody,
   ListReportsQuery,
   UpdateReportCommentBody,
   UpdateReportBody,
-} from "./report.schemas.js";
+} from "@/module/report/report.schemas.js";
 
 export type ReportListResponse = {
   data: ReportResponse[];

@@ -6,8 +6,12 @@ import type {
   PlayerProfiles,
   PlayerRanks,
   Players,
-} from "../../db/types.js";
-import type { CreatePlayerBody, ListPlayersQuery, UpdatePlayerBody } from "./player.schemas.js";
+} from "@/db/types.js";
+import type {
+  CreatePlayerBody,
+  ListPlayersQuery,
+  UpdatePlayerBody,
+} from "@/module/player/player.schemas.js";
 
 export type PlayerSummaryRecord = Pick<
   Selectable<Players>,

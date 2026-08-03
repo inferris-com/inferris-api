@@ -1,7 +1,7 @@
 import z from "zod";
 
-import { BigIntStringSchema } from "../../shared/common.schemas.js";
-import { paginationQuerySchema } from "../../shared/pagination.schemas.js";
+import { BigIntStringSchema } from "@/shared/common.schemas.js";
+import { paginationQuerySchema } from "@/shared/pagination.schemas.js";
 
 export const watchlistSeveritySchema = z.enum(["low", "medium", "high", "critical"]);
 

@@ -1,14 +1,17 @@
-import { ModCaseNotFoundError } from "./mod-case.errors.js";
-import { toModCaseActorResponse, toModCaseResponse } from "./mod-case.mapper.js";
-import type { ModCasePgRepository } from "./mod-case.pg-repository.js";
-import type { ModCasePublisher } from "./mod-case.publisher.js";
-import type { ModCaseActorResponse, ModCaseResponse } from "./mod-case.response-types.js";
+import { ModCaseNotFoundError } from "@/module/mod-case/mod-case.errors.js";
+import { toModCaseActorResponse, toModCaseResponse } from "@/module/mod-case/mod-case.mapper.js";
+import type { ModCasePgRepository } from "@/module/mod-case/mod-case.pg-repository.js";
+import type { ModCasePublisher } from "@/module/mod-case/mod-case.publisher.js";
+import type {
+  ModCaseActorResponse,
+  ModCaseResponse,
+} from "@/module/mod-case/mod-case.response-types.js";
 import type {
   CreateModCaseActorBody,
   CreateModCaseBody,
   ListModCasesQuery,
   UpdateModCaseBody,
-} from "./mod-case.schemas.js";
+} from "@/module/mod-case/mod-case.schemas.js";
 
 export type ModCaseListResponse = {
   data: ModCaseResponse[];

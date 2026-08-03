@@ -1,4 +1,4 @@
-import { NotFoundError } from "../../error/app-error.js";
+import { NotFoundError } from "@/error/app-error.js";
 
 export class PlayerSessionNotFoundError extends NotFoundError {
   readonly sessionId: string;

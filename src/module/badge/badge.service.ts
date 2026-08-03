@@ -1,8 +1,12 @@
-import { BadgeAlreadyExistsError, BadgeNotFoundError } from "./badge.errors.js";
-import { toBadgeResponse } from "./badge.mapper.js";
-import type { BadgePgRepository } from "./badge.pg-repository.js";
-import type { BadgeResponse } from "./badge.response-types.js";
-import type { CreateBadgeBody, ListBadgesQuery, UpdateBadgeBody } from "./badge.schemas.js";
+import { BadgeAlreadyExistsError, BadgeNotFoundError } from "@/module/badge/badge.errors.js";
+import { toBadgeResponse } from "@/module/badge/badge.mapper.js";
+import type { BadgePgRepository } from "@/module/badge/badge.pg-repository.js";
+import type { BadgeResponse } from "@/module/badge/badge.response-types.js";
+import type {
+  CreateBadgeBody,
+  ListBadgesQuery,
+  UpdateBadgeBody,
+} from "@/module/badge/badge.schemas.js";
 
 export class BadgeService {
   constructor(private readonly repo: BadgePgRepository) {}

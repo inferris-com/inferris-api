@@ -6,15 +6,18 @@ import {
   listResponse,
   standardErrorResponses,
   successResponse,
-} from "../../openapi/openapi.helpers.js";
-import { modCaseActorResponseSchema, modCaseResponseSchema } from "./mod-case.response-types.js";
+} from "@/openapi/openapi.helpers.js";
+import {
+  modCaseActorResponseSchema,
+  modCaseResponseSchema,
+} from "@/module/mod-case/mod-case.response-types.js";
 import {
   createModCaseActorBodySchema,
   createModCaseBodySchema,
   listModCasesQuerySchema,
   modCaseIdParamsSchema,
   updateModCaseBodySchema,
-} from "./mod-case.schemas.js";
+} from "@/module/mod-case/mod-case.schemas.js";
 
 export function registerModCaseOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

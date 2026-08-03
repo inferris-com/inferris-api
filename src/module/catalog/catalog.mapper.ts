@@ -1,8 +1,12 @@
 import type { Selectable } from "kysely";
 
-import type { Badges, Groups, Ranks } from "../../db/types.js";
-import { int8ToStringOrDefault, int8ToStringOrNull } from "../../shared/db/int8.js";
-import type { BadgeResponse, GroupResponse, RankResponse } from "./catalog.response-types.js";
+import type { Badges, Groups, Ranks } from "@/db/types.js";
+import { int8ToStringOrDefault, int8ToStringOrNull } from "@/shared/db/int8.js";
+import type {
+  BadgeResponse,
+  GroupResponse,
+  RankResponse,
+} from "@/module/catalog/catalog.response-types.js";
 
 export function toGroupResponse(row: Selectable<Groups>): GroupResponse {
   return {

@@ -1,8 +1,11 @@
 import { type Kysely, sql, type Selectable } from "kysely";
 
-import type { DB, Punishment, Punishments } from "../../db/types.js";
-import type { PaginatedResult } from "../../shared/pagination.schemas.js";
-import type { CreatePunishmentBody, ListPunishmentsQuery } from "./punishment.schemas.js";
+import type { DB, Punishment, Punishments } from "@/db/types.js";
+import type { PaginatedResult } from "@/shared/pagination.schemas.js";
+import type {
+  CreatePunishmentBody,
+  ListPunishmentsQuery,
+} from "@/module/punishment/punishment.schemas.js";
 
 export type CreatePunishmentInput = CreatePunishmentBody & {
   code: string;

@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { paginationQuerySchema } from "../../shared/pagination.schemas.js";
+import { paginationQuerySchema } from "@/shared/pagination.schemas.js";
 
 export const reportStatusSchema = z.enum([
   "open",

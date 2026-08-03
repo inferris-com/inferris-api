@@ -1,5 +1,5 @@
-import type { RedisClient } from "../../redis/index.js";
-import type { PunishmentResponse } from "./punishment.response-types.js";
+import type { RedisClient } from "@/redis/index.js";
+import type { PunishmentResponse } from "@/module/punishment/punishment.response-types.js";
 
 export const punishmentEventsChannel = "punishments.events";
 

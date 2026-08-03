@@ -1,5 +1,5 @@
 import pino, { type LoggerOptions } from "pino";
-import { config } from "./config.js";
+import { config } from "@/config.js";
 
 const options: LoggerOptions = {
   name: config.name,

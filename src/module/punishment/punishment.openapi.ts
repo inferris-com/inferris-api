@@ -6,15 +6,15 @@ import {
   listResponse,
   standardErrorResponses,
   successResponse,
-} from "../../openapi/openapi.helpers.js";
-import { punishmentResponseSchema } from "./punishment.response-types.js";
+} from "@/openapi/openapi.helpers.js";
+import { punishmentResponseSchema } from "@/module/punishment/punishment.response-types.js";
 import {
   createPunishmentBodySchema,
   listPunishmentsQuerySchema,
   punishmentCodeParamsSchema,
   punishmentIdParamsSchema,
   revokePunishmentBodySchema,
-} from "./punishment.schemas.js";
+} from "@/module/punishment/punishment.schemas.js";
 
 export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

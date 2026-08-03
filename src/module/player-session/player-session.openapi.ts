@@ -5,13 +5,13 @@ import {
   standardErrorResponses,
   successResponse,
   userOrServiceSecurity,
-} from "../../openapi/openapi.helpers.js";
-import { playerSessionResponseSchema } from "./player-session.response-types.js";
+} from "@/openapi/openapi.helpers.js";
+import { playerSessionResponseSchema } from "@/module/player-session/player-session.response-types.js";
 import {
   getPlayerSessionQuerySchema,
   listPlayerSessionsQuerySchema,
   networkSessionParamsSchema,
-} from "./player-session.schemas.js";
+} from "@/module/player-session/player-session.schemas.js";
 
 export function registerPlayerSessionOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

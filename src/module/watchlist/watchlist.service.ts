@@ -2,16 +2,16 @@ import {
   WatchlistActorNotFoundError,
   WatchlistEntryNotFoundError,
   WatchlistExpirationConflictError,
-} from "./watchlist.errors.js";
-import { toWatchlistEntryResponse } from "./watchlist.mapper.js";
-import type { WatchlistPgRepository } from "./watchlist.pg-repository.js";
-import type { WatchlistEntryResponse } from "./watchlist.response-types.js";
+} from "@/module/watchlist/watchlist.errors.js";
+import { toWatchlistEntryResponse } from "@/module/watchlist/watchlist.mapper.js";
+import type { WatchlistPgRepository } from "@/module/watchlist/watchlist.pg-repository.js";
+import type { WatchlistEntryResponse } from "@/module/watchlist/watchlist.response-types.js";
 import type {
   AddWatchlistBody,
   ClearWatchlistBody,
   GetActiveWatchlistQuery,
   ListWatchlistQuery,
-} from "./watchlist.schemas.js";
+} from "@/module/watchlist/watchlist.schemas.js";
 
 export type WatchlistListResponse = {
   data: WatchlistEntryResponse[];
@@ -44,7 +44,9 @@ export class WatchlistService {
     const entry = await this.repo.findActiveEntry(query);
 
     if (!entry) {
-      throw new WatchlistEntryNotFoundError(query.subjectActorId ?? query.subjectPlayerId ?? "unknown");
+      throw new WatchlistEntryNotFoundError(
+        query.subjectActorId ?? query.subjectPlayerId ?? "unknown",
+      );
     }
 
     return toWatchlistEntryResponse(entry);
@@ -55,7 +57,10 @@ export class WatchlistService {
       throw new WatchlistExpirationConflictError();
     }
 
-    const subjectActorId = await this.resolveSubjectActorId(input.subjectActorId, input.subjectPlayerId);
+    const subjectActorId = await this.resolveSubjectActorId(
+      input.subjectActorId,
+      input.subjectPlayerId,
+    );
     const entry = await this.repo.addEntry({
       ...input,
       subjectActorId,
@@ -69,7 +74,10 @@ export class WatchlistService {
     input: ClearWatchlistBody,
     clearedByActorId: string,
   ): Promise<WatchlistEntryResponse> {
-    const subjectActorId = await this.resolveSubjectActorId(input.subjectActorId, input.subjectPlayerId);
+    const subjectActorId = await this.resolveSubjectActorId(
+      input.subjectActorId,
+      input.subjectPlayerId,
+    );
     const entry = await this.repo.clearEntry({
       ...input,
       subjectActorId,

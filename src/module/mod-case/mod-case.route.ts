@@ -1,16 +1,19 @@
 import { type RequestHandler, Router } from "express";
 import type { ParamsDictionary } from "express-serve-static-core";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiListSuccess, ApiSuccess } from "@/shared/http/api-response.types.js";
 import {
   auditMutation,
   authorize,
   getRequestActorId,
   requireActor,
-} from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import type { ModCaseActorResponse, ModCaseResponse } from "./mod-case.response-types.js";
+} from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import type {
+  ModCaseActorResponse,
+  ModCaseResponse,
+} from "@/module/mod-case/mod-case.response-types.js";
 import {
   type CreateModCaseActorBody,
   createModCaseActorBodySchema,
@@ -22,8 +25,8 @@ import {
   modCaseIdParamsSchema,
   type UpdateModCaseBody,
   updateModCaseBodySchema,
-} from "./mod-case.schemas.js";
-import type { ModCaseListResponse, ModCaseService } from "./mod-case.service.js";
+} from "@/module/mod-case/mod-case.schemas.js";
+import type { ModCaseListResponse, ModCaseService } from "@/module/mod-case/mod-case.service.js";
 
 export function createModCaseRouter(
   service: ModCaseService,

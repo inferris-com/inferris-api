@@ -1,7 +1,11 @@
 import type { Kysely } from "kysely";
 
-import type { DB } from "../../db/types.js";
-import type { ListBadgesQuery, ListGroupsQuery, ListRanksQuery } from "./catalog.schemas.js";
+import type { DB } from "@/db/types.js";
+import type {
+  ListBadgesQuery,
+  ListGroupsQuery,
+  ListRanksQuery,
+} from "@/module/catalog/catalog.schemas.js";
 
 export class CatalogPgRepository {
   constructor(private readonly db: Kysely<DB>) {}

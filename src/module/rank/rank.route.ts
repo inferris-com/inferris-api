@@ -1,10 +1,10 @@
 import { type RequestHandler, Router } from "express";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
-import { auditMutation, authorize } from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import type { RankResponse } from "./rank.response-types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiListSuccess, ApiSuccess } from "@/shared/http/api-response.types.js";
+import { auditMutation, authorize } from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import type { RankResponse } from "@/module/rank/rank.response-types.js";
 import {
   createRankBodySchema,
   listRanksQuerySchema,
@@ -14,12 +14,15 @@ import {
   type ListRanksQuery,
   type RankKeyParams,
   type UpdateRankBody,
-} from "./rank.schemas.js";
-import type { RankService } from "./rank.service.js";
+} from "@/module/rank/rank.schemas.js";
+import type { RankService } from "@/module/rank/rank.service.js";
 
 export function createRankRouter(service: RankService, authRepository: AuthRepository): Router {
   const router = Router();
-  const readRanks = authorize(authRepository, { apiScopes: ["players:read"], argusRole: "moderator" });
+  const readRanks = authorize(authRepository, {
+    apiScopes: ["players:read"],
+    argusRole: "moderator",
+  });
   const writeRanks = authorize(authRepository, {
     apiScopes: ["players:write"],
     argusRole: "admin",

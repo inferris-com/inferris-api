@@ -1,11 +1,11 @@
 import { type RequestHandler, Router } from "express";
 import type { ParamsDictionary } from "express-serve-static-core";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
-import { auditMutation, authorize } from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import type { ChatMessageResponse } from "./chat-message.response-types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiListSuccess, ApiSuccess } from "@/shared/http/api-response.types.js";
+import { auditMutation, authorize } from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import type { ChatMessageResponse } from "@/module/chat-message/chat-message.response-types.js";
 import {
   type CreateChatMessageBatchBody,
   createChatMessageBatchBodySchema,
@@ -13,8 +13,8 @@ import {
   createChatMessageBodySchema,
   type ListChatMessagesQuery,
   listChatMessagesQuerySchema,
-} from "./chat-message.schemas.js";
-import type { ChatMessageService } from "./chat-message.service.js";
+} from "@/module/chat-message/chat-message.schemas.js";
+import type { ChatMessageService } from "@/module/chat-message/chat-message.service.js";
 
 export function createChatMessageRouter(
   service: ChatMessageService,

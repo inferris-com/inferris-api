@@ -1,5 +1,5 @@
-import type { ServerInstanceRow } from "./server-instance.pg-repository.js";
-import type { ServerInstanceResponse } from "./server-instance.response-types.js";
+import type { ServerInstanceRow } from "@/module/server-instance/server-instance.pg-repository.js";
+import type { ServerInstanceResponse } from "@/module/server-instance/server-instance.response-types.js";
 
 export function toServerInstanceResponse(row: ServerInstanceRow): ServerInstanceResponse {
   return {

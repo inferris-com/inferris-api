@@ -1,6 +1,6 @@
 import type { Selectable } from "kysely";
 
-import type { PlayerFlagDefinitions } from "../../db/types.js";
+import type { PlayerFlagDefinitions } from "@/db/types.js";
 
 export type PlayerFlagDefinition = Selectable<PlayerFlagDefinitions>;
 

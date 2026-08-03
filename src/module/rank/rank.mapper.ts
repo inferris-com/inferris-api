@@ -1,7 +1,7 @@
 import type { Selectable } from "kysely";
 
-import type { Json, Ranks } from "../../db/types.js";
-import type { CreateRankBody, UpdateRankBody } from "./rank.schemas.js";
+import type { Json, Ranks } from "@/db/types.js";
+import type { CreateRankBody, UpdateRankBody } from "@/module/rank/rank.schemas.js";
 
 export function toRankResponse(row: Selectable<Ranks>) {
   return {

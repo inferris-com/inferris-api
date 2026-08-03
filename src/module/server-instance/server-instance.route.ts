@@ -1,10 +1,10 @@
 import { type RequestHandler, Router } from "express";
 
-import { ForbiddenError } from "../../error/app-error.js";
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiSuccess } from "../../shared/http/api-response.types.js";
-import { authorize, requireServerInstance } from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
+import { ForbiddenError } from "@/error/app-error.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiSuccess } from "@/shared/http/api-response.types.js";
+import { authorize, requireServerInstance } from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
 import type {
   RegisterServerInstanceResponse,
   ServerInstanceEventResponse,
@@ -12,7 +12,7 @@ import type {
   ServerInstanceMetricsResponse,
   ServerInstancePresenceResponse,
   ServerInstanceResponse,
-} from "./server-instance.response-types.js";
+} from "@/module/server-instance/server-instance.response-types.js";
 import {
   type RegisterServerInstanceBody,
   registerServerInstanceBodySchema,
@@ -26,11 +26,11 @@ import {
   serverInstanceMetricsBodySchema,
   type ServerInstancePresenceBody,
   serverInstancePresenceBodySchema,
-} from "./server-instance.schemas.js";
+} from "@/module/server-instance/server-instance.schemas.js";
 import type {
   AuthenticatedServerInstance,
   ServerInstanceService,
-} from "./server-instance.service.js";
+} from "@/module/server-instance/server-instance.service.js";
 
 export function createServerInstanceRouter(
   service: ServerInstanceService,

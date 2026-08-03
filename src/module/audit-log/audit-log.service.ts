@@ -1,9 +1,9 @@
-import type { PaginatedResult } from "../../shared/pagination.schemas.js";
-import { AuditLogNotFoundError } from "./audit-log.errors.js";
-import { toAuditLogResponse } from "./audit-log.mapper.js";
-import type { AuditLogPgRepository } from "./audit-log.pg-repository.js";
-import type { AuditLogResponse } from "./audit-log.response-types.js";
-import type { ListAuditLogsQuery } from "./audit-log.schemas.js";
+import type { PaginatedResult } from "@/shared/pagination.schemas.js";
+import { AuditLogNotFoundError } from "@/module/audit-log/audit-log.errors.js";
+import { toAuditLogResponse } from "@/module/audit-log/audit-log.mapper.js";
+import type { AuditLogPgRepository } from "@/module/audit-log/audit-log.pg-repository.js";
+import type { AuditLogResponse } from "@/module/audit-log/audit-log.response-types.js";
+import type { ListAuditLogsQuery } from "@/module/audit-log/audit-log.schemas.js";
 
 export class AuditLogService {
   constructor(private readonly repo: AuditLogPgRepository) {}

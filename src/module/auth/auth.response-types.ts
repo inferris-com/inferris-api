@@ -1,8 +1,8 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
 
-import { accountIdentityResponseSchema } from "../account/account.schemas.js";
-import { staffPrivilegeRoleSchema } from "../staff-privilege/staff-privilege.schemas.js";
+import { accountIdentityResponseSchema } from "@/module/argus/account/account.schemas.js";
+import { staffPrivilegeRoleSchema } from "@/module/staff-privilege/staff-privilege.schemas.js";
 
 extendZodWithOpenApi(z);
 

@@ -1,8 +1,12 @@
-import type { ActorPgRepository } from "./actor.pg-repository.js";
-import { ActorNotFoundError, ActorsNotFoundError } from "./actor.errors.js";
-import type { ActorResponse } from "./actor.response.types.js";
-import { toActorResponse } from "./actor.mapper.js";
-import type { ListActorsQuery, SearchActorsQuery, UpdateActorBody } from "./actor.schemas.js";
+import type { ActorPgRepository } from "@/module/actor/actor.pg-repository.js";
+import { ActorNotFoundError, ActorsNotFoundError } from "@/module/actor/actor.errors.js";
+import type { ActorResponse } from "@/module/actor/actor.response.types.js";
+import { toActorResponse } from "@/module/actor/actor.mapper.js";
+import type {
+  ListActorsQuery,
+  SearchActorsQuery,
+  UpdateActorBody,
+} from "@/module/actor/actor.schemas.js";
 
 export type ActorListResponse = {
   data: ActorResponse[];

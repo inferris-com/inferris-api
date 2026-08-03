@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError, ValidationError } from "../../error/app-error.js";
+import { ConflictError, NotFoundError, ValidationError } from "@/error/app-error.js";
 
 export class PunishmentNotFoundError extends NotFoundError {
   constructor(punishmentId: string) {

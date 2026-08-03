@@ -6,16 +6,16 @@ import {
   listResponse,
   standardErrorResponses,
   successResponse,
-} from "../../openapi/openapi.helpers.js";
+} from "@/openapi/openapi.helpers.js";
 import {
   chatMessageListResponseSchema,
   chatMessageResponseSchema,
-} from "./chat-message.response-types.js";
+} from "@/module/chat-message/chat-message.response-types.js";
 import {
   createChatMessageBatchBodySchema,
   createChatMessageBodySchema,
   listChatMessagesQuerySchema,
-} from "./chat-message.schemas.js";
+} from "@/module/chat-message/chat-message.schemas.js";
 
 export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

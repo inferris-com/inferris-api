@@ -1,4 +1,4 @@
-import type { ReportResolution, ReportStatus, Severity } from "../../db/types.js";
+import type { ReportResolution, ReportStatus, Severity } from "@/db/types.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
 

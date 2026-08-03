@@ -1,4 +1,4 @@
-import type { ActorService } from "./actor.service.js";
+import type { ActorService } from "@/module/actor/actor.service.js";
 import { type RequestHandler, Router } from "express";
 import {
   type ActorIdParams,
@@ -9,13 +9,13 @@ import {
   searchActorsQuerySchema,
   type UpdateActorBody,
   updateActorBodySchema,
-} from "./actor.schemas.js";
-import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
-import type { ActorResponse } from "./actor.response.types.js";
-import { validateRequest } from "../../middleware/validation.js";
-import { type PlayerIdParams, playerIdParamsSchema } from "../player/player.schemas.js";
-import { auditMutation, authorize } from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
+} from "@/module/actor/actor.schemas.js";
+import type { ApiListSuccess, ApiSuccess } from "@/shared/http/api-response.types.js";
+import type { ActorResponse } from "@/module/actor/actor.response.types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import { type PlayerIdParams, playerIdParamsSchema } from "@/module/player/player.schemas.js";
+import { auditMutation, authorize } from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
 
 export function createActorRouter(service: ActorService, authRepository: AuthRepository): Router {
   const router = Router();

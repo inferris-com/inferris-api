@@ -1,7 +1,7 @@
-import { config } from "../../config.js";
-import { UnauthorizedError } from "../../error/app-error.js";
+import { config } from "@/config.js";
+import { UnauthorizedError } from "@/error/app-error.js";
 import { randomUUID } from "node:crypto";
-import type { RedisClient } from "../../redis/index.js";
+import type { RedisClient } from "@/redis/index.js";
 import {
   compareHashes,
   createRefreshToken,
@@ -13,16 +13,16 @@ import {
   signAccessToken,
   verifyAccessToken,
   verifyPassword,
-} from "./auth.crypto.js";
-import type { ArgusAuthRecord, AuthRepository } from "./auth.repository.js";
+} from "@/module/auth/auth.crypto.js";
+import type { ArgusAuthRecord, AuthRepository } from "@/module/auth/auth.repository.js";
 import type {
   ArgusSessionResponse,
   AuthTokenResponse,
   AuthUserResponse,
-} from "./auth.response-types.js";
-import type { LoginBody } from "./auth.schemas.js";
-import type { AuthContext } from "./auth.types.js";
-import type { PasswordSecurityService } from "../password-security/password-security.service.js";
+} from "@/module/auth/auth.response-types.js";
+import type { LoginBody } from "@/module/auth/auth.schemas.js";
+import type { AuthContext } from "@/module/auth/auth.types.js";
+import type { PasswordSecurityService } from "@/module/argus/password-security/password-security.service.js";
 
 type RefreshSession = {
   argusUserId: string;

@@ -1,8 +1,12 @@
 import type { Kysely } from "kysely";
 
-import type { DB } from "../../db/types.js";
-import { toBadgeInsert, toBadgeUpdate } from "./badge.mapper.js";
-import type { CreateBadgeBody, ListBadgesQuery, UpdateBadgeBody } from "./badge.schemas.js";
+import type { DB } from "@/db/types.js";
+import { toBadgeInsert, toBadgeUpdate } from "@/module/badge/badge.mapper.js";
+import type {
+  CreateBadgeBody,
+  ListBadgesQuery,
+  UpdateBadgeBody,
+} from "@/module/badge/badge.schemas.js";
 
 export class BadgePgRepository {
   constructor(private readonly db: Kysely<DB>) {}

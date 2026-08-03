@@ -1,12 +1,15 @@
 import type { Selectable } from "kysely";
 
-import type { PrivilegedSubjects } from "../../db/types.js";
+import type { PrivilegedSubjects } from "@/db/types.js";
 import type {
   CreateStaffPrivilegeBody,
   UpdateStaffPrivilegeBody,
-} from "./staff-privilege.schemas.js";
-import { staffPrivilegeRoleSchema, staffPrivilegeStatusSchema } from "./staff-privilege.schemas.js";
-import type { StaffPrivilegeResponse } from "./staff-privilege.response-types.js";
+} from "@/module/staff-privilege/staff-privilege.schemas.js";
+import {
+  staffPrivilegeRoleSchema,
+  staffPrivilegeStatusSchema,
+} from "@/module/staff-privilege/staff-privilege.schemas.js";
+import type { StaffPrivilegeResponse } from "@/module/staff-privilege/staff-privilege.response-types.js";
 
 export function toStaffPrivilegeResponse(
   row: Selectable<PrivilegedSubjects>,

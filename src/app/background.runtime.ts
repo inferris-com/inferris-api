@@ -1,6 +1,6 @@
-import { createCronJobs } from "../cron/jobs.js";
-import { CronScheduler } from "../cron/cron.scheduler.js";
-import type { AppDependencies } from "./app.dependencies.js";
+import { createCronJobs } from "@/cron/jobs.js";
+import { CronScheduler } from "@/cron/cron.scheduler.js";
+import type { AppDependencies } from "@/app/app.dependencies.js";
 
 export type BackgroundRuntime = {
   start(): void;

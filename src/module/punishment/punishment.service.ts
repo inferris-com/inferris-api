@@ -1,21 +1,21 @@
 import { randomInt } from "node:crypto";
 
-import { PgErrorCode, isPgErrorCode } from "../../shared/db/pg-error.utils.js";
+import { PgErrorCode, isPgErrorCode } from "@/shared/db/pg-error.utils.js";
 import {
   ActivePunishmentConflictError,
   InvalidPunishmentDurationError,
   PunishmentAlreadyRevokedError,
   PunishmentNotFoundError,
-} from "./punishment.errors.js";
-import { toPunishmentResponse } from "./punishment.mapper.js";
-import type { PunishmentPgRepository } from "./punishment.pg-repository.js";
-import type { PunishmentPublisher } from "./punishment.publisher.js";
-import type { PunishmentResponse } from "./punishment.response-types.js";
+} from "@/module/punishment/punishment.errors.js";
+import { toPunishmentResponse } from "@/module/punishment/punishment.mapper.js";
+import type { PunishmentPgRepository } from "@/module/punishment/punishment.pg-repository.js";
+import type { PunishmentPublisher } from "@/module/punishment/punishment.publisher.js";
+import type { PunishmentResponse } from "@/module/punishment/punishment.response-types.js";
 import type {
   CreatePunishmentBody,
   ListPunishmentsQuery,
   RevokePunishmentBody,
-} from "./punishment.schemas.js";
+} from "@/module/punishment/punishment.schemas.js";
 
 const punishmentCodeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const punishmentCodeLength = 10;

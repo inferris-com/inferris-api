@@ -1,5 +1,5 @@
-import type { ChatMessageResponse } from "./chat-message.response-types.js";
-import type { ChatMessageRecord } from "./chat-message.types.js";
+import type { ChatMessageResponse } from "@/module/chat-message/chat-message.response-types.js";
+import type { ChatMessageRecord } from "@/module/chat-message/chat-message.types.js";
 
 export function toChatMessageResponse(row: ChatMessageRecord): ChatMessageResponse {
   return {

@@ -5,9 +5,12 @@ import {
   standardErrorResponses,
   successResponse,
   userOrServiceSecurity,
-} from "../../openapi/openapi.helpers.js";
-import { auditLogResponseSchema } from "./audit-log.response-types.js";
-import { auditLogParamsSchema, listAuditLogsQuerySchema } from "./audit-log.schemas.js";
+} from "@/openapi/openapi.helpers.js";
+import { auditLogResponseSchema } from "@/module/audit-log/audit-log.response-types.js";
+import {
+  auditLogParamsSchema,
+  listAuditLogsQuerySchema,
+} from "@/module/audit-log/audit-log.schemas.js";
 
 export function registerAuditLogOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

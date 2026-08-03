@@ -1,7 +1,7 @@
 import { describe, expect, test } from "@jest/globals";
 
-import { ServerPgRepository } from "../../../src/module/server/server.pg-repository.js";
-import { createRecordingDb } from "../test-db.js";
+import { ServerPgRepository } from "@/module/server/server.pg-repository.js";
+import { createRecordingDb } from "@tests/unit/test-db.js";
 
 describe("ServerPgRepository", () => {
   test("expireInactiveServers cleans open sessions left on already inactive instances", async () => {

@@ -1,5 +1,5 @@
-import type { RedisClient } from "../../redis/index.js";
-import type { ModCaseResponse } from "./mod-case.response-types.js";
+import type { RedisClient } from "@/redis/index.js";
+import type { ModCaseResponse } from "@/module/mod-case/mod-case.response-types.js";
 
 export const modCaseEventsChannel = "mod_cases.events";
 

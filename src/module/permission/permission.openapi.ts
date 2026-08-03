@@ -6,18 +6,18 @@ import {
   listResponse,
   standardErrorResponses,
   successResponse,
-} from "../../openapi/openapi.helpers.js";
+} from "@/openapi/openapi.helpers.js";
 import {
   permissionNodeResponseSchema,
   permissionRuleResponseSchema,
-} from "./permission.response-types.js";
+} from "@/module/permission/permission.response-types.js";
 import {
   createPermissionNodeBodySchema,
   listPermissionsQuerySchema,
   permissionKeyParamsSchema,
   permissionRuleParamsSchema,
   replacePermissionRuleBodySchema,
-} from "./permission.schemas.js";
+} from "@/module/permission/permission.schemas.js";
 
 export function registerPermissionOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

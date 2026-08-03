@@ -1,11 +1,11 @@
 import { expect, jest, test } from "@jest/globals";
 import type { Selectable } from "kysely";
 
-import type { ReportComments } from "../../../src/db/types.js";
-import { toReportCommentResponse } from "../../../src/module/report/report.mapper.js";
-import type { ReportPgRepository } from "../../../src/module/report/report.pg-repository.js";
-import type { ReportPublisher } from "../../../src/module/report/report.publisher.js";
-import { ReportService } from "../../../src/module/report/report.service.js";
+import type { ReportComments } from "@/db/types.js";
+import { toReportCommentResponse } from "@/module/report/report.mapper.js";
+import type { ReportPgRepository } from "@/module/report/report.pg-repository.js";
+import type { ReportPublisher } from "@/module/report/report.publisher.js";
+import { ReportService } from "@/module/report/report.service.js";
 
 const reportId = "00000000-0000-0000-0000-000000000001";
 const commentId = "00000000-0000-0000-0000-000000000002";

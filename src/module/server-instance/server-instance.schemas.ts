@@ -1,7 +1,7 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
 
-import { BigIntStringSchema } from "../../shared/common.schemas.js";
+import { BigIntStringSchema } from "@/shared/common.schemas.js";
 
 extendZodWithOpenApi(z);
 

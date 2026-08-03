@@ -6,15 +6,15 @@ import {
   standardErrorResponses,
   successResponse,
   listResponse,
-} from "../../openapi/openapi.helpers.js";
-import { playerIdParamsSchema } from "../player/player.schemas.js";
-import { actorResponseSchema } from "./actor.response.types.js";
+} from "@/openapi/openapi.helpers.js";
+import { playerIdParamsSchema } from "@/module/player/player.schemas.js";
+import { actorResponseSchema } from "@/module/actor/actor.response.types.js";
 import {
   actorIdParamsSchema,
   listActorsQuerySchema,
   searchActorsQuerySchema,
   updateActorBodySchema,
-} from "./actor.schemas.js";
+} from "@/module/actor/actor.schemas.js";
 
 export function registerActorOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

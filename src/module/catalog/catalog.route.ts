@@ -1,11 +1,15 @@
 import { type RequestHandler, Router } from "express";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiListSuccess } from "../../shared/http/api-response.types.js";
-import { authorize } from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import type { CatalogService } from "./catalog.service.js";
-import type { BadgeResponse, GroupResponse, RankResponse } from "./catalog.response-types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiListSuccess } from "@/shared/http/api-response.types.js";
+import { authorize } from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import type { CatalogService } from "@/module/catalog/catalog.service.js";
+import type {
+  BadgeResponse,
+  GroupResponse,
+  RankResponse,
+} from "@/module/catalog/catalog.response-types.js";
 import {
   listBadgesQuerySchema,
   listGroupsQuerySchema,
@@ -13,9 +17,12 @@ import {
   type ListGroupsQuery,
   type ListRanksQuery,
   listRanksQuerySchema,
-} from "./catalog.schemas.js";
+} from "@/module/catalog/catalog.schemas.js";
 
-export function createCatalogRouter(service: CatalogService, authRepository: AuthRepository): Router {
+export function createCatalogRouter(
+  service: CatalogService,
+  authRepository: AuthRepository,
+): Router {
   const router = Router();
 
   const readCatalog = authorize(authRepository, {

@@ -3,10 +3,10 @@ import { expect, jest, test } from "@jest/globals";
 import {
   ChatMessageService,
   mergeChatMessages,
-} from "../../../src/module/chat-message/chat-message.service.js";
-import type { ChatMessagePgRepository } from "../../../src/module/chat-message/chat-message.pg-repository.js";
-import type { ChatMessageRedisBuffer } from "../../../src/module/chat-message/chat-message.redis-buffer.js";
-import type { ChatMessageRecord } from "../../../src/module/chat-message/chat-message.types.js";
+} from "@/module/chat-message/chat-message.service.js";
+import type { ChatMessagePgRepository } from "@/module/chat-message/chat-message.pg-repository.js";
+import type { ChatMessageRedisBuffer } from "@/module/chat-message/chat-message.redis-buffer.js";
+import type { ChatMessageRecord } from "@/module/chat-message/chat-message.types.js";
 
 function message(
   input: Partial<ChatMessageRecord> & Pick<ChatMessageRecord, "id">,

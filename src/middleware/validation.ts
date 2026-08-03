@@ -3,7 +3,7 @@ import type { ParamsDictionary } from "express-serve-static-core";
 import type { ParsedQs } from "qs";
 import type { infer as zInfer, ZodType } from "zod";
 
-import { ValidationError } from "../error/app-error.js";
+import { ValidationError } from "@/error/app-error.js";
 
 export type RequestInput = "body" | "params" | "query" | "headers";
 

@@ -7,14 +7,14 @@ import {
   standardErrorResponses,
   successResponse,
   userOrServiceSecurity,
-} from "../../openapi/openapi.helpers.js";
-import { groupResponseSchema } from "./group.response-types.js";
+} from "@/openapi/openapi.helpers.js";
+import { groupResponseSchema } from "@/module/group/group.response-types.js";
 import {
   createGroupBodySchema,
   groupKeyParamsSchema,
   listGroupsQuerySchema,
   updateGroupBodySchema,
-} from "./group.schemas.js";
+} from "@/module/group/group.schemas.js";
 
 export function registerGroupOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

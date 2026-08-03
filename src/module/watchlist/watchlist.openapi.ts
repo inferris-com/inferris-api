@@ -6,14 +6,14 @@ import {
   standardErrorResponses,
   successResponse,
   userOrServiceSecurity,
-} from "../../openapi/openapi.helpers.js";
-import { watchlistEntryResponseSchema } from "./watchlist.response-types.js";
+} from "@/openapi/openapi.helpers.js";
+import { watchlistEntryResponseSchema } from "@/module/watchlist/watchlist.response-types.js";
 import {
   addWatchlistBodySchema,
   clearWatchlistBodySchema,
   getActiveWatchlistQuerySchema,
   listWatchlistQuerySchema,
-} from "./watchlist.schemas.js";
+} from "@/module/watchlist/watchlist.schemas.js";
 
 export function registerWatchlistOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

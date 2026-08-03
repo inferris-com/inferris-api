@@ -6,7 +6,7 @@ import {
   toBitmaskResponse,
   UnknownPlayerFlagError,
   type PlayerFlagDefinition,
-} from "../../../src/module/player/player-flags.js";
+} from "@/module/player/player-flags.js";
 
 const definitions: PlayerFlagDefinition[] = [
   {

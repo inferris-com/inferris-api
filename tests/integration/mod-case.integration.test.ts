@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
-import { createTestApp, ids } from "./app-test-utils.js";
+import { createTestApp, ids } from "@tests/integration/app-test-utils.js";
 
 describe("mod case routes", () => {
   test("POST /mod-cases uses service actor API-key owner", async () => {

@@ -1,5 +1,5 @@
 import z from "zod";
-import { BigIntStringSchema } from "../../shared/common.schemas.js";
+import { BigIntStringSchema } from "@/shared/common.schemas.js";
 
 // Types
 export const serverTypeSchema = z.enum(["paper", "velocity", "unspecified"]);

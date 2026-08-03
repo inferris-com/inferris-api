@@ -1,4 +1,4 @@
-import { int8ToString, int8ToStringOrNull } from "../../shared/db/int8.js";
+import { int8ToString, int8ToStringOrNull } from "@/shared/db/int8.js";
 import type {
   PlayerBadgeRow,
   PlayerDetailsRecord,
@@ -7,7 +7,7 @@ import type {
   PlayerRankRow,
   PlayerSearchRecord,
   PlayerSummaryRecord,
-} from "./player.repository.js";
+} from "@/module/player/player.repository.js";
 import type {
   PlayerBadgeAssignmentResponse,
   PlayerNicknameResponse,
@@ -16,7 +16,7 @@ import type {
   PlayerResponse,
   PlayerSearchResultResponse,
   PlayerSummaryResponse,
-} from "./player.response.types.js";
+} from "@/module/player/player.response.types.js";
 
 export function toPlayerSummaryResponse(row: PlayerSummaryRecord): PlayerSummaryResponse {
   return {

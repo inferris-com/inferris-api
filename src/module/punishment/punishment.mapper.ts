@@ -1,8 +1,8 @@
 import type { Selectable } from "kysely";
 
-import type { Punishments } from "../../db/types.js";
-import { int8ToString, int8ToStringOrNull } from "../../shared/db/int8.js";
-import type { PunishmentResponse } from "./punishment.response-types.js";
+import type { Punishments } from "@/db/types.js";
+import { int8ToString, int8ToStringOrNull } from "@/shared/db/int8.js";
+import type { PunishmentResponse } from "@/module/punishment/punishment.response-types.js";
 
 export function toPunishmentResponse(row: Selectable<Punishments>): PunishmentResponse {
   const isEffectivelyActive = isPunishmentEffectivelyActive(row);

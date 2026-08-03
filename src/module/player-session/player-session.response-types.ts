@@ -1,6 +1,6 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
-import type { Json } from "../../db/types.js";
+import type { Json } from "@/db/types.js";
 
 extendZodWithOpenApi(z);
 

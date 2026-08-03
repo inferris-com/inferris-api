@@ -1,8 +1,15 @@
 import type { Selectable, Updateable } from "kysely";
-import type { Lockdowns, ServerAccessPolicies, Servers } from "../../db/types.js";
-import type { AccessResponse, LockdownResponse, ServerResponse } from "./server.response.types.js";
-import { int8ToStringOrDefault, int8ToStringOrNull } from "../../shared/db/int8.js";
-import type { ReplaceServerAccessBody, UpdateLockdownBody } from "./server.schemas.js";
+import type { Lockdowns, ServerAccessPolicies, Servers } from "@/db/types.js";
+import type {
+  AccessResponse,
+  LockdownResponse,
+  ServerResponse,
+} from "@/module/server/server.response.types.js";
+import { int8ToStringOrDefault, int8ToStringOrNull } from "@/shared/db/int8.js";
+import type {
+  ReplaceServerAccessBody,
+  UpdateLockdownBody,
+} from "@/module/server/server.schemas.js";
 
 export type ServerWithPresence = Selectable<Servers> & {
   status?: "online" | "offline";

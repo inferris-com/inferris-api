@@ -4,17 +4,17 @@ import {
   listResponse,
   standardErrorResponses,
   userOrServiceSecurity,
-} from "../../openapi/openapi.helpers.js";
+} from "@/openapi/openapi.helpers.js";
 import {
   badgeResponseSchema,
   groupResponseSchema,
   rankResponseSchema,
-} from "./catalog.response-types.js";
+} from "@/module/catalog/catalog.response-types.js";
 import {
   listBadgesQuerySchema,
   listGroupsQuerySchema,
   listRanksQuerySchema,
-} from "./catalog.schemas.js";
+} from "@/module/catalog/catalog.schemas.js";
 
 export function registerCatalogOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

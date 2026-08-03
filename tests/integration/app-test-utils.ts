@@ -2,9 +2,9 @@ import { jest } from "@jest/globals";
 import type { RequestHandler } from "express";
 import request from "supertest";
 
-import type { AppDependencies } from "../../src/app/app.dependencies.js";
-import { createApp } from "../../src/server.js";
-import type { AuthContext } from "../../src/module/auth/auth.types.js";
+import type { AppDependencies } from "@/app/app.dependencies.js";
+import { createApp } from "@/server.js";
+import type { AuthContext } from "@/module/auth/auth.types.js";
 
 type AsyncMock = jest.Mock<(...args: unknown[]) => Promise<unknown>>;
 

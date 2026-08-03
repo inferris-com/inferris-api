@@ -1,6 +1,6 @@
-import type { PunishmentService } from "../module/punishment/punishment.service.js";
-import type { ServerService } from "../module/server/server.service.js";
-import type { CronJob } from "./cron.types.js";
+import type { PunishmentService } from "@/module/punishment/punishment.service.js";
+import type { ServerService } from "@/module/server/server.service.js";
+import type { CronJob } from "@/cron/cron.types.js";
 
 const fiveMinutesMs = 5 * 60 * 1000;
 

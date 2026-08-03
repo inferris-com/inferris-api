@@ -1,7 +1,7 @@
 import { createClient, type RedisClientOptions } from "redis";
 
-import { config } from "../config.js";
-import { logger } from "../logger.js";
+import { config } from "@/config.js";
+import { logger } from "@/logger.js";
 
 export type RedisClient = ReturnType<typeof createClient>;
 

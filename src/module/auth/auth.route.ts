@@ -1,10 +1,10 @@
 import { type RequestHandler, Router } from "express";
 import type { ParamsDictionary } from "express-serve-static-core";
 
-import { UnauthorizedError } from "../../error/app-error.js";
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiSuccess } from "../../shared/http/api-response.types.js";
-import type { AuthTokenResponse, AuthUserResponse } from "./auth.response-types.js";
+import { UnauthorizedError } from "@/error/app-error.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiSuccess } from "@/shared/http/api-response.types.js";
+import type { AuthTokenResponse, AuthUserResponse } from "@/module/auth/auth.response-types.js";
 import {
   type LoginBody,
   loginBodySchema,
@@ -12,8 +12,8 @@ import {
   logoutBodySchema,
   type RefreshBody,
   refreshBodySchema,
-} from "./auth.schemas.js";
-import type { AuthService } from "./auth.service.js";
+} from "@/module/auth/auth.schemas.js";
+import type { AuthService } from "@/module/auth/auth.service.js";
 
 export function createAuthRouter(
   service: AuthService,

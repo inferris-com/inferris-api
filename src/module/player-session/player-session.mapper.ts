@@ -1,5 +1,8 @@
-import type { Json } from "../../db/types.js";
-import type { BackendSessionSummary, PlayerSessionResponse } from "./player-session.response-types.js";
+import type { Json } from "@/db/types.js";
+import type {
+  BackendSessionSummary,
+  PlayerSessionResponse,
+} from "@/module/player-session/player-session.response-types.js";
 
 export type PlayerSessionRow = {
   id: string;

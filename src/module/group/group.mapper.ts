@@ -1,7 +1,7 @@
 import type { Selectable } from "kysely";
 
-import type { Groups } from "../../db/types.js";
-import type { CreateGroupBody, UpdateGroupBody } from "./group.schemas.js";
+import type { Groups } from "@/db/types.js";
+import type { CreateGroupBody, UpdateGroupBody } from "@/module/group/group.schemas.js";
 
 export function toGroupResponse(row: Selectable<Groups>) {
   return {

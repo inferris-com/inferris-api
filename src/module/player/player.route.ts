@@ -1,8 +1,8 @@
 import { type RequestHandler, Router } from "express";
 import type { ParamsDictionary } from "express-serve-static-core";
 
-import { validateRequest } from "../../middleware/validation.js";
-import type { ApiListSuccess, ApiSuccess } from "../../shared/http/api-response.types.js";
+import { validateRequest } from "@/middleware/validation.js";
+import type { ApiListSuccess, ApiSuccess } from "@/shared/http/api-response.types.js";
 import type {
   PlayerBadgeAssignmentResponse,
   PlayerFlagBitmaskResponse,
@@ -13,8 +13,8 @@ import type {
   PlayerResponse,
   PlayerSearchResultResponse,
   PlayerSummaryResponse,
-} from "./player.response.types.js";
-import type { PlayerService } from "./player.service.js";
+} from "@/module/player/player.response.types.js";
+import type { PlayerService } from "@/module/player/player.service.js";
 import {
   type CreatePlayerBody,
   type CreatePlayerBadgeAssignmentBody,
@@ -40,7 +40,7 @@ import {
   type UpdatePlayerBody,
   updatePlayerProfileBodySchema,
   type UpdateProfileBody,
-} from "./player.schemas.js";
+} from "@/module/player/player.schemas.js";
 import {
   createPlayerBodySchema,
   deletePlayerQuerySchema,
@@ -50,15 +50,15 @@ import {
   playerMojangIdParamsSchema,
   playerRankAssignmentParamsSchema,
   updatePlayerBodySchema,
-} from "./player.schemas.js";
+} from "@/module/player/player.schemas.js";
 import {
   auditMutation,
   authorize,
   getRequestActorId,
   requireActor,
-} from "../auth/auth.middleware.js";
-import type { AuthRepository } from "../auth/auth.repository.js";
-import { ForbiddenError } from "../../error/app-error.js";
+} from "@/module/auth/auth.middleware.js";
+import type { AuthRepository } from "@/module/auth/auth.repository.js";
+import { ForbiddenError } from "@/error/app-error.js";
 
 export function createPlayerRouter(service: PlayerService, authRepository: AuthRepository): Router {
   const router = Router();

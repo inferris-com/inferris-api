@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
-import { createTestApp } from "./app-test-utils.js";
+import { createTestApp } from "@tests/integration/app-test-utils.js";
 
 describe("permission routes", () => {
   test("GET /permissions/:permissionKey returns a permission node", async () => {

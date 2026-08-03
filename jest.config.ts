@@ -10,6 +10,8 @@ const config: Config = {
   coveragePathIgnorePatterns: ["/node_modules/", "/tests/"],
   extensionsToTreatAsEsm: [".ts"],
   moduleNameMapper: {
+    "^@/(.*)\\.js$": "<rootDir>/src/$1",
+    "^@tests/(.*)\\.js$": "<rootDir>/tests/$1",
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
   transform: {

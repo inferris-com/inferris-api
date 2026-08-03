@@ -6,8 +6,11 @@ import {
   listResponse,
   standardErrorResponses,
   successResponse,
-} from "../../openapi/openapi.helpers.js";
-import { reportCommentResponseSchema, reportResponseSchema } from "./report.response-types.js";
+} from "@/openapi/openapi.helpers.js";
+import {
+  reportCommentResponseSchema,
+  reportResponseSchema,
+} from "@/module/report/report.response-types.js";
 import {
   createReportBodySchema,
   createReportCommentBodySchema,
@@ -17,7 +20,7 @@ import {
   reportIdParamsSchema,
   updateReportCommentBodySchema,
   updateReportBodySchema,
-} from "./report.schemas.js";
+} from "@/module/report/report.schemas.js";
 
 export function registerReportOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

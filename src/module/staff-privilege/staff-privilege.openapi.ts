@@ -6,15 +6,15 @@ import {
   standardErrorResponses,
   successResponse,
   userOrServiceSecurity,
-} from "../../openapi/openapi.helpers.js";
-import { staffPrivilegeResponseSchema } from "./staff-privilege.response-types.js";
+} from "@/openapi/openapi.helpers.js";
+import { staffPrivilegeResponseSchema } from "@/module/staff-privilege/staff-privilege.response-types.js";
 import {
   createStaffPrivilegeBodySchema,
   listStaffPrivilegesQuerySchema,
   staffPrivilegeActorParamsSchema,
   staffPrivilegeParamsSchema,
   updateStaffPrivilegeBodySchema,
-} from "./staff-privilege.schemas.js";
+} from "@/module/staff-privilege/staff-privilege.schemas.js";
 
 export function registerStaffPrivilegeOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

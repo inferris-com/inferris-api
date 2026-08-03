@@ -1,7 +1,10 @@
-import { ServerNotFoundError } from "../server/server.errors.js";
-import type { MetricsPgRepository } from "./metrics.pg-repository.js";
-import type { MetricsOverviewResponse, ServerMetricsResponse } from "./metrics.response-types.js";
-import { type MetricsWindow, windowToMs } from "./metrics.schemas.js";
+import { ServerNotFoundError } from "@/module/server/server.errors.js";
+import type { MetricsPgRepository } from "@/module/metrics/metrics.pg-repository.js";
+import type {
+  MetricsOverviewResponse,
+  ServerMetricsResponse,
+} from "@/module/metrics/metrics.response-types.js";
+import { type MetricsWindow, windowToMs } from "@/module/metrics/metrics.schemas.js";
 
 export class MetricsService {
   constructor(private readonly repo: MetricsPgRepository) {}

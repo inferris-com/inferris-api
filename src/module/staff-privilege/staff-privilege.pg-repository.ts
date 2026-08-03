@@ -1,16 +1,16 @@
 import { sql, type Kysely, type Selectable } from "kysely";
 
-import type { DB, PrivilegedSubjects } from "../../db/types.js";
-import type { PaginatedResult } from "../../shared/pagination.schemas.js";
+import type { DB, PrivilegedSubjects } from "@/db/types.js";
+import type { PaginatedResult } from "@/shared/pagination.schemas.js";
 import {
   toStaffPrivilegeInsert,
   toStaffPrivilegeUpdate,
-} from "./staff-privilege.mapper.js";
+} from "@/module/staff-privilege/staff-privilege.mapper.js";
 import type {
   CreateStaffPrivilegeBody,
   ListStaffPrivilegesQuery,
   UpdateStaffPrivilegeBody,
-} from "./staff-privilege.schemas.js";
+} from "@/module/staff-privilege/staff-privilege.schemas.js";
 
 export class StaffPrivilegePgRepository {
   constructor(private readonly db: Kysely<DB>) {}
