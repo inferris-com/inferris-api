@@ -1338,8 +1338,8 @@ const seed = {
       .values([
         {
           account_id: actors.refrizor.id,
-          title: "Test",
-          description: "This is a test notification.",
+          title: "Database seeded",
+          description: "The database has been re-seeded.",
           priority: 1,
         },
       ])
