@@ -2,12 +2,12 @@ import { sql, type Kysely, type Selectable } from "kysely";
 
 import type { ArgusDmConversations, ArgusDmMessages, ArgusUsers, DB } from "@/db/types.js";
 import type { PaginatedResult } from "@/shared/pagination.schemas.js";
-import type { ArgusDmParticipantRow } from "@/module/argus/argus-dm/argus-dm.mapper.js";
+import type { ArgusDmParticipantRow } from "@/module/argus/direct-messages/argus-dm.mapper.js";
 import type {
   CreateArgusDmConversationBody,
   ListArgusDmConversationsQuery,
   UpdateArgusDmConversationBody,
-} from "@/module/argus/argus-dm/argus-dm.schemas.js";
+} from "@/module/argus/direct-messages/argus-dm.schemas.js";
 
 export class ArgusDmPgRepository {
   constructor(private readonly db: Kysely<DB>) {}

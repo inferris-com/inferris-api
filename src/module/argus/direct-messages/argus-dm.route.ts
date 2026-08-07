@@ -10,7 +10,7 @@ import type {
   ArgusDmConversationResponse,
   ArgusDmMessageResponse,
   ArgusDmUnreadCountResponse,
-} from "@/module/argus/argus-dm/argus-dm.response-types.js";
+} from "@/module/argus/direct-messages/argus-dm.response-types.js";
 import {
   argusDmConversationParamsSchema,
   type ArgusDmConversationParams,
@@ -26,11 +26,11 @@ import {
   type UpdateArgusDmConversationBody,
   updateArgusDmMessageBodySchema,
   type UpdateArgusDmMessageBody,
-} from "@/module/argus/argus-dm/argus-dm.schemas.js";
+} from "@/module/argus/direct-messages/argus-dm.schemas.js";
 import type {
   ArgusDmConversationListResponse,
   ArgusDmService,
-} from "@/module/argus/argus-dm/argus-dm.service.js";
+} from "@/module/argus/direct-messages/argus-dm.service.js";
 
 export function createArgusDmRouter(
   service: ArgusDmService,

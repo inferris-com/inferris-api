@@ -2,15 +2,15 @@ import type { PaginatedResult } from "@/shared/pagination.schemas.js";
 import {
   ArgusAlertAlreadyExistsError,
   ArgusAlertNotFoundError,
-} from "@/module/argus/argus-alert/argus-alert.errors.js";
-import { toArgusAlertResponse } from "@/module/argus/argus-alert/argus-alert.mapper.js";
-import type { ArgusAlertPgRepository } from "@/module/argus/argus-alert/argus-alert.pg-repository.js";
-import type { ArgusAlertResponse } from "@/module/argus/argus-alert/argus-alert.response-types.js";
+} from "@/module/argus/alert/argus-alert.errors.js";
+import { toArgusAlertResponse } from "@/module/argus/alert/argus-alert.mapper.js";
+import type { ArgusAlertPgRepository } from "@/module/argus/alert/argus-alert.pg-repository.js";
+import type { ArgusAlertResponse } from "@/module/argus/alert/argus-alert.response-types.js";
 import type {
   CreateArgusAlertBody,
   ListArgusAlertsQuery,
   UpdateArgusAlertBody,
-} from "@/module/argus/argus-alert/argus-alert.schemas.js";
+} from "@/module/argus/alert/argus-alert.schemas.js";
 
 export class ArgusAlertService {
   constructor(private readonly repo: ArgusAlertPgRepository) {}

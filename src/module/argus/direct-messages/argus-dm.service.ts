@@ -6,26 +6,26 @@ import {
   ArgusDmMessageNotFoundError,
   ArgusDmUserNotFoundError,
   ArgusDmValidationError,
-} from "@/module/argus/argus-dm/argus-dm.errors.js";
+} from "@/module/argus/direct-messages/argus-dm.errors.js";
 import {
   toArgusDmConversationResponse,
   toArgusDmMessageResponse,
   toArgusDmParticipantResponse,
   type ArgusDmParticipantRow,
-} from "@/module/argus/argus-dm/argus-dm.mapper.js";
-import type { ArgusDmPgRepository } from "@/module/argus/argus-dm/argus-dm.pg-repository.js";
+} from "@/module/argus/direct-messages/argus-dm.mapper.js";
+import type { ArgusDmPgRepository } from "@/module/argus/direct-messages/argus-dm.pg-repository.js";
 import type {
   ArgusDmConversationResponse,
   ArgusDmMessageResponse,
   ArgusDmParticipantResponse,
-} from "@/module/argus/argus-dm/argus-dm.response-types.js";
+} from "@/module/argus/direct-messages/argus-dm.response-types.js";
 import type {
   CreateArgusDmConversationBody,
   CreateArgusDmMessageBody,
   ListArgusDmConversationsQuery,
   UpdateArgusDmConversationBody,
   UpdateArgusDmMessageBody,
-} from "@/module/argus/argus-dm/argus-dm.schemas.js";
+} from "@/module/argus/direct-messages/argus-dm.schemas.js";
 
 export type ArgusDmConversationListResponse = {
   data: ArgusDmConversationResponse[];

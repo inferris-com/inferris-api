@@ -7,13 +7,13 @@ import {
   successResponse,
   userOrServiceSecurity,
 } from "@/openapi/openapi.helpers.js";
-import { argusAlertResponseSchema } from "@/module/argus/argus-alert/argus-alert.response-types.js";
+import { argusAlertResponseSchema } from "@/module/argus/alert/argus-alert.response-types.js";
 import {
   argusAlertParamsSchema,
   createArgusAlertBodySchema,
   listArgusAlertsQuerySchema,
   updateArgusAlertBodySchema,
-} from "@/module/argus/argus-alert/argus-alert.schemas.js";
+} from "@/module/argus/alert/argus-alert.schemas.js";
 
 export function registerArgusAlertOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

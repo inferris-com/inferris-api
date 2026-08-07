@@ -7,10 +7,10 @@ import { AccountPgRepository } from "@/module/argus/account/account.pg-repositor
 import { AccountService } from "@/module/argus/account/account.service.js";
 import { ActorPgRepository } from "@/module/actor/actor.pg-repository.js";
 import { ActorService } from "@/module/actor/actor.service.js";
-import { ArgusAlertPgRepository } from "@/module/argus/argus-alert/argus-alert.pg-repository.js";
-import { ArgusAlertService } from "@/module/argus/argus-alert/argus-alert.service.js";
-import { ArgusDmPgRepository } from "@/module/argus/argus-dm/argus-dm.pg-repository.js";
-import { ArgusDmService } from "@/module/argus/argus-dm/argus-dm.service.js";
+import { ArgusAlertPgRepository } from "@/module/argus/alert/argus-alert.pg-repository.js";
+import { ArgusAlertService } from "@/module/argus/alert/argus-alert.service.js";
+import { ArgusDmPgRepository } from "@/module/argus/direct-messages/argus-dm.pg-repository.js";
+import { ArgusDmService } from "@/module/argus/direct-messages/argus-dm.service.js";
 import { ArgusUserPgRepository } from "@/module/argus/argus-user/argus-user.pg-repository.js";
 import { ArgusUserService } from "@/module/argus/argus-user/argus-user.service.js";
 import { authenticate } from "@/module/auth/auth.middleware.js";

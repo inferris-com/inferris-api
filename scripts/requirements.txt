@@ -1,2 +1,4 @@
-dotenv
 argon2-cffi
+Faker
+psycopg[binary]
+python-dotenv

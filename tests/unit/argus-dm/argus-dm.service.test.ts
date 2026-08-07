@@ -3,8 +3,8 @@ import { describe, expect, jest, test } from "@jest/globals";
 import {
   ArgusDmForbiddenError,
   ArgusDmValidationError,
-} from "@/module/argus/argus-dm/argus-dm.errors.js";
-import { ArgusDmService } from "@/module/argus/argus-dm/argus-dm.service.js";
+} from "@/module/argus/direct-messages/argus-dm.errors.js";
+import { ArgusDmService } from "@/module/argus/direct-messages/argus-dm.service.js";
 
 const conversation = {
   id: "00000000-0000-0000-0000-00000000000c",

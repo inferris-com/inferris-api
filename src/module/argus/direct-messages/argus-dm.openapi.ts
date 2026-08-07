@@ -11,7 +11,7 @@ import {
   argusDmConversationResponseSchema,
   argusDmMessageResponseSchema,
   argusDmUnreadCountResponseSchema,
-} from "@/module/argus/argus-dm/argus-dm.response-types.js";
+} from "@/module/argus/direct-messages/argus-dm.response-types.js";
 import {
   argusDmConversationParamsSchema,
   argusDmMessageParamsSchema,
@@ -20,7 +20,7 @@ import {
   listArgusDmConversationsQuerySchema,
   updateArgusDmConversationBodySchema,
   updateArgusDmMessageBodySchema,
-} from "@/module/argus/argus-dm/argus-dm.schemas.js";
+} from "@/module/argus/direct-messages/argus-dm.schemas.js";
 
 export function registerArgusDmOpenApi(registry: OpenAPIRegistry) {
   registry.registerPath({

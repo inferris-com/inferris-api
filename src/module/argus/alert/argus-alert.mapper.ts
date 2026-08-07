@@ -2,11 +2,11 @@ import type { Insertable, Selectable, Updateable } from "kysely";
 
 import type { ArgusAlerts } from "@/db/types.js";
 import { int8ToStringOrDefault } from "@/shared/db/int8.js";
-import type { ArgusAlertResponse } from "@/module/argus/argus-alert/argus-alert.response-types.js";
+import type { ArgusAlertResponse } from "@/module/argus/alert/argus-alert.response-types.js";
 import type {
   CreateArgusAlertBody,
   UpdateArgusAlertBody,
-} from "@/module/argus/argus-alert/argus-alert.schemas.js";
+} from "@/module/argus/alert/argus-alert.schemas.js";
 
 export function toArgusAlertResponse(alert: Selectable<ArgusAlerts>): ArgusAlertResponse {
   return {

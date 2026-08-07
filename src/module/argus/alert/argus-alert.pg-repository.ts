@@ -5,12 +5,12 @@ import type { PaginatedResult } from "@/shared/pagination.schemas.js";
 import {
   toArgusAlertInsert,
   toArgusAlertUpdate,
-} from "@/module/argus/argus-alert/argus-alert.mapper.js";
+} from "@/module/argus/alert/argus-alert.mapper.js";
 import type {
   CreateArgusAlertBody,
   ListArgusAlertsQuery,
   UpdateArgusAlertBody,
-} from "@/module/argus/argus-alert/argus-alert.schemas.js";
+} from "@/module/argus/alert/argus-alert.schemas.js";
 
 export class ArgusAlertPgRepository {
   constructor(private readonly db: Kysely<DB>) {}

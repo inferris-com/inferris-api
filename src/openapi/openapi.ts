@@ -2,8 +2,8 @@ import { OpenApiGeneratorV31, OpenAPIRegistry } from "@asteasolutions/zod-to-ope
 
 import { registerActorOpenApi } from "@/module/actor/actor.openapi.js";
 import { registerAccountOpenApi } from "@/module/argus/account/account.openapi.js";
-import { registerArgusAlertOpenApi } from "@/module/argus/argus-alert/argus-alert.openapi.js";
-import { registerArgusDmOpenApi } from "@/module/argus/argus-dm/argus-dm.openapi.js";
+import { registerArgusAlertOpenApi } from "@/module/argus/alert/argus-alert.openapi.js";
+import { registerArgusDmOpenApi } from "@/module/argus/direct-messages/argus-dm.openapi.js";
 import { registerArgusUserOpenApi } from "@/module/argus/argus-user/argus-user.openapi.js";
 import { registerAuthOpenApi } from "@/module/auth/auth.openapi.js";
 import { registerAuditLogOpenApi } from "@/module/audit-log/audit-log.openapi.js";

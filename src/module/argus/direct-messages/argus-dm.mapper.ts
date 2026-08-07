@@ -7,7 +7,7 @@ import type {
   ArgusDmConversationResponse,
   ArgusDmMessageResponse,
   ArgusDmParticipantResponse,
-} from "@/module/argus/argus-dm/argus-dm.response-types.js";
+} from "@/module/argus/direct-messages/argus-dm.response-types.js";
 
 export type ArgusDmParticipantRow = {
   argus_user_id: string;

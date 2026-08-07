@@ -5,7 +5,7 @@ import type { ApiSuccess } from "@/shared/http/api-response.types.js";
 import type { PaginatedResponse } from "@/shared/pagination.schemas.js";
 import { auditMutation, authorize } from "@/module/auth/auth.middleware.js";
 import type { AuthRepository } from "@/module/auth/auth.repository.js";
-import type { ArgusAlertResponse } from "@/module/argus/argus-alert/argus-alert.response-types.js";
+import type { ArgusAlertResponse } from "@/module/argus/alert/argus-alert.response-types.js";
 import {
   argusAlertParamsSchema,
   createArgusAlertBodySchema,
@@ -15,8 +15,8 @@ import {
   type CreateArgusAlertBody,
   type ListArgusAlertsQuery,
   type UpdateArgusAlertBody,
-} from "@/module/argus/argus-alert/argus-alert.schemas.js";
-import type { ArgusAlertService } from "@/module/argus/argus-alert/argus-alert.service.js";
+} from "@/module/argus/alert/argus-alert.schemas.js";
+import type { ArgusAlertService } from "@/module/argus/alert/argus-alert.service.js";
 
 type ArgusAlertListSuccess = { data: ArgusAlertResponse[]; meta: PaginatedResponse };
 
