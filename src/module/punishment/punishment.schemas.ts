@@ -37,8 +37,16 @@ export const listPunishmentsQuerySchema = paginationQuerySchema
 
 export const createPunishmentBodySchema = z
   .object({
-    subjectActorId: z.guid().optional(),
-    subjectPlayerId: z.guid().optional(),
+    subjectActorId: z
+      .guid()
+      .optional()
+      .describe("Compatibility input: must be the user actor of an existing Minecraft player."),
+    subjectPlayerId: z
+      .guid()
+      .optional()
+      .describe(
+        "Minecraft player being punished, including an archived player. Preferred subject input.",
+      ),
     serverOriginId: z.guid().optional().nullable(),
     type: punishmentTypeSchema,
     reason: z.string().max(100).optional().nullable(),

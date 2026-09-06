@@ -1,5 +1,14 @@
 import { ConflictError, NotFoundError, ValidationError } from "@/error/app-error.js";
 
+export class InvalidPunishmentSubjectError extends ValidationError {
+  constructor() {
+    super({
+      code: "INVALID_PUNISHMENT_SUBJECT",
+      message: "Minecraft punishments must target an existing player or its user actor.",
+    });
+  }
+}
+
 export class PunishmentNotFoundError extends NotFoundError {
   constructor(punishmentId: string) {
     super({

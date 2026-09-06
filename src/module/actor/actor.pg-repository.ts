@@ -1,12 +1,10 @@
 import { type Kysely, type Selectable, sql } from "kysely";
-import type { Actors, ActorType, DB } from "@/db/types.js";
+import type { Actors, DB } from "@/db/types.js";
 import type {
   ListActorsQuery,
   SearchActorsQuery,
   UpdateActorBody,
 } from "@/module/actor/actor.schemas.js";
-import type { DeleteResult } from "@/shared/results.types.js";
-import { isForeignKeyViolation } from "@/shared/db/pg-error.utils.js";
 import type { PaginatedResult } from "@/shared/pagination.schemas.js";
 
 export class ActorPgRepository {
@@ -21,7 +19,9 @@ export class ActorPgRepository {
     return await this.db.transaction().execute(async (trx) => {
       const actors = await trx
         .selectFrom("actors")
-        .selectAll()
+        .leftJoin("players", "players.actor_id", "actors.id")
+        .selectAll("actors")
+        .select("players.id as player_id")
         .$if(name !== undefined, (qb) => qb.where("actors.name", "=", name ?? ""))
         .$if(type !== undefined, (qb) => qb.where("actors.type", "=", type ?? "unspecified"))
         .limit(limit)
@@ -94,66 +94,22 @@ export class ActorPgRepository {
     });
   }
 
-  // todo check if exists
-  async updateActorById(id: string, input: UpdateActorBody): Promise<Selectable<Actors> | null> {
-    return await this.db.transaction().execute(async (trx) => {
-      const actorUpdate: {
-        name?: string;
-        type?: ActorType;
-        created_at_ms?: string;
-        last_updated_at_ms?: string;
-      } = {};
-
-      if (input.name != undefined) {
-        actorUpdate.name = input.name;
-      }
-      if (input.type != undefined) {
-        actorUpdate.type = input.type;
-      }
-      if (input.createdAtMs != undefined) {
-        actorUpdate.created_at_ms = input.createdAtMs;
-      }
-      if (input.lastUpdatedAtMs != undefined) {
-        actorUpdate.last_updated_at_ms = input.lastUpdatedAtMs;
-      }
-
-      if (Object.keys(actorUpdate).length === 0) {
-        return null;
-      }
-
+  async updateActorById(id: string, input: UpdateActorBody) {
+    return this.db.transaction().execute(async (trx) => {
       const actor = await trx
         .updateTable("actors")
-        .set(actorUpdate)
+        .set({ name: input.name, last_updated_at_ms: sql`get_unix_ms()` })
         .where("id", "=", id)
         .returningAll()
         .executeTakeFirst();
+      if (!actor) return null;
 
-      if (actor && input.playerId != undefined) {
-        await trx
-          .updateTable("players")
-          .set({ actor_id: actor.id })
-          .where("id", "=", input.playerId)
-          .executeTakeFirst();
-      }
-
-      return actor ?? null;
-    });
-  }
-
-  // Dangerous
-  async deleteActorById(id: string): Promise<DeleteResult> {
-    return await this.db.transaction().execute(async (trx) => {
-      try {
-        const result = await trx.deleteFrom("actors").where("id", "=", id).executeTakeFirst();
-
-        if (result.numDeletedRows === 0n) {
-          return { status: "not_found" };
-        }
-      } catch (err) {
-        if (isForeignKeyViolation(err))
-          return { status: "conflict", cause: "referenced_by_other_rows" } as const;
-      }
-      return { status: "deleted" };
+      const player = await trx
+        .selectFrom("players")
+        .select("id")
+        .where("actor_id", "=", id)
+        .executeTakeFirst();
+      return { ...actor, player_id: player?.id ?? null };
     });
   }
 }

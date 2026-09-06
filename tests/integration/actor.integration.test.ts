@@ -40,4 +40,22 @@ describe("actor routes", () => {
     });
     expect(dependencies.services.actor.findActorById).not.toHaveBeenCalled();
   });
+
+  test.each([
+    { type: "system" },
+    { playerId: ids.player },
+    { createdAtMs: "1" },
+    { lastUpdatedAtMs: "1" },
+    { name: "Label", playerId: ids.player },
+    {},
+    { name: "   " },
+  ])("PATCH /actors/:actorId rejects identity mutation: %j", async (body) => {
+    const { dependencies, request } = createTestApp();
+    const response = await request
+      .patch(`/actors/${ids.actor}`)
+      .set("Authorization", "Bearer admin-token")
+      .send(body);
+    expect(response.status).toBe(400);
+    expect(dependencies.services.actor.updateActorById).not.toHaveBeenCalled();
+  });
 });

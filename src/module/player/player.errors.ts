@@ -1,5 +1,14 @@
 import { ConflictError, NotFoundError } from "@/error/app-error.js";
 
+export class PlayerUsernameConflictError extends ConflictError {
+  constructor() {
+    super({
+      code: "PLAYER_USERNAME_CONFLICT",
+      message: "That username is already associated with a different Minecraft identity.",
+    });
+  }
+}
+
 export class PlayerNotFoundError extends NotFoundError {
   readonly playerId: string;
 

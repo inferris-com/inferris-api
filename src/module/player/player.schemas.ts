@@ -152,10 +152,8 @@ export const assignPlayerNicknameBodySchema = z
 
 export const deletePlayerQuerySchema = z
   .object({
-    hard: z
-      .enum(["true", "false"])
-      .optional()
-      .transform((value) => value === "true"),
+    // Accept the old explicit soft-delete option, but never hard-delete identities.
+    hard: z.literal("false").optional(),
   })
   .strict();
 
@@ -169,7 +167,6 @@ export type SearchPlayersQuery = z.infer<typeof searchPlayersQuerySchema>;
 export type ListPlayerFlagDefinitionsQuery = z.infer<typeof listPlayerFlagDefinitionsQuerySchema>;
 export type EncodePlayerFlagsQuery = z.infer<typeof encodePlayerFlagsQuerySchema>;
 export type DecodePlayerFlagsQuery = z.infer<typeof decodePlayerFlagsQuerySchema>;
-export type DeletePlayerQuery = z.infer<typeof deletePlayerQuerySchema>;
 
 export type CreatePlayerBody = z.infer<typeof createPlayerBodySchema>;
 export type CreatePlayerBadgeAssignmentBody = z.infer<typeof createPlayerBadgeAssignmentBodySchema>;

@@ -68,10 +68,6 @@ export type CreatePlayerResult =
   | { status: "created"; player: PlayerDetailsRecord }
   | { status: "player_exists" };
 
-export type DeletePlayerOptions = {
-  hard: boolean;
-};
-
 // Rank assignments
 export type PlayerRankRow = Selectable<PlayerRanks>;
 export type PlayerBadgeRow = Selectable<PlayerBadges>;
@@ -82,6 +78,6 @@ export interface PlayerRepository {
   findPlayerById(id: string): Promise<PlayerDetailsRecord | null>;
   createPlayer(input: CreatePlayerBody): Promise<CreatePlayerResult>;
   updatePlayer(id: string, input: UpdatePlayerBody): Promise<PlayerDetailsRecord | null>;
-  deletePlayer(id: string, options: DeletePlayerOptions): Promise<boolean>;
+  deletePlayer(id: string): Promise<boolean>;
 }
 export class PlayerRanksRecord {}

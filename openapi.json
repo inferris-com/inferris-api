@@ -4083,7 +4083,7 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 32
+              "maxLength": 100
             },
             "required": false,
             "name": "name",
@@ -4202,7 +4202,7 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 64
+              "maxLength": 100
             },
             "required": true,
             "name": "q",
@@ -4396,7 +4396,8 @@
             "apiKeyAuth": []
           }
         ],
-        "summary": "Update an actor",
+        "summary": "Update an actor display label",
+        "description": "Changes only the nullable display label. Actor kind, identity links, and timestamps are server-managed.",
         "operationId": "updateActor",
         "parameters": [
           {
@@ -4419,32 +4420,14 @@
                     "type": [
                       "string",
                       "null"
-                    ]
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "system",
-                      "application",
-                      "user",
-                      "unspecified"
-                    ]
-                  },
-                  "playerId": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "createdAtMs": {
-                    "type": "string",
-                    "pattern": "^-?\\d+$"
-                  },
-                  "lastUpdatedAtMs": {
-                    "type": "string",
-                    "pattern": "^-?\\d+$"
+                    ],
+                    "minLength": 1,
+                    "maxLength": 100
                   }
                 },
+                "required": [
+                  "name"
+                ],
                 "additionalProperties": false
               }
             }
@@ -8275,7 +8258,8 @@
             "apiKeyAuth": []
           }
         ],
-        "summary": "Create a player",
+        "summary": "Create or restore a player",
+        "description": "An archived Mojang identity is restored with the same player and actor IDs. Restoration preserves gameplay state and ignores supplied creation IDs and gameplay defaults.",
         "operationId": "createPlayer",
         "requestBody": {
           "required": true,
@@ -9140,7 +9124,8 @@
             "apiKeyAuth": []
           }
         ],
-        "summary": "Delete a player",
+        "summary": "Archive a player",
+        "description": "Preserves identity, profile, ranks, badges, gameplay state, and moderation history. A subsequent connection or creation with the same Mojang ID restores the archive. Hard deletion is not supported.",
         "operationId": "deletePlayer",
         "parameters": [
           {
@@ -9155,7 +9140,6 @@
             "schema": {
               "type": "string",
               "enum": [
-                "true",
                 "false"
               ]
             },
@@ -14824,10 +14808,12 @@
                 "type": "object",
                 "properties": {
                   "subjectActorId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Compatibility input: must be the user actor of an existing Minecraft player."
                   },
                   "subjectPlayerId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Minecraft player being punished, including an archived player. Preferred subject input."
                   },
                   "serverOriginId": {
                     "type": [

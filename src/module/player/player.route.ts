@@ -20,7 +20,6 @@ import {
   type CreatePlayerBadgeAssignmentBody,
   type AssignPlayerNicknameBody,
   type DecodePlayerFlagsQuery,
-  type DeletePlayerQuery,
   type EncodePlayerFlagsQuery,
   type ListPlayersQuery,
   type ListPlayerFlagDefinitionsQuery,
@@ -264,9 +263,7 @@ export function createPlayerRouter(service: PlayerService, authRepository: AuthR
   };
 
   const deletePlayer: RequestHandler<PlayerIdParams> = async (req, res) => {
-    const query = req.query as unknown as DeletePlayerQuery;
-
-    await service.deletePlayer(req.params.playerId, { hard: query.hard });
+    await service.deletePlayer(req.params.playerId);
     res.status(204).send();
   };
 

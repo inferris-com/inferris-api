@@ -17,3 +17,8 @@ It is an Express RESTful API written in TypeScript (Node 24).
 - `npm run lint` - lint the project.
 - `npm run format` - format files with Prettier.
 - `npm test` - run Node's built-in test runner.
+
+## Domain documentation
+
+- [Actors and domain boundaries](docs/actors-and-domain-boundaries.md)
+- [Authentication and authorization](docs/authentication-and-authorization.md)

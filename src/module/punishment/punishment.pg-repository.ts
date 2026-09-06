@@ -127,11 +127,18 @@ export class PunishmentPgRepository {
     );
   }
 
-  async findActorIdByPlayerId(playerId: string): Promise<string | null> {
+  async findSubjectActorId(
+    input: Pick<CreatePunishmentBody, "subjectPlayerId" | "subjectActorId">,
+  ): Promise<string | null> {
+    const subjectId = input.subjectPlayerId ?? input.subjectActorId;
+    if (!subjectId) return null;
+
     const row = await this.db
       .selectFrom("players")
-      .select("actor_id")
-      .where("id", "=", playerId)
+      .innerJoin("actors", "actors.id", "players.actor_id")
+      .select("players.actor_id")
+      .where("actors.type", "=", "user")
+      .where(input.subjectPlayerId ? "players.id" : "actors.id", "=", subjectId)
       .executeTakeFirst();
 
     return row?.actor_id ?? null;

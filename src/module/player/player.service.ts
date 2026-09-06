@@ -4,6 +4,7 @@ import {
   PlayerNicknameConflictError,
   PlayerNicknameNotFoundError,
   PlayerNotFoundError,
+  PlayerUsernameConflictError,
   RankNotFoundError,
 } from "@/module/player/player.errors.js";
 import {
@@ -23,7 +24,6 @@ import {
   toPlayerSearchResultResponse,
   toPlayerSummaryResponse,
 } from "@/module/player/player.mapper.js";
-import type { DeletePlayerOptions } from "@/module/player/player.repository.js";
 import type {
   PlayerBadgeAssignmentResponse,
   PlayerNicknameResponse,
@@ -48,6 +48,7 @@ import type {
 } from "@/module/player/player.schemas.js";
 import type { PlayerPgRepository } from "@/module/player/player.pg-repository.js";
 import { ValidationError } from "@/error/app-error.js";
+import { isPgErrorCode, PgErrorCode } from "@/shared/db/pg-error.utils.js";
 
 export class PlayerService {
   constructor(private readonly repository: PlayerPgRepository) {}
@@ -128,7 +129,7 @@ export class PlayerService {
   }
 
   async createPlayer(input: CreatePlayerBody): Promise<PlayerResponse> {
-    const result = await this.repository.createPlayer(input);
+    const result = await this.repository.createPlayer(input).catch(rethrowIdentityConflict);
 
     if (result.status === "player_exists") {
       throw new PlayerAlreadyExistsError(input.mojangId);
@@ -142,7 +143,7 @@ export class PlayerService {
     username: string;
     serverId: string;
   }) {
-    return this.repository.ensureMinecraftPlayerIdentity(input);
+    return this.repository.ensureMinecraftPlayerIdentity(input).catch(rethrowIdentityConflict);
   }
 
   async getPlayerIdentityByMojangId(mojangId: string) {
@@ -160,7 +161,7 @@ export class PlayerService {
   }
 
   async updatePlayer(id: string, input: UpdatePlayerBody): Promise<PlayerResponse> {
-    const player = await this.repository.updatePlayer(id, input);
+    const player = await this.repository.updatePlayer(id, input).catch(rethrowIdentityConflict);
 
     if (!player) {
       throw new PlayerNotFoundError(id);
@@ -267,8 +268,8 @@ export class PlayerService {
     return toPlayerNicknameResponse(result.nickname);
   }
 
-  async deletePlayer(id: string, options: DeletePlayerOptions): Promise<void> {
-    const deleted = await this.repository.deletePlayer(id, options);
+  async deletePlayer(id: string): Promise<void> {
+    const deleted = await this.repository.deletePlayer(id);
 
     if (!deleted) {
       throw new PlayerNotFoundError(id);
@@ -294,4 +295,14 @@ export class PlayerService {
       throw new BadgeNotFoundError(badgeId);
     }
   }
+}
+
+function rethrowIdentityConflict(error: unknown): never {
+  if (
+    isPgErrorCode(error, PgErrorCode.UniqueViolation) &&
+    error.constraint === "players_username_key"
+  ) {
+    throw new PlayerUsernameConflictError();
+  }
+  throw error;
 }

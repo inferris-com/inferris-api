@@ -236,4 +236,25 @@ describe("player routes", () => {
     });
     expect(dependencies.services.player.updateRankAssignment).not.toHaveBeenCalled();
   });
+
+  test("DELETE /players/:playerId rejects hard deletion", async () => {
+    const { dependencies, request } = createTestApp();
+    const response = await request
+      .delete(`/players/${ids.player}?hard=true`)
+      .set("Authorization", "Bearer admin-token");
+    expect(response.status).toBe(400);
+    expect(dependencies.services.player.deletePlayer).not.toHaveBeenCalled();
+  });
+
+  test.each(["", "?hard=false"])(
+    "DELETE /players/:playerId%s archives the player",
+    async (query) => {
+      const { dependencies, request } = createTestApp();
+      const response = await request
+        .delete(`/players/${ids.player}${query}`)
+        .set("Authorization", "Bearer admin-token");
+      expect(response.status).toBe(204);
+      expect(dependencies.services.player.deletePlayer).toHaveBeenCalledWith(ids.player);
+    },
+  );
 });

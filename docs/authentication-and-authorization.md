@@ -132,6 +132,13 @@ key as the principal authority while borrowing the resolved `actorId`, privilege
 Minecraft session details from the Minecraft session. This supports trusted server-plugin
 workflows that need both service authority and the currently resolved player actor.
 
+## Actors and domain identity
+
+Actors provide stable attribution independently of player and Argus account lifecycles.
+Actor identity and labels do not grant permissions or prove account ownership. See
+[Actors and domain boundaries](actors-and-domain-boundaries.md) for identity linking, player
+archival, moderation subjects, and middleware responsibilities.
+
 ## Auth Context
 
 Authenticated requests receive `req.auth`, shaped by `AuthContext` in

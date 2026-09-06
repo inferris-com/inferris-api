@@ -169,7 +169,9 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     path: "/players",
     tags: ["Players"],
     security: userOrServiceSecurity,
-    summary: "Create a player",
+    summary: "Create or restore a player",
+    description:
+      "An archived Mojang identity is restored with the same player and actor IDs. Restoration preserves gameplay state and ignores supplied creation IDs and gameplay defaults.",
     operationId: "createPlayer",
     request: {
       body: { required: true, content: { "application/json": jsonBody(createPlayerBodySchema) } },
@@ -276,7 +278,9 @@ export function registerPlayerOpenApi(registry: OpenAPIRegistry) {
     path: "/players/{playerId}",
     tags: ["Players"],
     security: userOrServiceSecurity,
-    summary: "Delete a player",
+    summary: "Archive a player",
+    description:
+      "Preserves identity, profile, ranks, badges, gameplay state, and moderation history. A subsequent connection or creation with the same Mojang ID restores the archive. Hard deletion is not supported.",
     operationId: "deletePlayer",
     request: { params: playerIdParamsSchema, query: deletePlayerQuerySchema },
     responses: { "204": noContentResponse, ...standardErrorResponses },

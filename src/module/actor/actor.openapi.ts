@@ -66,7 +66,9 @@ export function registerActorOpenApi(registry: OpenAPIRegistry) {
     path: "/actors/{actorId}",
     tags: ["Actors"],
     security: userOrServiceSecurity,
-    summary: "Update an actor",
+    summary: "Update an actor display label",
+    description:
+      "Changes only the nullable display label. Actor kind, identity links, and timestamps are server-managed.",
     operationId: "updateActor",
     request: {
       params: actorIdParamsSchema,

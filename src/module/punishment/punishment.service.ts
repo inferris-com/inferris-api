@@ -4,6 +4,7 @@ import { PgErrorCode, isPgErrorCode } from "@/shared/db/pg-error.utils.js";
 import {
   ActivePunishmentConflictError,
   InvalidPunishmentDurationError,
+  InvalidPunishmentSubjectError,
   PunishmentAlreadyRevokedError,
   PunishmentNotFoundError,
 } from "@/module/punishment/punishment.errors.js";
@@ -77,8 +78,8 @@ export class PunishmentService {
   ): Promise<PunishmentResponse> {
     this.validateDuration(input);
 
-    const subjectActorId =
-      input.subjectActorId ?? (await this.resolveSubjectActorId(input.subjectPlayerId));
+    const subjectActorId = await this.repo.findSubjectActorId(input);
+    if (!subjectActorId) throw new InvalidPunishmentSubjectError();
 
     await this.expirePunishments(subjectActorId, input.type);
     if (
@@ -159,20 +160,6 @@ export class PunishmentService {
     });
 
     return response;
-  }
-
-  private async resolveSubjectActorId(subjectPlayerId: string | undefined): Promise<string> {
-    if (!subjectPlayerId) {
-      throw new PunishmentNotFoundError("unknown");
-    }
-
-    const actorId = await this.repo.findActorIdByPlayerId(subjectPlayerId);
-
-    if (!actorId) {
-      throw new PunishmentNotFoundError(subjectPlayerId);
-    }
-
-    return actorId;
   }
 
   private validateDuration(input: CreatePunishmentBody): void {

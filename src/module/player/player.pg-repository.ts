@@ -4,7 +4,6 @@ import type { DB } from "@/db/types.js";
 import type { PlayerFlagDefinition } from "@/module/player/player-flags.js";
 import type {
   CreatePlayerResult,
-  DeletePlayerOptions,
   PlayerDetailsRecord,
   PlayerProfileRow,
   PlayerRepository,
@@ -131,85 +130,55 @@ export class PlayerPgRepository implements PlayerRepository {
 
   async createPlayer(input: CreatePlayerBody): Promise<CreatePlayerResult> {
     return this.db.transaction().execute(async (trx) => {
-      const { username, flags, chatChannel } = input;
-
-      const existingPlayer = await trx
+      // Mojang IDs establish Minecraft identity. Names never link identities.
+      const existing = await trx
         .selectFrom("players")
         .select(["id", "deleted_at_ms"])
         .where("mojang_id", "=", input.mojangId)
+        .forUpdate()
         .executeTakeFirst();
 
-      if (existingPlayer && existingPlayer.deleted_at_ms === null) {
+      if (existing && existing.deleted_at_ms === null) {
         return { status: "player_exists" };
       }
 
-      const existingActor = await trx
-        .selectFrom("actors")
-        .select("id")
-        .where("name", "=", username)
-        .executeTakeFirst();
-
-      const actor =
-        existingActor ??
-        (await trx
-          .insertInto("actors")
-          .values({ name: username, type: "user" })
-          .returning("id")
-          .executeTakeFirstOrThrow());
-
-      const playerInsert: {
-        id?: string;
-        mojang_id: string;
-        actor_id: string;
-        username: string;
-        flags: string;
-        orbs?: string;
-        active_channel_key: CreatePlayerBody["chatChannel"];
-      } = {
-        ...(input.id ? { id: input.id } : {}),
-        mojang_id: input.mojangId,
-        actor_id: actor.id,
-        username,
-        flags,
-        active_channel_key: chatChannel,
-      };
-
-      if (input.orbs !== undefined) {
-        playerInsert.orbs = input.orbs;
-      }
-
-      if (existingPlayer) {
+      if (existing) {
+        // Restoring an archive preserves its IDs and gameplay state. Supplied creation
+        // defaults must not reset balances, flags, or channel preferences.
         await trx
           .updateTable("players")
-          .set({
-            ...playerInsert,
-            deleted_at_ms: null,
-            deleted_reason: null,
-          })
-          .where("id", "=", existingPlayer.id)
+          .set({ username: input.username, deleted_at_ms: null, deleted_reason: null })
+          .where("id", "=", existing.id)
           .executeTakeFirstOrThrow();
-      } else {
-        await trx.insertInto("players").values(playerInsert).executeTakeFirstOrThrow();
+        await trx
+          .insertInto("player_profiles")
+          .values({ player_id: existing.id })
+          .onConflict((oc) => oc.column("player_id").doNothing())
+          .execute();
+        return { status: "created", player: await this.loadPlayerDetailsOrThrow(trx, existing.id) };
       }
 
-      const playerId =
-        existingPlayer?.id ??
-        input.id ??
-        (
-          await trx
-            .selectFrom("players")
-            .select("id")
-            .where("mojang_id", "=", input.mojangId)
-            .executeTakeFirstOrThrow()
-        ).id;
-
-      await trx
-        .insertInto("player_profiles")
-        .values({ player_id: playerId })
-        .onConflict((oc) => oc.column("player_id").doNothing())
+      const actor = await trx
+        .insertInto("actors")
+        .values({ name: input.username, type: "user" })
+        .returning("id")
         .executeTakeFirstOrThrow();
+      const player = await trx
+        .insertInto("players")
+        .values({
+          ...(input.id ? { id: input.id } : {}),
+          mojang_id: input.mojangId,
+          actor_id: actor.id,
+          username: input.username,
+          flags: input.flags,
+          ...(input.orbs !== undefined ? { orbs: input.orbs } : {}),
+          active_channel_key: input.chatChannel,
+        })
+        .returning("id")
+        .executeTakeFirstOrThrow();
+      await trx.insertInto("player_profiles").values({ player_id: player.id }).execute();
 
-      return { status: "created", player: await this.loadPlayerDetailsOrThrow(trx, playerId) };
+      return { status: "created", player: await this.loadPlayerDetailsOrThrow(trx, player.id) };
     });
   }
 
@@ -223,6 +192,7 @@ export class PlayerPgRepository implements PlayerRepository {
         .selectFrom("players")
         .select(["id", "mojang_id", "actor_id", "username"])
         .where("mojang_id", "=", input.mojangId)
+        .forUpdate()
         .executeTakeFirst();
 
       if (existing) {
@@ -237,71 +207,20 @@ export class PlayerPgRepository implements PlayerRepository {
           })
           .where("id", "=", existing.id)
           .execute();
-
         await trx
-          .updateTable("actors")
-          .set({ name: input.username, type: "user" })
-          .where("id", "=", existing.actor_id)
+          .insertInto("player_profiles")
+          .values({ player_id: existing.id })
+          .onConflict((oc) => oc.column("player_id").doNothing())
           .execute();
 
         return { ...existing, username: input.username };
       }
 
-      const existingActor = await trx
-        .selectFrom("actors")
-        .select("id")
-        .where("name", "=", input.username)
-        .executeTakeFirst();
-
-      if (existingActor) {
-        const playerForActor = await trx
-          .selectFrom("players")
-          .select(["id", "mojang_id", "actor_id", "username"])
-          .where("actor_id", "=", existingActor.id)
-          .executeTakeFirst();
-
-        if (playerForActor) {
-          await trx
-            .updateTable("players")
-            .set({
-              mojang_id: input.mojangId,
-              username: input.username,
-              last_seen_at_ms: sql`get_unix_ms()`,
-              last_server_id: input.serverId,
-              deleted_at_ms: null,
-              deleted_reason: null,
-            })
-            .where("id", "=", playerForActor.id)
-            .execute();
-
-          await trx
-            .updateTable("actors")
-            .set({ type: "user" })
-            .where("id", "=", existingActor.id)
-            .execute();
-
-          await trx
-            .insertInto("player_profiles")
-            .values({ player_id: playerForActor.id })
-            .onConflict((oc) => oc.column("player_id").doNothing())
-            .execute();
-
-          return {
-            ...playerForActor,
-            mojang_id: input.mojangId,
-            username: input.username,
-          };
-        }
-      }
-
-      const actor =
-        existingActor ??
-        (await trx
-          .insertInto("actors")
-          .values({ name: input.username, type: "user" })
-          .returning("id")
-          .executeTakeFirstOrThrow());
-
+      const actor = await trx
+        .insertInto("actors")
+        .values({ name: input.username, type: "user" })
+        .returning("id")
+        .executeTakeFirstOrThrow();
       const player = await trx
         .insertInto("players")
         .values({
@@ -314,12 +233,7 @@ export class PlayerPgRepository implements PlayerRepository {
         })
         .returning(["id", "mojang_id", "actor_id", "username"])
         .executeTakeFirstOrThrow();
-
-      await trx
-        .insertInto("player_profiles")
-        .values({ player_id: player.id })
-        .onConflict((oc) => oc.column("player_id").doNothing())
-        .execute();
+      await trx.insertInto("player_profiles").values({ player_id: player.id }).execute();
 
       return player;
     });
@@ -338,7 +252,7 @@ export class PlayerPgRepository implements PlayerRepository {
     return this.db.transaction().execute(async (trx) => {
       const playerExists = await trx
         .selectFrom("players")
-        .select(["id", "actor_id"])
+        .select("id")
         .where("id", "=", id)
         .where("deleted_at_ms", "is", null)
         .executeTakeFirst();
@@ -356,13 +270,6 @@ export class PlayerPgRepository implements PlayerRepository {
 
       if (input.username !== undefined) {
         playerUpdate.username = input.username;
-
-        await trx
-          .updateTable("actors")
-          .set({ name: input.username })
-          .where("id", "=", playerExists.actor_id)
-          .where("type", "=", "user")
-          .execute();
       }
 
       if (input.flags !== undefined) {
@@ -634,35 +541,15 @@ export class PlayerPgRepository implements PlayerRepository {
     });
   }
 
-  async deletePlayer(id: string, { hard }: DeletePlayerOptions): Promise<boolean> {
-    if (hard) {
-      const result = await this.db.deleteFrom("players").where("id", "=", id).executeTakeFirst();
-      return result.numDeletedRows > 0n;
-    }
+  async deletePlayer(id: string): Promise<boolean> {
+    const result = await this.db
+      .updateTable("players")
+      .set({ deleted_at_ms: sql`get_unix_ms()`, deleted_reason: "api_delete" })
+      .where("id", "=", id)
+      .where("deleted_at_ms", "is", null)
+      .executeTakeFirst();
 
-    return this.db.transaction().execute(async (trx) => {
-      const result = await trx
-        .updateTable("players")
-        .set({
-          deleted_at_ms: sql`get_unix_ms()`,
-          deleted_reason: "api_delete",
-        })
-        .where("id", "=", id)
-        .where("deleted_at_ms", "is", null)
-        .executeTakeFirst();
-
-      if (result.numUpdatedRows === 0n) {
-        return false;
-      }
-
-      await Promise.all([
-        trx.deleteFrom("player_badges").where("player_id", "=", id).execute(),
-        trx.deleteFrom("player_ranks").where("player_id", "=", id).execute(),
-        trx.deleteFrom("player_profiles").where("player_id", "=", id).execute(),
-      ]);
-
-      return true;
-    });
+    return result.numUpdatedRows > 0n;
   }
 
   async deleteRankAssignment(
