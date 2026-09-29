@@ -37,6 +37,9 @@ network-wide person. Future Discord identities must be linked explicitly, never 
   label's update time. There is no public actor deletion or identity-relinking endpoint.
 - Actor lookup, search, list, and patch responses expose the linked player ID, including for
   archived players, so attribution can still be navigated.
+- An Argus account may exist without an actor link, but a linked actor can back at most one Argus
+  account. The account ID and actor ID remain distinct identities even when they refer to the same
+  human.
 
 Minecraft usernames remain unique in the current schema. If a new Mojang identity presents a
 username still stored against another player, the operation returns `409 PLAYER_USERNAME_CONFLICT`
@@ -110,6 +113,10 @@ Apply pending migrations with `npm run db:migrate`. Migration
 `20260906000000_actor_display_labels` removes only the unique actor-name constraint; it does not
 rewrite identities or historical records. Rollback restores uniqueness and fails if duplicate
 labels exist, allowing an operator to resolve the conflict without silently renaming records.
+
+Migration `20260929000000_unique_argus_actor` keeps `argus_users.actor_id` nullable but makes
+non-null links unique. Existing duplicate links cause migration failure so operators can reconcile the
+accounts explicitly rather than silently merging or unlinking identities.
 
 The database regression suite creates and drops a disposable schema in an explicitly supplied
 PostgreSQL database. It tests actual migrations and repositories without reading existing users

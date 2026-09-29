@@ -6,6 +6,7 @@ import { Pool } from "pg";
 import type { DB } from "@/db/types.js";
 import { up as createTables } from "@/db/migrations/20260506000000_create_dev_tables.js";
 import { up as allowDisplayLabels } from "@/db/migrations/20260906000000_actor_display_labels.js";
+import { up as enforceUniqueArgusActor } from "@/db/migrations/20260929000000_unique_argus_actor.js";
 import { ActorPgRepository } from "@/module/actor/actor.pg-repository.js";
 import { PlayerPgRepository } from "@/module/player/player.pg-repository.js";
 import { PlayerService } from "@/module/player/player.service.js";
@@ -45,6 +46,7 @@ databaseTests("actor and player identity (PostgreSQL)", () => {
     db = migrationDb.withTables<{ [Table in keyof DB]: DB[Table] }>();
     await createTables(migrationDb);
     await allowDisplayLabels(migrationDb);
+    await enforceUniqueArgusActor(migrationDb);
     await db.insertInto("chat_channels").values({ key: "global" }).execute();
     await db.insertInto("groups").values({ key: "test", label: "Test" }).execute();
     await db
@@ -279,7 +281,54 @@ databaseTests("actor and player identity (PostgreSQL)", () => {
     });
   });
 
-  test("migration changes only label uniqueness", async () => {
+  test("an actor can back at most one Argus account while unlinked accounts remain valid", async () => {
+    const actor = await db
+      .insertInto("actors")
+      .values({ name: "Argus staff", type: "user" })
+      .returning("id")
+      .executeTakeFirstOrThrow();
+
+    await db
+      .insertInto("argus_users")
+      .values({
+        username: "argus-one",
+        email: "argus-one@example.com",
+        role: "moderator",
+        actor_id: actor.id,
+      })
+      .execute();
+
+    await expect(
+      db
+        .insertInto("argus_users")
+        .values({
+          username: "argus-two",
+          email: "argus-two@example.com",
+          role: "moderator",
+          actor_id: actor.id,
+        })
+        .execute(),
+    ).rejects.toMatchObject({ code: "23505" });
+
+    await db
+      .insertInto("argus_users")
+      .values([
+        {
+          username: "argus-unlinked-one",
+          email: "argus-unlinked-one@example.com",
+          role: "moderator",
+          actor_id: null,
+        },
+        {
+          username: "argus-unlinked-two",
+          email: "argus-unlinked-two@example.com",
+          role: "moderator",
+          actor_id: null,
+        },
+      ])
+      .execute();
+  });
+  test("actor display-label migration preserves player identity constraints", async () => {
     const constraints = await sql<{ constraint_name: string }>`
       SELECT constraint_name FROM information_schema.table_constraints
       WHERE table_schema = ${schema} AND table_name = 'players' AND constraint_type = 'UNIQUE'

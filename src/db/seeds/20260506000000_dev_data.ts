@@ -33,6 +33,10 @@ const ids = {
     refrizor: "7d16b15d-bb22-4a6d-80db-6213b3d75007",
   },
 
+  argusUsers: {
+    refrizor: "60000000-0000-0000-0000-000000000001",
+  },
+
   players: {
     dummy: "00000000-0000-0000-0000-000000000003",
     moderatorDummy: "00000000-0000-0000-0000-000000000004",
@@ -1294,7 +1298,7 @@ const seed = {
       .insertInto("argus_users")
       .values([
         {
-          id: ids.actors.refrizor,
+          id: ids.argusUsers.refrizor,
           actor_id: ids.actors.refrizor,
           username: "Refrizor",
           email: "azzy@inferris.com",
@@ -1337,7 +1341,7 @@ const seed = {
       .insertInto("argus_notifications")
       .values([
         {
-          account_id: actors.refrizor.id,
+          account_id: ids.argusUsers.refrizor,
           title: "Database seeded",
           description: "The database has been re-seeded.",
           priority: 1,
