@@ -1,4 +1,5 @@
 export enum PgErrorCode {
+  RestrictViolation = "23001",
   ForeignKeyViolation = "23503",
   UniqueViolation = "23505",
   NotNullViolation = "23502",

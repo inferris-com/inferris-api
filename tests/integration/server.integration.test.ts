@@ -4,6 +4,65 @@ import { ServerNotFoundError } from "@/module/server/server.errors.js";
 import { createTestApp, ids } from "@tests/integration/app-test-utils.js";
 
 describe("server and lockdown routes", () => {
+  test("malformed JSON returns the validation envelope", async () => {
+    const { request } = createTestApp();
+    const response = await request
+      .post("/servers")
+      .set("Content-Type", "application/json")
+      .send('{"name":');
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({ error: { code: "VALIDATION_ERROR" } });
+  });
+
+  test.each([
+    { mode: "open", requiredPermissionId: null, requiredRankKey: "admin" },
+    { mode: "permission", requiredPermissionId: null, requiredRankKey: null },
+    { mode: "min_rank", requiredPermissionId: null, requiredRankKey: null },
+  ])("PUT access rejects inconsistent requirements: $mode", async (body) => {
+    const { dependencies, request } = createTestApp();
+    const response = await request
+      .put(`/servers/${ids.server}/access`)
+      .set("Authorization", "ApiKey service-actor-token")
+      .send({ ...body, note: null });
+    expect(response.status).toBe(400);
+    expect(dependencies.services.server.updateAccessPolicy).not.toHaveBeenCalled();
+  });
+
+  test("PUT access accepts the GUID format used by seeded permissions", async () => {
+    const { dependencies, request } = createTestApp();
+    const body = {
+      mode: "permission",
+      requiredPermissionId: "00000000-0000-0000-0000-000000000001",
+      requiredRankKey: null,
+      note: null,
+    };
+    dependencies.services.server.updateAccessPolicy.mockResolvedValue(body);
+    const response = await request
+      .put(`/servers/${ids.server}/access`)
+      .set("Authorization", "ApiKey service-actor-token")
+      .send(body);
+    expect(response.status).toBe(200);
+    expect(dependencies.services.server.updateAccessPolicy).toHaveBeenCalledWith(ids.server, body);
+  });
+
+  test.each([
+    { startsAtMs: "2000", endsAtMs: "1000" },
+    { startsAtMs: "not-a-time", endsAtMs: "1000" },
+    { startsAtMs: "2000", endsAtMs: "not-a-time" },
+  ])("POST lockdown rejects invalid times: $startsAtMs to $endsAtMs", async (times) => {
+    const { dependencies, request } = createTestApp();
+    const response = await request
+      .post(`/servers/${ids.server}/lockdown`)
+      .set("Authorization", "Bearer moderator-token")
+      .send({
+        scope: "local",
+        requiredRankKey: "moderator",
+        reason: "Maintenance",
+        ...times,
+      });
+    expect(response.status).toBe(400);
+    expect(dependencies.services.server.createLockdown).not.toHaveBeenCalled();
+  });
   test("GET /servers returns list envelope for plugin cache warmup", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.server.listServers.mockResolvedValue([

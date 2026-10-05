@@ -17,7 +17,7 @@ export const serverPlayerSummaryResponseSchema = z
 
 export const serverResponseSchema = z
   .object({
-    id: z.string().uuid(),
+    id: z.guid(),
     name: z.string(),
     type: z.string(),
     environment: z.string(),
@@ -30,9 +30,9 @@ export const serverResponseSchema = z
 
 export const accessResponseSchema = z
   .object({
-    id: z.string().uuid(),
+    id: z.guid(),
     mode: z.string(),
-    requiredPermissionId: z.string().uuid().nullable(),
+    requiredPermissionId: z.guid().nullable(),
     requiredRankKey: z.string().nullable(),
     note: z.string().nullable(),
     createdAtMs: z.string(),
@@ -42,12 +42,12 @@ export const accessResponseSchema = z
 
 export const lockdownResponseSchema = z
   .object({
-    id: z.string().uuid(),
+    id: z.string().regex(/^\d+$/),
     scope: z.string(),
-    serverId: z.string().uuid().nullable(),
+    serverId: z.guid().nullable(),
     requiredRankKey: z.string(),
     reason: z.string(),
-    issuedByActorId: z.string().uuid(),
+    issuedByActorId: z.guid(),
     isActive: z.boolean(),
     startedAtMs: z.string(),
     endsAtMs: z.string().nullable(),

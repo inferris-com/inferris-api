@@ -38,13 +38,24 @@ export const createServerBodySchema = z
 export const createLockdownBodySchema = z
   .object({
     scope: lockdownScopeTypeSchema,
-    requiredRankKey: z.string().max(30),
+    requiredRankKey: z.string().min(1).max(30),
     reason: z.string(),
     isActive: z.boolean().optional().default(true),
     startsAtMs: BigIntStringSchema,
     endsAtMs: BigIntStringSchema.optional().nullable(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (body) =>
+      body.endsAtMs == null ||
+      !/^-?\d+$/.test(body.startsAtMs) ||
+      !/^-?\d+$/.test(body.endsAtMs) ||
+      BigInt(body.endsAtMs) >= BigInt(body.startsAtMs),
+    {
+      message: "Lockdown end must be at or after its start.",
+      path: ["endsAtMs"],
+    },
+  );
 
 export const createPlayerSessionBodySchema = z
   .object({
@@ -88,11 +99,31 @@ export const serverHeartbeatBodySchema = z
 export const replaceServerAccessBodySchema = z
   .object({
     mode: serverAccessTypeSchema,
-    requiredPermissionId: z.uuid().nullable(),
-    requiredRankKey: z.string().max(30).nullable(),
+    requiredPermissionId: z.guid().nullable(),
+    requiredRankKey: z.string().min(1).max(30).nullable(),
     note: z.string().nullable(),
   })
-  .strict();
+  .strict()
+  .superRefine((body, ctx) => {
+    const valid =
+      (body.mode === "open" &&
+        body.requiredPermissionId === null &&
+        body.requiredRankKey === null) ||
+      (body.mode === "permission" &&
+        body.requiredPermissionId !== null &&
+        body.requiredRankKey === null) ||
+      (body.mode === "min_rank" &&
+        body.requiredRankKey !== null &&
+        body.requiredPermissionId === null);
+    if (!valid) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["mode"],
+        message:
+          "Open access requires no requirement; permission and min_rank require only their corresponding requirement.",
+      });
+    }
+  });
 
 // PATCH
 export const updateServerBodySchema = z
@@ -116,7 +147,7 @@ export const updateServerBodySchema = z
 export const updateLockdownBodySchema = z
   .object({
     scope: lockdownScopeTypeSchema.optional(),
-    requiredRankKey: z.string().max(30).optional(),
+    requiredRankKey: z.string().min(1).max(30).optional(),
     reason: z.string().optional(),
     isActive: z.boolean().optional(),
     startsAtMs: BigIntStringSchema.optional(),

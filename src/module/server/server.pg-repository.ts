@@ -20,8 +20,10 @@ import type {
 import type { CreateResult, DeleteResult } from "@/shared/results.types.js";
 import {
   toServerAccessPolicyUpdate,
+  toServerLockdownUpdate,
   type ServerWithPresence,
 } from "@/module/server/server.mapper.js";
+import { ValidationError } from "@/error/app-error.js";
 
 export type CreateServerResult = CreateResult<Selectable<Servers>>;
 export type CreateLockdownResult = CreateResult<Selectable<Lockdowns>>;
@@ -472,6 +474,11 @@ export class ServerPgRepository {
 
       if (!server) return { status: "conflict" };
 
+      await trx
+        .insertInto("server_access_policies")
+        .values({ server_id: server.id, mode: "open" })
+        .execute();
+
       return { status: "created", data: server };
     });
   }
@@ -492,7 +499,7 @@ export class ServerPgRepository {
       const lockdown = await trx
         .insertInto("lockdowns")
         .values({
-          server_id: serverId,
+          server_id: scope === "global" ? null : serverId,
           scope: scope,
           reason: reason,
           issued_by_actor_id: issuedByActorId,
@@ -591,6 +598,7 @@ export class ServerPgRepository {
         .selectFrom("servers")
         .selectAll()
         .where("id", "=", serverId)
+        .forUpdate()
         .executeTakeFirst();
 
       if (!serverExists) {
@@ -598,9 +606,17 @@ export class ServerPgRepository {
       }
 
       return await trx
-        .updateTable("server_access_policies")
-        .set(mappedInput)
-        .where("server_id", "=", serverId)
+        .insertInto("server_access_policies")
+        .values({
+          server_id: serverId,
+          mode: input.mode,
+          required_permission_id: input.requiredPermissionId,
+          required_rank_key: input.requiredRankKey,
+          note: input.note,
+        })
+        .onConflict((oc) =>
+          oc.column("server_id").doUpdateSet({ ...mappedInput, updated_at_ms: sql`get_unix_ms()` }),
+        )
         .returningAll()
         .executeTakeFirstOrThrow();
     });
@@ -621,6 +637,12 @@ export class ServerPgRepository {
         .selectFrom("lockdowns")
         .selectAll()
         .where("server_id", "=", id)
+        .where("scope", "=", "local")
+        .orderBy("is_active", "desc")
+        .orderBy("starts_at_ms", "desc")
+        .orderBy("id", "desc")
+        .limit(1)
+        .forUpdate()
         .executeTakeFirst();
 
       if (!serverExists) {
@@ -630,41 +652,23 @@ export class ServerPgRepository {
         return null;
       }
 
-      const updateLockdown: {
-        server_id?: string;
-        scope?: "global" | "local";
-        reason?: string;
-        required_rank_key?: string;
-        issued_by_actor_id?: string;
-        is_active?: boolean;
-        starts_at_ms?: string;
-        ends_at_ms?: string | null;
-      } = {} as const;
-
-      // PATCH
-      if (input.requiredRankKey !== undefined) {
-        updateLockdown.required_rank_key = input.requiredRankKey;
-      }
-      if (input.scope !== undefined) {
-        updateLockdown.scope = input.scope;
-      }
-      if (input.reason !== undefined) {
-        updateLockdown.reason = input.reason;
-      }
-      if (input.isActive !== undefined) {
-        updateLockdown.is_active = input.isActive;
-      }
-      if (input.startsAtMs !== undefined) {
-        updateLockdown.starts_at_ms = input.startsAtMs;
-      }
-      if (input.endsAtMs !== undefined) {
-        updateLockdown.ends_at_ms = input.endsAtMs;
+      const startsAtMs = input.startsAtMs ?? lockdownExists.starts_at_ms;
+      const endsAtMs = input.endsAtMs === undefined ? lockdownExists.ends_at_ms : input.endsAtMs;
+      if (endsAtMs !== null && BigInt(endsAtMs) < BigInt(startsAtMs)) {
+        throw new ValidationError({
+          code: "VALIDATION_ERROR",
+          message: "Lockdown end must be at or after its start.",
+        });
       }
 
       const lockdown = await trx
         .updateTable("lockdowns")
-        .set(updateLockdown)
-        .set("updated_at_ms", Date.now())
+        .set({
+          ...toServerLockdownUpdate(input),
+          ...(input.scope === "global" ? { server_id: null } : {}),
+          updated_at_ms: sql`get_unix_ms()`,
+        })
+        .where("id", "=", lockdownExists.id)
         .returningAll()
         .executeTakeFirstOrThrow();
 
@@ -730,8 +734,9 @@ export class ServerPgRepository {
         .where("server_id", "=", id)
         .where("scope", "=", "local")
         .where("is_active", "=", true)
+        .where("starts_at_ms", "<=", Date.now().toString())
         .where((eb) =>
-          eb.or([eb("ends_at_ms", "is", null), eb("ends_at_ms", ">=", Date.now().toString())]),
+          eb.or([eb("ends_at_ms", "is", null), eb("ends_at_ms", ">", Date.now().toString())]),
         )
         .orderBy("starts_at_ms", "desc")
         .executeTakeFirst();
@@ -751,8 +756,9 @@ export class ServerPgRepository {
         .selectAll()
         .where("scope", "=", "global")
         .where("is_active", "=", true)
+        .where("starts_at_ms", "<=", Date.now().toString())
         .where((eb) =>
-          eb.or([eb("ends_at_ms", "is", null), eb("ends_at_ms", ">=", Date.now().toString())]),
+          eb.or([eb("ends_at_ms", "is", null), eb("ends_at_ms", ">", Date.now().toString())]),
         )
         .orderBy("starts_at_ms", "desc")
         .executeTakeFirst();
@@ -781,55 +787,27 @@ export class ServerPgRepository {
     });
   }
 
-  async deleteServerById(id: string) {
-    return await this.db.transaction().execute(async (trx) => {
-      const serverExists = await trx.selectFrom("servers").where("id", "=", id).executeTakeFirst();
-
-      if (!serverExists) {
-        return { status: "not_found" };
-      }
-
-      await trx.deleteFrom("servers").where("id", "=", id).executeTakeFirst();
-
-      return { status: "deleted" };
-    });
+  async deleteServerById(id: string): Promise<DeleteResult> {
+    const result = await this.db.deleteFrom("servers").where("id", "=", id).executeTakeFirst();
+    return { status: result.numDeletedRows > 0n ? "deleted" : "not_found" };
   }
 
-  async deletePolicyByServerId(serverId: string) {
-    return await this.db.transaction().execute(async (trx) => {
-      const serverExists = await trx
-        .selectFrom("servers")
-        .where("id", "=", serverId)
-        .executeTakeFirst();
+  async deletePolicyByServerId(serverId: string): Promise<DeleteResult> {
+    const result = await this.db
+      .deleteFrom("server_access_policies")
+      .where("server_id", "=", serverId)
+      .executeTakeFirst();
 
-      if (!serverExists) {
-        return { status: "not_found" };
-      }
-
-      await trx
-        .deleteFrom("server_access_policies")
-        .where("server_id", "=", serverId)
-        .executeTakeFirst();
-
-      return { status: "deleted" };
-    });
+    return { status: result.numDeletedRows > 0n ? "deleted" : "not_found" };
   }
 
-  async deleteLockdownByServerId(serverId: string) {
-    return await this.db.transaction().execute(async (trx) => {
-      const serverExists = await trx
-        .selectFrom("servers")
-        .where("id", "=", serverId)
-        .executeTakeFirst();
+  async deleteLockdownByServerId(serverId: string): Promise<DeleteResult> {
+    const result = await this.db
+      .deleteFrom("lockdowns")
+      .where("server_id", "=", serverId)
+      .executeTakeFirst();
 
-      if (!serverExists) {
-        return { status: "not_found" };
-      }
-
-      await trx.deleteFrom("lockdowns").where("server_id", "=", serverId).executeTakeFirst();
-
-      return { status: "deleted" };
-    });
+    return { status: result.numDeletedRows > 0n ? "deleted" : "not_found" };
   }
 }
 

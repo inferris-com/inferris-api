@@ -100,6 +100,16 @@ export const errorHandler: ErrorRequestHandler = (
   res: Response<ErrorResponseBody>,
   _next: NextFunction,
 ) => {
+  if (res.headersSent) {
+    _next(err);
+    return;
+  }
+  if (err instanceof SyntaxError && "type" in err && err.type === "entity.parse.failed") {
+    err = new ValidationError({
+      code: "VALIDATION_ERROR",
+      message: "Request body must contain valid JSON.",
+    });
+  }
   const appError =
     err instanceof AppError
       ? err

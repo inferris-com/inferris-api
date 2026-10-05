@@ -35,6 +35,8 @@ import {
   type MinecraftSessionState,
 } from "@/module/auth/auth.service.js";
 import type { PlayerService } from "@/module/player/player.service.js";
+import { ConflictError, ValidationError } from "@/error/app-error.js";
+import { isPgErrorCode, PgErrorCode } from "@/shared/db/pg-error.utils.js";
 
 export class ServerService {
   constructor(
@@ -251,7 +253,15 @@ export class ServerService {
     serverId: string,
     input: AuthenticatedCreateLockdownBody,
   ): Promise<LockdownResponse> {
-    const result = await this.repo.createLockdown(serverId, input);
+    if (!(await this.repo.findServerById(serverId))) {
+      throw new ServerNotFoundError(serverId);
+    }
+    const result = await this.repo.createLockdown(serverId, input).catch((error: unknown) => {
+      if (isPgErrorCode(error, PgErrorCode.UniqueViolation)) {
+        throw new ServerLockdownAlreadyExistsError(serverId);
+      }
+      return rethrowServerInputError(error);
+    });
 
     if (result.status === "conflict") {
       throw new ServerLockdownAlreadyExistsError(serverId);
@@ -261,7 +271,12 @@ export class ServerService {
   }
 
   async patchServer(id: string, input: UpdateServerBody): Promise<ServerResponse> {
-    const server = await this.repo.updateServerById(id, input);
+    const server = await this.repo.updateServerById(id, input).catch((error: unknown) => {
+      if (isPgErrorCode(error, PgErrorCode.UniqueViolation)) {
+        throw new ServerAlreadyExistsError(input.name ?? id);
+      }
+      throw error;
+    });
 
     if (!server) {
       throw new ServerNotFoundError(id);
@@ -271,7 +286,9 @@ export class ServerService {
   }
 
   async updateAccessPolicy(id: string, input: ReplaceServerAccessBody): Promise<AccessResponse> {
-    const policy = await this.repo.updateAccessPolicyByServerId(id, input);
+    const policy = await this.repo
+      .updateAccessPolicyByServerId(id, input)
+      .catch(rethrowServerInputError);
 
     if (!policy) {
       throw new ServerNotFoundError(id);
@@ -280,7 +297,12 @@ export class ServerService {
   }
 
   async patchLockdown(id: string, input: UpdateLockdownBody): Promise<LockdownResponse> {
-    const lockdown = await this.repo.updateLockdownByServerId(id, input);
+    const lockdown = await this.repo.updateLockdownByServerId(id, input).catch((error: unknown) => {
+      if (isPgErrorCode(error, PgErrorCode.UniqueViolation)) {
+        throw new ServerLockdownAlreadyExistsError(id);
+      }
+      return rethrowServerInputError(error);
+    });
 
     if (!lockdown) {
       throw new ServerNotFoundError(id);
@@ -346,9 +368,20 @@ export class ServerService {
   }
 
   async deleteServer(id: string): Promise<boolean> {
-    const server = await this.repo.deleteServerById(id);
+    const server = await this.repo.deleteServerById(id).catch((error: unknown) => {
+      if (
+        isPgErrorCode(error, PgErrorCode.ForeignKeyViolation) ||
+        isPgErrorCode(error, PgErrorCode.RestrictViolation)
+      ) {
+        throw new ConflictError({
+          code: "SERVER_IN_USE",
+          message: "Server is referenced by other records.",
+        });
+      }
+      throw error;
+    });
 
-    if (!server) {
+    if (server.status !== "deleted") {
       throw new ServerNotFoundError(id);
     }
     return true;
@@ -357,7 +390,7 @@ export class ServerService {
   async deletePolicy(serverId: string): Promise<boolean> {
     const server = await this.repo.deletePolicyByServerId(serverId);
 
-    if (!server) {
+    if (server.status !== "deleted") {
       throw new ServerNotFoundError(serverId);
     }
     return true;
@@ -366,9 +399,25 @@ export class ServerService {
   async deleteLockdown(serverId: string): Promise<boolean> {
     const server = await this.repo.deleteLockdownByServerId(serverId);
 
-    if (!server) {
+    if (server.status !== "deleted") {
       throw new ServerNotFoundError(serverId);
     }
     return true;
   }
+}
+
+function rethrowServerInputError(error: unknown): never {
+  if (isPgErrorCode(error, PgErrorCode.ForeignKeyViolation)) {
+    throw new ValidationError({
+      code: "VALIDATION_ERROR",
+      message: "Referenced server, rank, permission, or actor does not exist.",
+    });
+  }
+  if (isPgErrorCode(error, PgErrorCode.CheckViolation)) {
+    throw new ValidationError({
+      code: "VALIDATION_ERROR",
+      message: "Invalid access policy or lockdown requirements.",
+    });
+  }
+  throw error;
 }

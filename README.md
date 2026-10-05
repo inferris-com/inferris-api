@@ -16,7 +16,7 @@ It is an Express RESTful API written in TypeScript (Node 24).
 - `npm run db:codegen` - regenerate Kysely database types from Postgres.
 - `npm run lint` - lint the project.
 - `npm run format` - format files with Prettier.
-- `npm test` - run Node's built-in test runner.
+- `npm test` - run Jest unit and route integration tests. PostgreSQL tests require `TEST_DATABASE_URL` and use disposable schemas.
 
 ## Domain documentation
 

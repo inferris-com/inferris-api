@@ -8,7 +8,6 @@ import { createArgusUserRouter } from "@/module/argus/argus-user/argus-user.rout
 import { createAuthRouter } from "@/module/auth/auth.route.js";
 import { createAuditLogRouter } from "@/module/audit-log/audit-log.route.js";
 import { createBadgeRouter } from "@/module/badge/badge.route.js";
-import { createCatalogRouter } from "@/module/catalog/catalog.route.js";
 import { createChatMessageRouter } from "@/module/chat-message/chat-message.route.js";
 import { createGroupRouter } from "@/module/group/group.route.js";
 import { createMetricsRouter } from "@/module/metrics/metrics.route.js";
@@ -34,7 +33,6 @@ export function registerAppRoutes(app: Express, dependencies: AppDependencies): 
   app.use("/groups", authenticateRequest, createGroupRouter(services.group, authRepository));
   app.use("/ranks", authenticateRequest, createRankRouter(services.rank, authRepository));
   app.use("/badges", authenticateRequest, createBadgeRouter(services.badge, authRepository));
-  app.use("/", authenticateRequest, createCatalogRouter(services.catalog, authRepository));
   app.use(
     "/staff-privileges",
     authenticateRequest,

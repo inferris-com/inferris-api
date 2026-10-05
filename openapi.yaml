@@ -1102,7 +1102,6 @@ components:
       properties:
         id:
           type: "string"
-          format: "uuid"
         name:
           type: "string"
         type:
@@ -1138,21 +1137,19 @@ components:
       properties:
         id:
           type: "string"
-          format: "uuid"
+          pattern: "^\\d+$"
         scope:
           type: "string"
         serverId:
           type:
             - "string"
             - "null"
-          format: "uuid"
         requiredRankKey:
           type: "string"
         reason:
           type: "string"
         issuedByActorId:
           type: "string"
-          format: "uuid"
         isActive:
           type: "boolean"
         startedAtMs:
@@ -1176,14 +1173,12 @@ components:
       properties:
         id:
           type: "string"
-          format: "uuid"
         mode:
           type: "string"
         requiredPermissionId:
           type:
             - "string"
             - "null"
-          format: "uuid"
         requiredRankKey:
           type:
             - "string"
@@ -7549,6 +7544,7 @@ paths:
                     - "local"
                 requiredRankKey:
                   type: "string"
+                  minLength: 1
                   maxLength: 30
                 reason:
                   type: "string"
@@ -7612,6 +7608,7 @@ paths:
         - apiKeyAuth:
             []
       summary: "Update a server lockdown"
+      description: "Updates one local lockdown belonging to this server: the active record first, otherwise the most recent record. Changing scope to global detaches that record from the server."
       operationId: "updateServerLockdown"
       parameters:
         - schema:
@@ -7633,6 +7630,7 @@ paths:
                     - "local"
                 requiredRankKey:
                   type: "string"
+                  minLength: 1
                   maxLength: 30
                 reason:
                   type: "string"
@@ -7786,6 +7784,7 @@ paths:
         - apiKeyAuth:
             []
       summary: "Replace a server access policy"
+      description: "Creates a policy if missing, or replaces it. Open mode requires both requirements to be null; permission and min_rank require only their corresponding requirement. Referenced permissions and ranks must exist."
       operationId: "replaceServerAccessPolicy"
       parameters:
         - schema:
@@ -7810,11 +7809,11 @@ paths:
                   type:
                     - "string"
                     - "null"
-                  format: "uuid"
                 requiredRankKey:
                   type:
                     - "string"
                     - "null"
+                  minLength: 1
                   maxLength: 30
                 note:
                   type:

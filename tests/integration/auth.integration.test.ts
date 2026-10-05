@@ -1,8 +1,18 @@
-import { describe, expect, test } from "@jest/globals";
+import { describe, expect, jest, test } from "@jest/globals";
 
-import { createTestApp, ids } from "@tests/integration/app-test-utils.js";
+import { createTestApp, createTestDependencies, ids } from "@tests/integration/app-test-utils.js";
 
 describe("auth routes", () => {
+  test("server requests authenticate once", async () => {
+    const dependencies = createTestDependencies();
+    const authenticateRequest = jest.fn(dependencies.authenticateRequest);
+    dependencies.authenticateRequest = authenticateRequest;
+    dependencies.services.server.listServers.mockResolvedValue([]);
+    const { request } = createTestApp(dependencies);
+    const response = await request.get("/servers").set("Authorization", "ApiKey server-token");
+    expect(response.status).toBe(200);
+    expect(authenticateRequest).toHaveBeenCalledTimes(1);
+  });
   test("POST /auth/login returns token data without embedding the account", async () => {
     const { dependencies, request } = createTestApp();
     dependencies.services.auth.login.mockResolvedValue({

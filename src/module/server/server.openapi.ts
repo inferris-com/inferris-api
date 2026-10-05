@@ -80,6 +80,8 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     tags: ["Servers"],
     security: userOrServiceSecurity,
     summary: "Replace a server access policy",
+    description:
+      "Creates a policy if missing, or replaces it. Open mode requires both requirements to be null; permission and min_rank require only their corresponding requirement. Referenced permissions and ranks must exist.",
     operationId: "replaceServerAccessPolicy",
     request: {
       params: serverIdParamsSchema,
@@ -111,6 +113,8 @@ export function registerServerOpenApi(registry: OpenAPIRegistry) {
     tags: ["Servers"],
     security: userOrServiceSecurity,
     summary: "Update a server lockdown",
+    description:
+      "Updates one local lockdown belonging to this server: the active record first, otherwise the most recent record. Changing scope to global detaches that record from the server.",
     operationId: "updateServerLockdown",
     request: {
       params: serverIdParamsSchema,
