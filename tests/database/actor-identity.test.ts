@@ -8,6 +8,8 @@ import { up as createTables } from "@/db/migrations/20260506000000_create_dev_ta
 import { up as allowDisplayLabels } from "@/db/migrations/20260906000000_actor_display_labels.js";
 import { up as enforceUniqueArgusActor } from "@/db/migrations/20260929000000_unique_argus_actor.js";
 import { ActorPgRepository } from "@/module/actor/actor.pg-repository.js";
+import { loadActorSummaries } from "@/module/actor/actor-summary.js";
+import { ReportPgRepository } from "@/module/report/report.pg-repository.js";
 import { PlayerPgRepository } from "@/module/player/player.pg-repository.js";
 import { PlayerService } from "@/module/player/player.service.js";
 import { PunishmentPgRepository } from "@/module/punishment/punishment.pg-repository.js";
@@ -29,6 +31,7 @@ databaseTests("actor and player identity (PostgreSQL)", () => {
   let punishments: PunishmentService;
   let serverId: string;
   let issuerActorId: string;
+  const queries: string[] = [];
 
   beforeAll(async () => {
     admin = new Kysely<DB>({
@@ -36,6 +39,9 @@ databaseTests("actor and player identity (PostgreSQL)", () => {
     });
     await admin.schema.createSchema(schema).execute();
     const migrationDb = new Kysely<unknown>({
+      log: (event) => {
+        if (event.level === "query") queries.push(event.query.sql);
+      },
       dialect: new PostgresDialect({
         pool: new Pool({
           connectionString: databaseUrl,
@@ -92,6 +98,120 @@ databaseTests("actor and player identity (PostgreSQL)", () => {
       chatChannel: "global",
     });
   }
+
+  test("identity expansion keeps list query counts constant at 25 and 100 rows", async () => {
+    const subjects = await db
+      .insertInto("actors")
+      .values(
+        Array.from({ length: 100 }, (_, index) => ({
+          name: `Catalogue ${index}`,
+          type: "user" as const,
+        })),
+      )
+      .returning(["id", "name"])
+      .execute();
+    await db
+      .insertInto("punishments")
+      .values(
+        subjects.map((actor, index) => ({
+          code: `PERF${String(index).padStart(4, "0")}`,
+          type: "warn" as const,
+          is_active: false,
+          subject_actor_id: actor.id,
+          issuer_actor_id: issuerActorId,
+        })),
+      )
+      .execute();
+    await db
+      .insertInto("reports")
+      .values(
+        subjects.map((actor, index) => ({
+          code: `PERF${String(index).padStart(4, "0")}`,
+          selected_reason: "Catalogue test",
+          subject_actor_id: actor.id,
+          reporter_actor_id: issuerActorId,
+        })),
+      )
+      .execute();
+
+    const punishmentRepo = new PunishmentPgRepository(db);
+    const reportRepo = new ReportPgRepository(db);
+    for (const limit of [25, 100]) {
+      for (const list of [
+        () =>
+          punishmentRepo.listPunishments({
+            include: "identities",
+            limit,
+            offset: 0,
+            issuerActorId,
+          }),
+        () =>
+          reportRepo.listReports({
+            include: "identities",
+            limit,
+            offset: 0,
+            reporterActorId: issuerActorId,
+          }),
+      ]) {
+        queries.length = 0;
+        const result = await list();
+        expect(result.rows).toHaveLength(limit);
+        expect(result.total).toBe(100);
+        expect(result.rows.every((row) => row.subjectActor?.name?.startsWith("Catalogue "))).toBe(
+          true,
+        );
+        expect(queries).toHaveLength(3);
+        expect(queries.filter((query) => query.includes('from "actors"'))).toHaveLength(1);
+        expect(queries.join(" ")).not.toMatch(/player_profiles|player_ranks|player_badges/);
+      }
+    }
+    queries.length = 0;
+    const plain = await punishmentRepo.listPunishments({ limit: 25, offset: 0, issuerActorId });
+    expect(queries).toHaveLength(2);
+    expect(plain.rows[0]).not.toHaveProperty("subjectActor");
+    queries.length = 0;
+    const empty = await reportRepo.listReports({
+      include: "identities",
+      limit: 25,
+      offset: 100,
+      reporterActorId: issuerActorId,
+    });
+    expect(empty.rows).toHaveLength(0);
+    expect(queries).toHaveLength(2);
+  });
+
+  test("identity summaries retain actor labels while omitting archived player links", async () => {
+    const player = await createPlayer("SummaryPlayer");
+    await actors.updateActorById(player.actorId, { name: "Summary display" });
+    await db
+      .insertInto("player_nicknames")
+      .values({ player_id: player.id, nickname: "CatalogueAlias" })
+      .execute();
+    let identities = await loadActorSummaries(db, [player.actorId, player.actorId, issuerActorId]);
+    expect(identities.size).toBe(2);
+    expect(identities.get(player.actorId)).toMatchObject({
+      name: "Summary display",
+      player: {
+        id: player.id,
+        username: "SummaryPlayer",
+        activeNickname: { nickname: "CatalogueAlias" },
+      },
+    });
+    expect(identities.get(issuerActorId)).toMatchObject({
+      name: "Automation",
+      type: "system",
+      player: null,
+    });
+    await service.deletePlayer(player.id);
+    identities = await loadActorSummaries(db, [player.actorId]);
+    expect(identities.get(player.actorId)).toMatchObject({
+      name: "Summary display",
+      player: null,
+    });
+    queries.length = 0;
+    expect(await loadActorSummaries(db, [])).toEqual(new Map());
+    expect(queries).toHaveLength(0);
+  });
 
   test("a player never adopts an existing system or human actor with the same label", async () => {
     const player = await createPlayer("Automation");
