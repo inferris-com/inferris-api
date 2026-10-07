@@ -1,6 +1,8 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
 
+import { actorSummaryResponseSchema } from "@/module/actor/actor.response.types.js";
+
 extendZodWithOpenApi(z);
 
 export const chatMessageResponseSchema = z
@@ -22,9 +24,15 @@ export const chatMessageResponseSchema = z
   })
   .openapi("ChatMessageResponse");
 
+export const chatMessageListItemResponseSchema = chatMessageResponseSchema
+  .extend({
+    actor: actorSummaryResponseSchema.nullable().optional(),
+  })
+  .openapi("ChatMessageListItemResponse");
+
 export const chatMessageListResponseSchema = z
   .object({
-    data: z.array(chatMessageResponseSchema),
+    data: z.array(chatMessageListItemResponseSchema),
     meta: z.object({
       count: z.number().int(),
       limit: z.number().int(),
@@ -35,3 +43,4 @@ export const chatMessageListResponseSchema = z
   .openapi("ChatMessageListResponse");
 
 export type ChatMessageResponse = z.infer<typeof chatMessageResponseSchema>;
+export type ChatMessageListItemResponse = z.infer<typeof chatMessageListItemResponseSchema>;

@@ -12,7 +12,10 @@ import {
 import { toChatMessageResponse } from "@/module/chat-message/chat-message.mapper.js";
 import type { ChatMessagePgRepository } from "@/module/chat-message/chat-message.pg-repository.js";
 import type { ChatMessageRedisBuffer } from "@/module/chat-message/chat-message.redis-buffer.js";
-import type { ChatMessageResponse } from "@/module/chat-message/chat-message.response-types.js";
+import type {
+  ChatMessageListItemResponse,
+  ChatMessageResponse,
+} from "@/module/chat-message/chat-message.response-types.js";
 import type {
   CreateChatMessageBatchBody,
   CreateChatMessageBody,
@@ -26,7 +29,7 @@ import type {
 } from "@/module/chat-message/chat-message.types.js";
 
 export type ChatMessageListResponse = {
-  data: ChatMessageResponse[];
+  data: ChatMessageListItemResponse[];
   meta: {
     count: number;
     limit: number;
@@ -88,12 +91,20 @@ export class ChatMessageService {
     const filters = toFilters(query);
     const persisted = await this.repo.listMessages(filters);
     const pending = query.includePending ? await this.safeListPending(filters) : [];
-    const merged = mergeChatMessages(persisted, pending, filters.limit).map(toChatMessageResponse);
+    const merged = mergeChatMessages(persisted, pending, filters.limit);
+    const identities =
+      query.include === "identities"
+        ? await this.repo.loadActorSummaries(merged.map((message) => message.actorId))
+        : null;
+    const data: ChatMessageListItemResponse[] = merged.map((message) => ({
+      ...toChatMessageResponse(message),
+      ...(identities ? { actor: identities.get(message.actorId) ?? null } : {}),
+    }));
 
     return {
-      data: merged,
+      data,
       meta: {
-        count: merged.length,
+        count: data.length,
         limit: filters.limit,
         includePending: query.includePending,
         nextCursor: getNextCursor(merged, filters.limit),

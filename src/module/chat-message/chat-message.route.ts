@@ -2,6 +2,7 @@ import { type RequestHandler, Router } from "express";
 import type { ParamsDictionary } from "express-serve-static-core";
 
 import { validateRequest } from "@/middleware/validation.js";
+import { authorizeListIdentities } from "@/module/actor/actor-summary.middleware.js";
 import type { ApiListSuccess, ApiSuccess } from "@/shared/http/api-response.types.js";
 import { auditMutation, authorize } from "@/module/auth/auth.middleware.js";
 import type { AuthRepository } from "@/module/auth/auth.repository.js";
@@ -63,6 +64,7 @@ export function createChatMessageRouter(
     "/",
     readChat,
     validateRequest({ query: listChatMessagesQuerySchema }) as unknown as RequestHandler,
+    authorizeListIdentities(authRepository),
     listMessages,
   );
   router.post(

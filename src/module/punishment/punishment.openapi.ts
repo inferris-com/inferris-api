@@ -3,11 +3,14 @@ import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import {
   userOrServiceSecurity,
   jsonBody,
-  listResponse,
+  paginatedResponse,
   standardErrorResponses,
   successResponse,
 } from "@/openapi/openapi.helpers.js";
-import { punishmentResponseSchema } from "@/module/punishment/punishment.response-types.js";
+import {
+  punishmentListItemResponseSchema,
+  punishmentResponseSchema,
+} from "@/module/punishment/punishment.response-types.js";
 import {
   createPunishmentBodySchema,
   listPunishmentsQuerySchema,
@@ -23,9 +26,14 @@ export function registerPunishmentOpenApi(registry: OpenAPIRegistry) {
     tags: ["Punishments"],
     security: userOrServiceSecurity,
     summary: "List punishments",
+    description:
+      "Use include=identities to receive subjectActor and issuerActor summaries with each row. This expansion also requires actors:read and players:read for API keys, or an Argus moderator role. Missing or archived players use the actor identity; detail and mutation responses are unchanged.",
     operationId: "listPunishments",
     request: { query: listPunishmentsQuerySchema },
-    responses: { "200": listResponse(punishmentResponseSchema), ...standardErrorResponses },
+    responses: {
+      "200": paginatedResponse(punishmentListItemResponseSchema),
+      ...standardErrorResponses,
+    },
   });
 
   registry.registerPath({

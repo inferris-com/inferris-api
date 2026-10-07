@@ -2,6 +2,8 @@ import { type Kysely, sql, type Selectable } from "kysely";
 
 import type { DB, Punishment, Punishments } from "@/db/types.js";
 import type { PaginatedResult } from "@/shared/pagination.schemas.js";
+import { loadActorSummaries } from "@/module/actor/actor-summary.js";
+import type { ActorSummaryResponse } from "@/module/actor/actor.response.types.js";
 import type {
   CreatePunishmentBody,
   ListPunishmentsQuery,
@@ -19,12 +21,15 @@ export type RevokePunishmentInput = {
   reason: string | null;
 };
 
+export type PunishmentListRow = Selectable<Punishments> & {
+  subjectActor?: ActorSummaryResponse | null;
+  issuerActor?: ActorSummaryResponse | null;
+};
+
 export class PunishmentPgRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
-  async listPunishments(
-    query: ListPunishmentsQuery,
-  ): Promise<PaginatedResult<Selectable<Punishments>>> {
+  async listPunishments(query: ListPunishmentsQuery): Promise<PaginatedResult<PunishmentListRow>> {
     const rowsQuery = this.db
       .selectFrom("punishments")
       .$if(query.subjectActorId !== undefined, (qb) =>
@@ -99,8 +104,22 @@ export class PunishmentPgRepository {
         .executeTakeFirstOrThrow(),
     ]);
 
+    const identities =
+      query.include === "identities"
+        ? await loadActorSummaries(
+            this.db,
+            rows.flatMap((row) => [row.subject_actor_id, row.issuer_actor_id]),
+          )
+        : null;
+
     return {
-      rows,
+      rows: identities
+        ? rows.map((row) => ({
+            ...row,
+            subjectActor: identities.get(row.subject_actor_id) ?? null,
+            issuerActor: identities.get(row.issuer_actor_id) ?? null,
+          }))
+        : rows,
       total: Number(countRow.total),
       limit: query.limit,
       offset: query.offset,

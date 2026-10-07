@@ -1660,6 +1660,68 @@ components:
         - "effect"
         - "createdAtMs"
         - "updatedAtMs"
+    PunishmentListItemResponse:
+      allOf:
+        - "$ref": "#/components/schemas/PunishmentResponse"
+        - type: "object"
+          properties:
+            subjectActor:
+              "$ref": "#/components/schemas/ActorSummaryResponse"
+            issuerActor:
+              "$ref": "#/components/schemas/ActorSummaryResponse"
+    ActorSummaryResponse:
+      type:
+        - "object"
+        - "null"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type:
+            - "string"
+            - "null"
+        type:
+          type: "string"
+          enum:
+            - "system"
+            - "application"
+            - "user"
+            - "unspecified"
+        player:
+          type:
+            - "object"
+            - "null"
+          properties:
+            id:
+              type: "string"
+              format: "uuid"
+            username:
+              type: "string"
+            activeNickname:
+              type:
+                - "object"
+                - "null"
+              properties:
+                nickname:
+                  type: "string"
+                coverRankKey:
+                  type:
+                    - "string"
+                    - "null"
+              required:
+                - "nickname"
+                - "coverRankKey"
+          required:
+            - "id"
+            - "username"
+            - "activeNickname"
+          description: "Active player identity only. Archived players fall back to the actor label."
+      required:
+        - "id"
+        - "name"
+        - "type"
+        - "player"
     PunishmentResponse:
       type: "object"
       properties:
@@ -1858,6 +1920,15 @@ components:
         - "resolutionNote"
         - "createdAtMs"
         - "updatedAtMs"
+    ReportListItemResponse:
+      allOf:
+        - "$ref": "#/components/schemas/ReportResponse"
+        - type: "object"
+          properties:
+            reporterActor:
+              "$ref": "#/components/schemas/ActorSummaryResponse"
+            subjectActor:
+              "$ref": "#/components/schemas/ActorSummaryResponse"
     ReportCommentResponse:
       type: "object"
       properties:
@@ -2078,7 +2149,7 @@ components:
         data:
           type: "array"
           items:
-            "$ref": "#/components/schemas/ChatMessageResponse"
+            "$ref": "#/components/schemas/ChatMessageListItemResponse"
         meta:
           type: "object"
           properties:
@@ -2100,6 +2171,13 @@ components:
       required:
         - "data"
         - "meta"
+    ChatMessageListItemResponse:
+      allOf:
+        - "$ref": "#/components/schemas/ChatMessageResponse"
+        - type: "object"
+          properties:
+            actor:
+              "$ref": "#/components/schemas/ActorSummaryResponse"
     ChatMessageResponse:
       type: "object"
       properties:
@@ -9529,6 +9607,7 @@ paths:
         - apiKeyAuth:
             []
       summary: "List punishments"
+      description: "Use include=identities to receive subjectActor and issuerActor summaries with each row. This expansion also requires actors:read and players:read for API keys, or an Argus moderator role. Missing or archived players use the actor identity; detail and mutation responses are unchanged."
       operationId: "listPunishments"
       parameters:
         - schema:
@@ -9547,6 +9626,13 @@ paths:
             default: 0
           required: false
           name: "offset"
+          in: "query"
+        - schema:
+            type: "string"
+            enum:
+              - "identities"
+          required: false
+          name: "include"
           in: "query"
         - schema:
             type: "string"
@@ -9596,7 +9682,7 @@ paths:
           in: "query"
       responses:
         "200":
-          description: "Successful list response"
+          description: "Successful paginated response"
           content:
             "application/json":
               schema:
@@ -9605,15 +9691,27 @@ paths:
                   data:
                     type: "array"
                     items:
-                      "$ref": "#/components/schemas/PunishmentResponse"
+                      "$ref": "#/components/schemas/PunishmentListItemResponse"
                   meta:
                     type: "object"
                     properties:
                       count:
                         type: "integer"
                         minimum: 0
+                      total:
+                        type: "integer"
+                        minimum: 0
+                      limit:
+                        type: "integer"
+                        exclusiveMinimum: 0
+                      offset:
+                        type: "integer"
+                        minimum: 0
                     required:
                       - "count"
+                      - "total"
+                      - "limit"
+                      - "offset"
                 required:
                   - "data"
                   - "meta"
@@ -9990,6 +10088,7 @@ paths:
         - apiKeyAuth:
             []
       summary: "List reports"
+      description: "Use include=identities to receive reporterActor and subjectActor summaries with each row. This expansion also requires actors:read and players:read for API keys, or an Argus moderator role. Missing or archived players use the actor identity; detail and mutation responses are unchanged."
       operationId: "listReports"
       parameters:
         - schema:
@@ -10008,6 +10107,13 @@ paths:
             default: 0
           required: false
           name: "offset"
+          in: "query"
+        - schema:
+            type: "string"
+            enum:
+              - "identities"
+          required: false
+          name: "include"
           in: "query"
         - schema:
             type: "string"
@@ -10059,7 +10165,7 @@ paths:
           in: "query"
       responses:
         "200":
-          description: "Successful list response"
+          description: "Successful paginated response"
           content:
             "application/json":
               schema:
@@ -10068,15 +10174,27 @@ paths:
                   data:
                     type: "array"
                     items:
-                      "$ref": "#/components/schemas/ReportResponse"
+                      "$ref": "#/components/schemas/ReportListItemResponse"
                   meta:
                     type: "object"
                     properties:
                       count:
                         type: "integer"
                         minimum: 0
+                      total:
+                        type: "integer"
+                        minimum: 0
+                      limit:
+                        type: "integer"
+                        exclusiveMinimum: 0
+                      offset:
+                        type: "integer"
+                        minimum: 0
                     required:
                       - "count"
+                      - "total"
+                      - "limit"
+                      - "offset"
                 required:
                   - "data"
                   - "meta"
@@ -11118,8 +11236,16 @@ paths:
         - apiKeyAuth:
             []
       summary: "List chat messages"
+      description: "Use include=identities to receive the actor and active player identity needed to render each row, including the active nickname when present. This expansion also requires actors:read and players:read for API keys, or an Argus moderator role. Archived players fall back to the actor identity."
       operationId: "listChatMessages"
       parameters:
+        - schema:
+            type: "string"
+            enum:
+              - "identities"
+          required: false
+          name: "include"
+          in: "query"
         - schema:
             type: "integer"
             minimum: 1

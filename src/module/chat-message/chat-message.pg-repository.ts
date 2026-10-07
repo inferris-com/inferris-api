@@ -1,6 +1,7 @@
 import { type Insertable, type Kysely, type Selectable, sql } from "kysely";
 
 import type { ChatMessages, DB, JsonValue } from "@/db/types.js";
+import { loadActorSummaries } from "@/module/actor/actor-summary.js";
 import type {
   BufferedChatMessage,
   ChatMessageListFilters,
@@ -116,6 +117,10 @@ export class ChatMessagePgRepository {
       .execute();
 
     return rows.map(toPersistedRecord);
+  }
+
+  async loadActorSummaries(actorIds: string[]) {
+    return loadActorSummaries(this.db, actorIds);
   }
 
   async insertMany(messages: BufferedChatMessage[]): Promise<void> {

@@ -2,6 +2,7 @@ import { type RequestHandler, Router } from "express";
 import type { ParamsDictionary } from "express-serve-static-core";
 
 import { validateRequest } from "@/middleware/validation.js";
+import { authorizeListIdentities } from "@/module/actor/actor-summary.middleware.js";
 import type { ApiListSuccess, ApiSuccess } from "@/shared/http/api-response.types.js";
 import { argusRoleRank, privilegedRoleRank } from "@/module/auth/auth.types.js";
 import {
@@ -160,6 +161,7 @@ export function createReportRouter(service: ReportService, authRepository: AuthR
     "/",
     readReports,
     validateRequest({ query: listReportsQuerySchema }) as unknown as RequestHandler,
+    authorizeListIdentities(authRepository),
     listReports,
   );
   router.get(

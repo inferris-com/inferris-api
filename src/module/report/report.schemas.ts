@@ -57,6 +57,7 @@ export const createReportBodySchema = z
 
 export const listReportsQuerySchema = paginationQuerySchema
   .extend({
+    include: z.literal("identities").optional(),
     reporterActorId: z.guid().optional(),
     subjectActorId: z.guid().optional(),
     assignedToActorId: z.guid().optional(),

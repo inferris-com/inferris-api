@@ -4,12 +4,14 @@ import {
   userOrServiceSecurity,
   jsonBody,
   listResponse,
+  paginatedResponse,
   standardErrorResponses,
   successResponse,
 } from "@/openapi/openapi.helpers.js";
 import {
   reportCommentResponseSchema,
   reportResponseSchema,
+  reportListItemResponseSchema,
 } from "@/module/report/report.response-types.js";
 import {
   createReportBodySchema,
@@ -45,9 +47,14 @@ export function registerReportOpenApi(registry: OpenAPIRegistry) {
     tags: ["Reports"],
     security: userOrServiceSecurity,
     summary: "List reports",
+    description:
+      "Use include=identities to receive reporterActor and subjectActor summaries with each row. This expansion also requires actors:read and players:read for API keys, or an Argus moderator role. Missing or archived players use the actor identity; detail and mutation responses are unchanged.",
     operationId: "listReports",
     request: { query: listReportsQuerySchema },
-    responses: { "200": listResponse(reportResponseSchema), ...standardErrorResponses },
+    responses: {
+      "200": paginatedResponse(reportListItemResponseSchema),
+      ...standardErrorResponses,
+    },
   });
 
   registry.registerPath({

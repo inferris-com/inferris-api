@@ -116,3 +116,55 @@ test("listMessages decodes stable cursors into repository filters", async () => 
     },
   });
 });
+
+test("listMessages expands page identities in one repository lookup", async () => {
+  const actorId = "00000000-0000-0000-0000-000000000001";
+  const playerId = "00000000-0000-0000-0000-000000000003";
+  const row = message({
+    id: "00000000-0000-0000-0000-000000000004",
+    actorId,
+    playerId,
+  });
+  const listMessages = jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue([row]);
+  const loadActorSummaries = jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue(
+    new Map([
+      [
+        actorId,
+        {
+          id: actorId,
+          name: "Player",
+          type: "user",
+          player: {
+            id: playerId,
+            username: "Player",
+            activeNickname: { nickname: "Alias", coverRankKey: null },
+          },
+        },
+      ],
+    ]),
+  );
+  const repo = { listMessages, loadActorSummaries } as unknown as ChatMessagePgRepository;
+  const buffer = {
+    listPendingMessages: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+  } as unknown as ChatMessageRedisBuffer;
+  const service = new ChatMessageService(repo, buffer);
+
+  const result = await service.listMessages({
+    include: "identities",
+    limit: 100,
+    includePending: false,
+  });
+
+  expect(loadActorSummaries).toHaveBeenCalledTimes(1);
+  expect(loadActorSummaries).toHaveBeenCalledWith([actorId]);
+  expect(result.data[0]?.actor).toEqual(
+    expect.objectContaining({
+      id: actorId,
+      player: expect.objectContaining({
+        id: playerId,
+        username: "Player",
+        activeNickname: { nickname: "Alias", coverRankKey: null },
+      }),
+    }),
+  );
+});

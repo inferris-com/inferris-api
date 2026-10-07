@@ -24,6 +24,8 @@ export function registerChatMessageOpenApi(registry: OpenAPIRegistry) {
     tags: ["Chat Messages"],
     security: userOrServiceSecurity,
     summary: "List chat messages",
+    description:
+      "Use include=identities to receive the actor and active player identity needed to render each row, including the active nickname when present. This expansion also requires actors:read and players:read for API keys, or an Argus moderator role. Archived players fall back to the actor identity.",
     operationId: "listChatMessages",
     request: { query: listChatMessagesQuerySchema },
     responses: {

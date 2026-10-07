@@ -2,6 +2,8 @@ import { type Kysely, sql, type Selectable } from "kysely";
 
 import type { DB, ReportComments, Reports } from "@/db/types.js";
 import type { PaginatedResult } from "@/shared/pagination.schemas.js";
+import { loadActorSummaries } from "@/module/actor/actor-summary.js";
+import type { ActorSummaryResponse } from "@/module/actor/actor.response.types.js";
 import type {
   CreateReportBody,
   CreateReportCommentBody,
@@ -33,10 +35,15 @@ export type UpdateReportCommentInput = {
   isSticky?: boolean;
 };
 
+export type ReportListRow = Selectable<Reports> & {
+  reporterActor?: ActorSummaryResponse | null;
+  subjectActor?: ActorSummaryResponse | null;
+};
+
 export class ReportPgRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
-  async listReports(query: ListReportsQuery): Promise<PaginatedResult<Selectable<Reports>>> {
+  async listReports(query: ListReportsQuery): Promise<PaginatedResult<ReportListRow>> {
     const rowsQuery = this.db
       .selectFrom("reports")
       .$if(query.reporterActorId !== undefined, (qb) =>
@@ -70,8 +77,22 @@ export class ReportPgRepository {
         .executeTakeFirstOrThrow(),
     ]);
 
+    const identities =
+      query.include === "identities"
+        ? await loadActorSummaries(
+            this.db,
+            rows.flatMap((row) => [row.reporter_actor_id, row.subject_actor_id]),
+          )
+        : null;
+
     return {
-      rows,
+      rows: identities
+        ? rows.map((row) => ({
+            ...row,
+            reporterActor: identities.get(row.reporter_actor_id) ?? null,
+            subjectActor: identities.get(row.subject_actor_id) ?? null,
+          }))
+        : rows,
       total: Number(countRow.total),
       limit: query.limit,
       offset: query.offset,

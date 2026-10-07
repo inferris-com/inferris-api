@@ -36,6 +36,7 @@ export const createChatMessageBatchBodySchema = z
 
 export const listChatMessagesQuerySchema = z
   .object({
+    include: z.literal("identities").optional(),
     limit: z.coerce.number().int().min(1).max(500).default(100),
     cursor: z.string().trim().min(1).max(1000).optional(),
     beforeMs: z.string().optional(),

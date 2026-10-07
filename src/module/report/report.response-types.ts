@@ -1,6 +1,7 @@
 import type { ReportResolution, ReportStatus, Severity } from "@/db/types.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
+import { actorSummaryResponseSchema } from "@/module/actor/actor.response.types.js";
 
 extendZodWithOpenApi(z);
 
@@ -36,6 +37,15 @@ export const reportResponseSchema = z
     updatedAtMs: z.string().nullable(),
   })
   .openapi("ReportResponse");
+
+export const reportListItemResponseSchema = reportResponseSchema
+  .extend({
+    reporterActor: actorSummaryResponseSchema.nullable().optional(),
+    subjectActor: actorSummaryResponseSchema.nullable().optional(),
+  })
+  .openapi("ReportListItemResponse");
+
+export type ReportListItemResponse = z.infer<typeof reportListItemResponseSchema>;
 
 export const reportCommentResponseSchema = z
   .object({

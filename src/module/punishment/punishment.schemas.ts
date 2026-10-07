@@ -19,6 +19,7 @@ export const punishmentCodeParamsSchema = z.object({
 
 export const listPunishmentsQuerySchema = paginationQuerySchema
   .extend({
+    include: z.literal("identities").optional(),
     subjectActorId: z.guid().optional(),
     subjectPlayerId: z.guid().optional(),
     issuerActorId: z.guid().optional(),

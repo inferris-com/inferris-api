@@ -11,7 +11,10 @@ import {
 import { toPunishmentResponse } from "@/module/punishment/punishment.mapper.js";
 import type { PunishmentPgRepository } from "@/module/punishment/punishment.pg-repository.js";
 import type { PunishmentPublisher } from "@/module/punishment/punishment.publisher.js";
-import type { PunishmentResponse } from "@/module/punishment/punishment.response-types.js";
+import type {
+  PunishmentListItemResponse,
+  PunishmentResponse,
+} from "@/module/punishment/punishment.response-types.js";
 import type {
   CreatePunishmentBody,
   ListPunishmentsQuery,
@@ -23,7 +26,7 @@ const punishmentCodeLength = 10;
 const maxPunishmentCodeCreateAttempts = 5;
 
 export type PunishmentListResponse = {
-  data: PunishmentResponse[];
+  data: PunishmentListItemResponse[];
   meta: {
     count: number;
     total: number;
@@ -42,7 +45,12 @@ export class PunishmentService {
     const result = await this.repo.listPunishments(query);
 
     return {
-      data: result.rows.map(toPunishmentResponse),
+      data: result.rows.map((row) => ({
+        ...toPunishmentResponse(row),
+        ...(query.include === "identities"
+          ? { subjectActor: row.subjectActor ?? null, issuerActor: row.issuerActor ?? null }
+          : {}),
+      })),
       meta: {
         count: result.rows.length,
         total: result.total,

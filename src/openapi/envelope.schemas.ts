@@ -25,3 +25,14 @@ export function listEnvelope<T extends z.ZodType>(data: T) {
     }),
   });
 }
+
+export function paginatedEnvelope<T extends z.ZodType>(data: T) {
+  return listEnvelope(data).extend({
+    meta: z.object({
+      count: z.number().int().nonnegative(),
+      total: z.number().int().nonnegative(),
+      limit: z.number().int().positive(),
+      offset: z.number().int().nonnegative(),
+    }),
+  });
+}

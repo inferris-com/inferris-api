@@ -1,7 +1,7 @@
 import type { RouteConfig, ZodMediaTypeObject } from "@asteasolutions/zod-to-openapi";
 import type { ZodType } from "zod";
 
-import { apiErrorEnvelopeSchema, listEnvelope, successEnvelope } from "@/openapi/envelope.schemas.js";
+import { apiErrorEnvelopeSchema, listEnvelope, paginatedEnvelope, successEnvelope } from "@/openapi/envelope.schemas.js";
 
 export const userSecurity: NonNullable<RouteConfig["security"]> = [
   { bearerAuth: [] },
@@ -50,6 +50,13 @@ export function errorResponse(description: string) {
     content: {
       "application/json": jsonBody(apiErrorEnvelopeSchema),
     },
+  };
+}
+
+export function paginatedResponse(dataSchema: ZodType): RouteConfig["responses"][string] {
+  return {
+    description: "Successful paginated response",
+    content: { "application/json": jsonBody(paginatedEnvelope(dataSchema)) },
   };
 }
 

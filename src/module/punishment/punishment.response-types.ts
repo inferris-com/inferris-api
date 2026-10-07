@@ -1,6 +1,7 @@
 import type { Punishment, PunishmentLiftedCause } from "@/db/types.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
+import { actorSummaryResponseSchema } from "@/module/actor/actor.response.types.js";
 
 extendZodWithOpenApi(z);
 
@@ -25,6 +26,15 @@ export const punishmentResponseSchema = z
     updatedAtMs: z.string().nullable(),
   })
   .openapi("PunishmentResponse");
+
+export const punishmentListItemResponseSchema = punishmentResponseSchema
+  .extend({
+    subjectActor: actorSummaryResponseSchema.nullable().optional(),
+    issuerActor: actorSummaryResponseSchema.nullable().optional(),
+  })
+  .openapi("PunishmentListItemResponse");
+
+export type PunishmentListItemResponse = z.infer<typeof punishmentListItemResponseSchema>;
 
 export type PunishmentResponse = z.infer<typeof punishmentResponseSchema> & {
   type: Punishment;

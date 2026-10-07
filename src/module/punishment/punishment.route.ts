@@ -9,6 +9,7 @@ import {
 } from "@/module/auth/auth.middleware.js";
 import type { AuthRepository } from "@/module/auth/auth.repository.js";
 import { validateRequest } from "@/middleware/validation.js";
+import { authorizeListIdentities } from "@/module/actor/actor-summary.middleware.js";
 import type { ApiSuccess } from "@/shared/http/api-response.types.js";
 import type { PunishmentResponse } from "@/module/punishment/punishment.response-types.js";
 import {
@@ -93,6 +94,7 @@ export function createPunishmentRouter(
     "/",
     readPunishments,
     validateRequest({ query: listPunishmentsQuerySchema }) as unknown as RequestHandler,
+    authorizeListIdentities(authRepository),
     listPunishments,
   );
   router.get(

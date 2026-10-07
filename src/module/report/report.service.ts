@@ -13,6 +13,7 @@ import type { ReportPublisher } from "@/module/report/report.publisher.js";
 import type {
   ReportCommentResponse,
   ReportResponse,
+  ReportListItemResponse,
 } from "@/module/report/report.response-types.js";
 import type {
   CreateReportBody,
@@ -23,7 +24,7 @@ import type {
 } from "@/module/report/report.schemas.js";
 
 export type ReportListResponse = {
-  data: ReportResponse[];
+  data: ReportListItemResponse[];
   meta: {
     count: number;
     total: number;
@@ -47,7 +48,12 @@ export class ReportService {
     const result = await this.repo.listReports(query);
 
     return {
-      data: result.rows.map(toReportResponse),
+      data: result.rows.map((row) => ({
+        ...toReportResponse(row),
+        ...(query.include === "identities"
+          ? { reporterActor: row.reporterActor ?? null, subjectActor: row.subjectActor ?? null }
+          : {}),
+      })),
       meta: {
         count: result.rows.length,
         total: result.total,

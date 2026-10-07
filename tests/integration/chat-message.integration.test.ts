@@ -63,13 +63,14 @@ describe("chat message routes", () => {
     });
 
     const response = await request
-      .get("/chat-messages?verdict=deny")
+      .get("/chat-messages?verdict=deny&include=identities")
       .set("Authorization", "Bearer moderator-token");
 
     expect(response.status).toBe(200);
     expect(dependencies.services.chatMessage.listMessages).toHaveBeenCalledWith(
       expect.objectContaining({
         verdict: "deny",
+        include: "identities",
       }),
     );
   });
