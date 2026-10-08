@@ -12,6 +12,7 @@
     "node": ">=24"
   },
   "scripts": {
+    "api": "python scripts/api.py",
     "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "check": "tsc -p tsconfig.json --noEmit",
     "db:codegen": "kysely-codegen --env-file .env --dialect postgres --out-file ./src/db/types.ts",
@@ -31,7 +32,8 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "start": "node dist/index.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:api-client": "python -B -m unittest discover -s scripts -p api_test.py -v"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
