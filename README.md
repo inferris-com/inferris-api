@@ -55,10 +55,15 @@ The API accepts these credential forms:
 | Argus access token       | `Authorization: Bearer <token>`                                       |
 | Minecraft player session | `Authorization: MinecraftSession <token>`                             |
 | API key                  | `Authorization: ApiKey <keyId.secret>` or `X-Api-Key: <keyId.secret>` |
+| Server instance token    | `Authorization: Bearer <instanceToken>`                             |
 
 Route policies can authorize by **API scope**, **Argus account role**, or **actor staff privilege**. Some operations additionally require a resolved actor for attribution, or enforce Minecraft permissions for trusted player-session workflows. A valid identity alone is not permission to access a resource.
 
 API-key superkeys bypass scope checks **only outside production**. Argus uses signed JWT access tokens and opaque, rotating refresh tokens. Minecraft sessions are verified against both Redis-held token state and the current database session.
+
+### Server instance tokens
+
+Minecraft servers register a running instance with `POST /server-instances/register`, using an appropriately scoped, server-bound API key or authorized administrator credential. Registration returns a new `data.token` for that instance. The server sends it as a bearer token for instance heartbeats, metrics, presence, and events under `/server-instances/:serverInstanceId/`. Unlike registration API keys or Argus JWTs, these opaque tokens identify a specific running instance. Only token hashes are stored; tokens stop authenticating when their instance is stopped, lost, or superseded. Keep them secret and register each new boot to obtain a fresh token.
 
 See [Actors and domain boundaries](docs/actors-and-domain-boundaries.md) and [Authentication and authorization](docs/authentication-and-authorization.md) for the detailed model and route policies.
 
