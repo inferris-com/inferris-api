@@ -11,3 +11,5 @@ coverage/
 !.env.example
 transient_docs/
 *.tar.gz
+
+__internal__
