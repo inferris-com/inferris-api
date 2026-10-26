@@ -10,7 +10,7 @@ const options: LoggerOptions = {
     env: config.env,
   },
   redact: {
-    paths: ["req.headers.authorization", "req.headers.cookie", "body.password", "body.token"],
+    paths: ["req.headers.authorization", "req.headers.x-api-key", "req.headers.cookie", "body.password", "body.token"],
     censor: "[REDACTED]",
   },
   ...(config.isProduction
