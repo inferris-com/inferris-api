@@ -14,6 +14,7 @@ import { ArgusDmService } from "@/module/argus/direct-messages/argus-dm.service.
 import { ArgusUserPgRepository } from "@/module/argus/argus-user/argus-user.pg-repository.js";
 import { ArgusUserService } from "@/module/argus/argus-user/argus-user.service.js";
 import { authenticate } from "@/module/auth/auth.middleware.js";
+import { createRateLimiter } from "@/middleware/rate-limiter.js";
 import { AuthRepository } from "@/module/auth/auth.repository.js";
 import { AuthService } from "@/module/auth/auth.service.js";
 import { AuditLogPgRepository } from "@/module/audit-log/audit-log.pg-repository.js";
@@ -64,6 +65,7 @@ This should work for now; might take another swing at it in the future
 export type AppDependencies = {
   authRepository: AuthRepository;
   authenticateRequest: RequestHandler;
+  rateLimit: ReturnType<typeof createRateLimiter>;
   services: {
     actor: ActorService;
     auth: AuthService;
@@ -141,6 +143,7 @@ export function createAppDependencies({
   return {
     authRepository,
     authenticateRequest: authenticate(authService),
+    rateLimit: createRateLimiter(redisClient),
     services: {
       actor: new ActorService(actorRepository),
       auth: authService,

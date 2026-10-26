@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, RequestHandler } from "express";
 
 import { createAccountRouter } from "@/module/argus/account/account.route.js";
 import { createActorRouter } from "@/module/actor/actor.route.js";
@@ -25,7 +25,37 @@ import { createWatchlistRouter } from "@/module/watchlist/watchlist.route.js";
 import type { AppDependencies } from "@/app/app.dependencies.js";
 
 export function registerAppRoutes(app: Express, dependencies: AppDependencies): void {
-  const { authRepository, authenticateRequest, services } = dependencies;
+  const { authRepository, rateLimit, services } = dependencies;
+
+  app.use(
+    "/auth/login",
+    rateLimit({ name: "auth-login", subject: "ip", maxRequests: 10, windowMs: 60_000 }),
+  );
+  app.use(
+    "/auth/refresh",
+    rateLimit({ name: "auth-refresh", subject: "ip", maxRequests: 30, windowMs: 60_000 }),
+  );
+  app.use(
+    "/auth/logout",
+    rateLimit({ name: "auth-logout", subject: "ip", maxRequests: 30, windowMs: 60_000 }),
+  );
+
+  const generalRateLimit = rateLimit({
+    name: "api-general",
+    subject: "principal",
+    // Servers may multiplex requests for many players under one credential.
+    maxRequests: 12_000,
+    windowMs: 60_000,
+  });
+  const authenticateRequest: RequestHandler = (req, res, next) => {
+    return dependencies.authenticateRequest(req, res, (error?: unknown) => {
+      if (error) {
+        next(error);
+        return;
+      }
+      void generalRateLimit(req, res, next);
+    });
+  };
 
   app.use("/auth", createAuthRouter(services.auth, authenticateRequest));
   app.use("/account", authenticateRequest, createAccountRouter(services.account));
