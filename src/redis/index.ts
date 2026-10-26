@@ -31,7 +31,7 @@ export function createRedisClient(redisUrl = config.redis.url, options: RedisCli
   return client;
 }
 
-export async function connectRedis(client = redis) {
+export async function connectRedis(client: RedisClient = redis) {
   if (client.isReady) {
     return client;
   }
@@ -50,7 +50,7 @@ export async function connectRedis(client = redis) {
   return connectionPromise;
 }
 
-export async function disconnectRedis(client = redis) {
+export async function disconnectRedis(client: RedisClient = redis) {
   if (client.isOpen) {
     await client.close();
   }
