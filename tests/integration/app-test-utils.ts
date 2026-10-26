@@ -612,6 +612,10 @@ export function createTestDependencies(): TestDependencies {
     },
   };
 
+  Object.assign(dependencies, {
+    rateLimit: (): RequestHandler => (_req, _res, next) => next(),
+  });
+
   return dependencies as unknown as TestDependencies;
 }
 
