@@ -14,7 +14,8 @@
   "scripts": {
     "api": "python scripts/api.py",
     "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
-    "check": "tsc -p tsconfig.json --noEmit",
+    "check": "tsc -p tsconfig.json --noEmit && npm run check:tests",
+    "check:tests": "tsc -p tests/tsconfig.json --noEmit",
     "db:codegen": "kysely-codegen --env-file .env --dialect postgres --out-file ./src/db/types.ts",
     "db:migrate": "kysely migrate:latest",
     "db:migrate:down": "kysely migrate:down",
