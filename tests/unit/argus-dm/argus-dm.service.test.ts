@@ -17,21 +17,35 @@ const conversation = {
 function createRepo(overrides: Record<string, unknown> = {}) {
   return {
     listConversations: jest.fn(),
-    findConversationForParticipant: jest.fn().mockResolvedValue(conversation),
-    listActiveParticipants: jest.fn().mockResolvedValue([]),
-    listLatestMessages: jest.fn().mockResolvedValue([]),
-    createConversation: jest.fn().mockResolvedValue(conversation),
-    updateConversation: jest.fn().mockResolvedValue(conversation),
-    leaveConversation: jest.fn().mockResolvedValue(true),
-    markConversationRead: jest.fn().mockResolvedValue(true),
-    countUnreadConversations: jest.fn().mockResolvedValue(0),
-    countUnreadMessages: jest.fn().mockResolvedValue([]),
-    listMessages: jest.fn().mockResolvedValue([]),
+    findConversationForParticipant: jest
+      .fn<(...args: unknown[]) => Promise<unknown>>()
+      .mockResolvedValue(conversation),
+    listActiveParticipants: jest
+      .fn<(...args: unknown[]) => Promise<unknown>>()
+      .mockResolvedValue([]),
+    listLatestMessages: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue([]),
+    createConversation: jest
+      .fn<(...args: unknown[]) => Promise<unknown>>()
+      .mockResolvedValue(conversation),
+    updateConversation: jest
+      .fn<(...args: unknown[]) => Promise<unknown>>()
+      .mockResolvedValue(conversation),
+    leaveConversation: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue(true),
+    markConversationRead: jest
+      .fn<(...args: unknown[]) => Promise<unknown>>()
+      .mockResolvedValue(true),
+    countUnreadConversations: jest
+      .fn<(...args: unknown[]) => Promise<unknown>>()
+      .mockResolvedValue(0),
+    countUnreadMessages: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue([]),
+    listMessages: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue([]),
     findMessageById: jest.fn(),
     createMessage: jest.fn(),
     updateMessage: jest.fn(),
     deleteMessage: jest.fn(),
-    listExistingActiveUserIds: jest.fn().mockResolvedValue(["owner", "recipient"]),
+    listExistingActiveUserIds: jest
+      .fn<(...args: unknown[]) => Promise<unknown>>()
+      .mockResolvedValue(["owner", "recipient"]),
     findArgusUserById: jest.fn(),
     ...overrides,
   };
@@ -112,8 +126,10 @@ describe("ArgusDmService", () => {
       deleted_by_argus_user_id: null,
     };
     const repo = createRepo({
-      findMessageById: jest.fn().mockResolvedValue({ ...message, body: "Original" }),
-      updateMessage: jest.fn().mockResolvedValue(message),
+      findMessageById: jest
+        .fn<(...args: unknown[]) => Promise<unknown>>()
+        .mockResolvedValue({ ...message, body: "Original" }),
+      updateMessage: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue(message),
     });
     const service = new ArgusDmService(repo as never);
 
@@ -132,7 +148,11 @@ describe("ArgusDmService", () => {
   });
 
   test("returns derived unread conversation count", async () => {
-    const repo = createRepo({ countUnreadConversations: jest.fn().mockResolvedValue(2) });
+    const repo = createRepo({
+      countUnreadConversations: jest
+        .fn<(...args: unknown[]) => Promise<unknown>>()
+        .mockResolvedValue(2),
+    });
     const service = new ArgusDmService(repo as never);
 
     await expect(service.getUnreadCount("owner")).resolves.toEqual({ unreadConversations: 2 });

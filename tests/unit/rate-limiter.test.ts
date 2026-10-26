@@ -12,7 +12,7 @@ const auth = {
   actorId: "player-1",
   platform: "minecraft",
   apiKey: { id: "credential-1", scopes: [], isSuperKey: false },
-} as AuthContext;
+} as unknown as AuthContext;
 
 describe("rate limiter", () => {
   test("distinguishes acting actor and credential principal", () => {
@@ -52,9 +52,9 @@ describe("rate limiter", () => {
     } as Response;
     const run = async () => {
       let error: unknown;
-      const next = jest.fn<NextFunction>((nextError?: unknown) => {
+      const next: NextFunction = (nextError?: unknown) => {
         error = nextError;
-      });
+      };
       await middleware(req, res, next);
       return error;
     };

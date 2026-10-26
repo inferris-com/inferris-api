@@ -98,7 +98,7 @@ describe("ServerInstancePgRepository", () => {
     const repo = new ServerInstancePgRepository(db);
 
     const result = await repo.reconcilePresence(
-      { id: instanceId, serverId, serverType: "velocity", state: "active" },
+      { id: instanceId, serverId, serverType: "velocity" },
       {
         observedAtMs: "2000",
         snapshotSequence: 1,
@@ -133,7 +133,7 @@ describe("ServerInstancePgRepository", () => {
     const repo = new ServerInstancePgRepository(db);
 
     const result = await repo.reconcilePresence(
-      { id: instanceId, serverId, serverType: "paper", state: "active" },
+      { id: instanceId, serverId, serverType: "paper" },
       { observedAtMs: "3000", snapshotSequence: 1, onlineMojangIds: [] },
     );
 
@@ -186,7 +186,7 @@ describe("ServerInstancePgRepository", () => {
     const repo = new ServerInstancePgRepository(db);
 
     const result = await repo.processEvent(
-      { id: instanceId, serverId, serverType: "velocity", state: "active" },
+      { id: instanceId, serverId, serverType: "velocity" },
       {
         eventId: "evt-1",
         sequence: 1,

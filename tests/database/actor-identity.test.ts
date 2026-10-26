@@ -140,6 +140,8 @@ databaseTests("actor and player identity (PostgreSQL)", () => {
       for (const list of [
         () =>
           punishmentRepo.listPunishments({
+            active: undefined,
+            revoked: undefined,
             include: "identities",
             limit,
             offset: 0,
@@ -166,7 +168,13 @@ databaseTests("actor and player identity (PostgreSQL)", () => {
       }
     }
     queries.length = 0;
-    const plain = await punishmentRepo.listPunishments({ limit: 25, offset: 0, issuerActorId });
+    const plain = await punishmentRepo.listPunishments({
+      limit: 25,
+      offset: 0,
+      issuerActorId,
+      active: undefined,
+      revoked: undefined,
+    });
     expect(queries).toHaveLength(2);
     expect(plain.rows[0]).not.toHaveProperty("subjectActor");
     queries.length = 0;

@@ -38,11 +38,9 @@ function serviceWithRepo(repo: Partial<ReportPgRepository>) {
 }
 
 test("updateComment rejects non-admin edits to another actor's comment", async () => {
-  const updateComment = jest.fn<(...args: unknown[]) => Promise<unknown>>();
+  const updateComment = jest.fn<ReportPgRepository["updateComment"]>();
   const service = serviceWithRepo({
-    findCommentById: jest
-      .fn<(...args: unknown[]) => Promise<unknown>>()
-      .mockResolvedValue(comment()),
+    findCommentById: jest.fn<ReportPgRepository["findCommentById"]>().mockResolvedValue(comment()),
     updateComment,
   });
 
@@ -56,13 +54,9 @@ test("updateComment rejects non-admin edits to another actor's comment", async (
 
 test("updateComment allows authors to edit their own comment and stamps editedAtMs", async () => {
   const updated = comment({ comment_text: "Updated.", edited_at_ms: "2000" });
-  const updateComment = jest
-    .fn<(...args: unknown[]) => Promise<unknown>>()
-    .mockResolvedValue(updated);
+  const updateComment = jest.fn<ReportPgRepository["updateComment"]>().mockResolvedValue(updated);
   const service = serviceWithRepo({
-    findCommentById: jest
-      .fn<(...args: unknown[]) => Promise<unknown>>()
-      .mockResolvedValue(comment()),
+    findCommentById: jest.fn<ReportPgRepository["findCommentById"]>().mockResolvedValue(comment()),
     updateComment,
   });
 
@@ -86,10 +80,10 @@ test("updateComment allows authors to edit their own comment and stamps editedAt
 });
 
 test("updateComment rejects edits to deleted comments", async () => {
-  const updateComment = jest.fn<(...args: unknown[]) => Promise<unknown>>();
+  const updateComment = jest.fn<ReportPgRepository["updateComment"]>();
   const service = serviceWithRepo({
     findCommentById: jest
-      .fn<(...args: unknown[]) => Promise<unknown>>()
+      .fn<ReportPgRepository["findCommentById"]>()
       .mockResolvedValue(comment({ deleted_at_ms: "2000", deleted_by_actor_id: authorActorId })),
     updateComment,
   });
@@ -104,12 +98,10 @@ test("updateComment rejects edits to deleted comments", async () => {
 
 test("deleteComment passes actor id so threaded comments can be tombstoned", async () => {
   const deleteComment = jest
-    .fn<(...args: unknown[]) => Promise<unknown>>()
+    .fn<ReportPgRepository["deleteComment"]>()
     .mockResolvedValue("tombstoned");
   const service = serviceWithRepo({
-    findCommentById: jest
-      .fn<(...args: unknown[]) => Promise<unknown>>()
-      .mockResolvedValue(comment()),
+    findCommentById: jest.fn<ReportPgRepository["findCommentById"]>().mockResolvedValue(comment()),
     deleteComment,
   });
 
