@@ -1,11 +1,11 @@
 # Inferris API
 
 > [!NOTE]
-> The API is in active development.
+> The API is under active development and is subject to quickly change. This project does not include the specific Argus and Plugin projects.
 
 [![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) [![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Express 5](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)](https://expressjs.com/) [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-6BA539?logo=openapiinitiative&logoColor=white)](openapi.json)
 
-**Inferris API** is the backend for the [Inferris](https://github.com/inferris-com) Minecraft network and Argus staff panel. It provides shared identity, moderation, server management, and administrative services through a REST API.
+**Inferris API** is the backend for the [Inferris](https://github.com/inferris-com) network and Argus staff panel. It provides shared identity, moderation, server management, and administrative services through a REST API.
 
 Built with **Node.js 24+, TypeScript, Express 5, Kysely, Zod** and uses both **PostgreSQL** and **Redis**.
 
@@ -65,6 +65,12 @@ Supported credentials include Argus bearer tokens, Minecraft session tokens, API
 | `npm run db:codegen`       | Regenerate Kysely database types |
 
 Database integration tests require `TEST_DATABASE_URL` and run in disposable schemas. Tests requiring it are skipped when unset. Do not edit the generated `src/db/types.ts` manually.
+
+## Argus, plugins, and other projects
+
+This repository does not include the Argus or Plugin projects themselves. Future versions might remove Argus from this API contract and favor a monorepo containing both Argus frontend and backend.
+
+It is currently unclear whether Argus and the Minecraft server instance plugins will be open-sourced. Future information will explicitly provide an update on just this. The most likely outcome is building a developer-first ecosystem originating from Inferris code so that developers have a fuller, more unified experience while allowing Inferris to stand on its own. 
 
 ## Repository structure
 
