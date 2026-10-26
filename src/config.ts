@@ -54,6 +54,24 @@ const envSchema = z
       return;
     }
 
+    if (env.AUTH_JWT_SECRET === "development-auth-secret-change-me-at-least-32-chars") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["AUTH_JWT_SECRET"],
+        message:
+          "Production AUTH_JWT_SECRET cannot use the development secret. Please change the secret to something unique.",
+      });
+    }
+
+    if (env.AUTH_API_KEY_PEPPER === "development-api-key-pepper-change-me-32-chars") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["AUTH_API_KEY_PEPPER"],
+        message:
+          "Production AUTH_API_KEY_PEPPER cannot use the development pepper. Please change the pepper to something unique.",
+      });
+    }
+
     if (env.AUTH_JWT_SECRET.length < 32) {
       ctx.addIssue({
         code: "too_small",
