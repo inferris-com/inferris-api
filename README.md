@@ -1,229 +1,97 @@
 # Inferris API
 
-The **Inferris API** is the backend for the [Inferris](https://github.com/inferris-com) social and gaming ecosystem. It connects the Minecraft network, the Argus staff panel, and shared platform services through a single REST API. Its identity model is also designed to accommodate other integrations, including Discord, while treating each domain user as a pointer to one principal.
+> [!NOTE]
+> The API is under active development and is subject to quickly change. This project does not include the specific Argus and Plugin projects.
 
-Built with **TypeScript**, **Node.js 24+**, **Express 5**, **PostgreSQL**, **Kysely**, **Redis**, and **Zod**. The API exposes an OpenAPI 3.1 specification and interactive Swagger UI.
+[![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) [![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Express 5](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)](https://expressjs.com/) [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-6BA539?logo=openapiinitiative&logoColor=white)](openapi.json)
 
-## Capabilities
+**Inferris API** is the backend for the [Inferris](https://github.com/inferris-com) network and Argus staff panel. It provides shared identity, moderation, server management, and administrative services through a REST API.
 
-### Platform and identity
+Built with **Node.js 24+, TypeScript, Express 5, Kysely, Zod** and uses both **PostgreSQL** and **Redis**.
 
-- **Actors:** stable identities for attributing actions to people, services, and automated systems. Actors can be linked to Minecraft players or Argus users without being interchangeable with those accounts.
-- **Authentication and authorization:** scoped API keys, Argus bearer tokens, Minecraft player sessions, actor-level staff privileges, and Minecraft rank-based permissions.
-- **Audit logs:** records of authorization decisions and selected mutations, with the acting principal and actor context.
+## Features
 
-### Minecraft network
+- **Identity & access**: cross-platform actors, Minecraft players, Argus accounts, scoped API keys, staff privileges, and audit logs.
+- **Minecraft network**: profiles, ranks, permissions, badges, server instances, sessions, and telemetry.
+- **Moderation**: punishments, reports, cases, evidence, chat ingestion, and watchlists.
+- **Argus**: staff accounts, authentication, security controls, direct messages, and alerts.
+- **Infrastructure**: PostgreSQL persistence, Redis-backed services, background workers, and OpenAPI 3.1 contracts.
 
-- **Players:** Mojang identity, profile data, player state and bitmask flags, archival/restoration, rank assignments, and community badge assignments.
-- **Ranks, badges, and permissions:** configurable ranks, rank-groups, badges, permission nodes, and allow/deny permission policies evaluated against ranks.
-- **Servers:** server configuration, access rules, local and global lockdowns, server instances, and player connection/session tracking.
-- **Operations and telemetry:** server heartbeats, observations, metrics, and network-session history.
+Actors are stable cross-platform identities; Minecraft players and Argus users remain distinct accounts. Authentication credentials and authorization policies are separate from those identities.
 
-### Moderation
+## Quick start
 
-- **Punishments:** issue and manage kicks, warnings, mutes, and bans, including expirations and automated lifting actions.
-- **Reports and cases:** player reports, discussion threads, moderation cases, participants, and evidence.
-- **Chat messages:** authenticated ingestion and querying, with Redis-backed buffering and a background flush worker.
-- **Watchlist:** staff-managed monitoring records for subjects of interest.
-
-### Argus staff panel
-
-- **Accounts:** Argus user management, authentication, account states, security locks, password-change and reset flows.
-- **Security:** Argon2 password hashing, refresh-token sessions, and breached-password checks.
-- **Collaboration:** multi-recipient direct messages and alerts.
-- **Administration:** staff-facing access to supported platform, player, moderation, and server resources.
-
-For individual endpoints, request bodies, and access requirements, consult the [interactive API documentation](#api-reference) rather than relying on this overview as an endpoint catalogue.
-
-## Identity and access model
-
-Inferris separates **identity**, **authentication**, and **authorization**:
-
-| Concept                  | Responsibility                                                                                                                                              |
-| ------------------------ |-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Actor**                | Principal. Stable identity used for attribution. May represent a person or a system; its kind and display name do not grant access.                         |
-| **Player**               | Minecraft-specific identity and gameplay state, keyed by Mojang ID and linked to an actor. Archiving a player preserves history and the actor relationship. |
-| **Argus user**           | Staff-panel login and account lifecycle. An actor link is optional, and the Argus user ID remains separate.                                                 |
-| **API key**              | Service credential with route scopes (for example, `players:read` or `moderation:write`). Some keys are associated with an actor.                           |
-| **Staff privilege**      | Role assigned to an actor (from `none` through `superadmin`), independent of Minecraft rank.                                                                |
-| **Minecraft permission** | Rank-based allow/deny policy for permission nodes, separate from API key scopes and Argus roles.[^1]                                                        |
-
-The API accepts these credential forms:
-
-| Credential               | Header                                                                |
-| ------------------------ | --------------------------------------------------------------------- |
-| Argus access token       | `Authorization: Bearer <token>`                                       |
-| Minecraft player session | `Authorization: MinecraftSession <token>`                             |
-| API key                  | `Authorization: ApiKey <keyId.secret>` or `X-Api-Key: <keyId.secret>` |
-| Server instance token    | `Authorization: Bearer <instanceToken>`                             |
-
-Route policies can authorize by **API scope**, **Argus account role**, or **actor staff privilege**. Some operations additionally require a resolved actor for attribution, or enforce Minecraft permissions for trusted player-session workflows. A valid identity alone is not permission to access a resource.
-
-API-key superkeys bypass scope checks **only outside production**. Argus uses signed JWT access tokens and opaque, rotating refresh tokens. Minecraft sessions are verified against both Redis-held token state and the current database session.
-
-### Server instance tokens
-
-Minecraft servers register a running instance with `POST /server-instances/register`, using an appropriately scoped, server-bound API key or authorized administrator credential. Registration returns a new `data.token` for that instance. The server sends it as a bearer token for instance heartbeats, metrics, presence, and events under `/server-instances/:serverInstanceId/`. Unlike registration API keys or Argus JWTs, these opaque tokens identify a specific running instance. Only token hashes are stored; tokens stop authenticating when their instance is stopped, lost, or superseded. Keep them secret and register each new boot to obtain a fresh token.
-
-See [Actors and domain boundaries](docs/actors-and-domain-boundaries.md) and [Authentication and authorization](docs/authentication-and-authorization.md) for the detailed model and route policies.
-
-## Getting started
-
-### Requirements
-
-- **Node.js 24 or newer** and npm.
-- **Docker with Docker Compose** for the recommended local development environment, or separately running **PostgreSQL** and **Redis**.
-- **Python 3.10+** only for optional Python-based development scripts.
-
-PostgreSQL stores application data; Redis supports authentication sessions, pub/sub, and chat buffering. **Both services are currently required when the server starts**. Docker Compose provides them alongside the API and Adminer.
-
-### Docker Compose (recommended)
-
-From the `inferris-api/` directory:
+Requires Docker Compose.
 
 ```sh
-# Create your local configuration; on PowerShell use:
-# Copy-Item .env.example .env
 cp .env.example .env
-
-# Start the API, PostgreSQL, Redis, and Adminer
 docker compose up --build -d
-
-# Apply database migrations
 docker compose exec -T app npm run db:migrate
-
-# Optional: populate local development seed data
-docker compose exec -T app npm run db:seed
 ```
 
-The `app` service runs `npm run dev` with the repository mounted, so TypeScript changes reload automatically.
+Local endpoints:
 
-| Local URL                                                                | Purpose                                  |
-| ------------------------------------------------------------------------ | ---------------------------------------- |
-| [http://localhost:3000/docs](http://localhost:3000/docs)                 | Swagger UI                               |
-| [http://localhost:3000/openapi.json](http://localhost:3000/openapi.json) | OpenAPI JSON                             |
-| [http://localhost:3000/health](http://localhost:3000/health)             | Basic HTTP health response               |
-| [http://localhost:3000/readyz](http://localhost:3000/readyz)             | Readiness check for PostgreSQL and Redis |
-| [http://localhost:8080](http://localhost:8080)                           | Adminer database interface               |
+| Service      | URL                                                               |
+| ------------ | ----------------------------------------------------------------- |
+| Swagger UI   | [localhost:3000/docs](http://localhost:3000/docs)                 |
+| OpenAPI JSON | [localhost:3000/openapi.json](http://localhost:3000/openapi.json) |
+| Health check | [localhost:3000/health](http://localhost:3000/health)             |
+| Readiness    | [localhost:3000/readyz](http://localhost:3000/readyz)             |
+| Adminer      | [localhost:8080](http://localhost:8080)                           |
 
-These are defaults. Host-facing ports are configurable through `API_PORT`, `POSTGRES_PORT`, `REDIS_PORT`, and `ADMINER_PORT` in `.env`.
+The API can also run directly with Node.js 24+, PostgreSQL, and Redis. Connection settings are defined in [`.env.example`](.env.example).
 
-To follow application logs, use `docker compose logs -f app`. To stop the development stack without removing persisted volumes, use `docker compose down`.
+## API
 
-### Run the API directly
+Route definitions, request schemas, and response contracts are documented in:
 
-If PostgreSQL and Redis are already available on the host:
+- [Swagger UI](http://localhost:3000/docs) (running locally)
+- [OpenAPI JSON](openapi.json)
+- [OpenAPI YAML](openapi.yaml)
 
-```sh
-cp .env.example .env
-npm ci
-npm run db:migrate
-npm run dev
-```
+Supported credentials include Argus bearer tokens, Minecraft session tokens, API keys, and server-instance tokens. Access is enforced through route scopes, roles, privileges, and resource-specific policies; see [Authentication and authorization](docs/authentication-and-authorization.md).
 
-Use `Copy-Item .env.example .env` instead of `cp` if preferred on PowerShell. Check `DATABASE_URL` and `REDIS_URL` in `.env`; the example values target services on `localhost`. The Node process reads this configuration through `src/config.ts`.
+## Development
 
-For a compiled run, use `npm run build` followed by `npm start`.
+| Command                    | Purpose                          |
+| -------------------------- | -------------------------------- |
+| `npm run dev`              | Start the development server     |
+| `npm run check`            | Type-check source and tests      |
+| `npm test`                 | Run Jest tests                   |
+| `npm run lint`             | Run ESLint                       |
+| `npm run build`            | Compile to `dist/`               |
+| `npm run generate:openapi` | Regenerate API specifications    |
+| `npm run db:migrate`       | Apply database migrations        |
+| `npm run db:codegen`       | Regenerate Kysely database types |
 
-## API reference
+Database integration tests require `TEST_DATABASE_URL` and run in disposable schemas. Tests requiring it are skipped when unset. Do not edit the generated `src/db/types.ts` manually.
 
-The running service hosts Swagger UI at **`/docs`** and the OpenAPI document at **`/openapi.json`**. Generated specifications are also committed as [`openapi.json`](openapi.json) and [`openapi.yaml`](openapi.yaml).
+## Argus, plugins, and other projects
 
-### Example requests
+This repository does not include the Argus or Plugin projects themselves. Future versions might remove Argus from this API contract and favor a monorepo containing both Argus frontend and backend.
 
-The liveness and readiness routes do not require credentials:
+It is currently unclear whether Argus and the Minecraft server instance plugins will be open-sourced. Future information will explicitly provide an update on just this. The most likely outcome is building a developer-first ecosystem originating from Inferris code so that developers have a fuller, more unified experience while allowing Inferris to stand on its own.
 
-```sh
-curl http://localhost:3000/health
-curl http://localhost:3000/readyz
-```
-
-Application resources typically require a credential with an applicable role or scope:
-
-```sh
-# Replace the placeholder with an API key authorized for player reads
-curl -H "X-Api-Key: <keyId.secret>" http://localhost:3000/players
-
-# Argus login returns access and refresh tokens in the data envelope
-curl -X POST http://localhost:3000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"usernameOrEmail":"YOUR_USERNAME","password":"YOUR_PASSWORD"}'
-```
-
-Most successful resource responses are wrapped in `{"data": ...}`; lists may include `meta`. Errors use `{"error":{"code":"...","message":"..."}}`, with optional details. Use the OpenAPI schemas for the exact contract of each route.
-
-A separate Python endpoint-testing client is available in `scripts/api.py` (see `scripts/api.README.md`). It can be run with `npm run api --` or directly with Python when its optional dependencies are installed.
-
-## Configuration
-
-Copy [`.env.example`](.env.example) to `.env` and adjust it for your environment. Common application variables include:
-
-| Variable                                                                | Purpose                                    |
-| ----------------------------------------------------------------------- | ------------------------------------------ |
-| `NODE_ENV`, `HOST`, `PORT`                                              | Runtime environment and HTTP listener.     |
-| `DATABASE_URL`, `DB_POOL_SIZE`                                          | PostgreSQL connection and pool size.       |
-| `REDIS_URL`, `REDIS_CONNECT_TIMEOUT_MS`, `REDIS_RECONNECT_MAX_DELAY_MS` | Redis connection and retry behavior.       |
-| `AUTH_JWT_SECRET`, `AUTH_API_KEY_PEPPER`                                | Token signing and API-key hashing secrets. |
-| `AUTH_ACCESS_TOKEN_TTL_SECONDS`, `AUTH_REFRESH_TOKEN_TTL_SECONDS`       | Argus token lifetimes.                     |
-| `MINECRAFT_SESSION_TTL_SECONDS`, `MINECRAFT_HEARTBEAT_STALE_SECONDS`    | Minecraft session and heartbeat settings.  |
-| `CHAT_FLUSH_BATCH_SIZE`, `CHAT_FLUSH_INTERVAL_MS`                       | Chat ingestion worker tuning.              |
-
-Additional options and their defaults are defined in [`src/config.ts`](src/config.ts). **Replace development credentials before deploying**; production validates a minimum length of 32 characters for both `AUTH_JWT_SECRET` and `AUTH_API_KEY_PEPPER`. Never commit your local `.env` or real tokens.
-
-## Development workflow
-
-| Command                    | Purpose                                             |
-| -------------------------- | --------------------------------------------------- |
-| `npm run dev`              | Start the TypeScript server in watch mode.          |
-| `npm run check`            | Type-check without generating output.               |
-| `npm run lint`             | Run ESLint.                                         |
-| `npm run format:check`     | Check formatting with Prettier.                     |
-| `npm run format`           | Format files with Prettier (writes changes).        |
-| `npm test`                 | Run Jest tests.                                     |
-| `npm run build`            | Compile into `dist/`.                               |
-| `npm start`                | Run the compiled server.                            |
-| `npm run generate:openapi` | Regenerate `openapi.json` and `openapi.yaml`.       |
-| `npm run db:migrate`       | Apply pending Kysely migrations.                    |
-| `npm run db:migrate:list`  | Inspect migration status.                           |
-| `npm run db:seed`          | Run development seed scripts.                       |
-| `npm run db:codegen`       | Generate TypeScript database types from PostgreSQL. |
-| `npm run test:api-client`  | Test the optional Python HTTP client.               |
-
-When changing endpoints or schemas, update their OpenAPI registrations and run `npm run generate:openapi`. CI checks that the committed specifications match the generator.
-
-Database-backed tests need an explicit `TEST_DATABASE_URL`; they run against **disposable schemas** in the supplied PostgreSQL database. Tests that require it are skipped without that variable. For example, with the development stack running:
-
-```sh
-docker compose exec -T app sh -c 'TEST_DATABASE_URL="$DATABASE_URL" npm test -- --runInBand --coverage=false tests/database'
-```
-
-Edit migrations in `src/db/migrations/` and regenerate `src/db/types.ts` with `npm run db:codegen`; **do not edit generated database types manually**. Destructive migration resets and reseeding should be confined to disposable development data.
-
-## Repository layout
+## Repository structure
 
 ```text
 src/
-  app/         Application composition, dependencies, and route mounting
-  module/      Domain modules (routes, schemas, services, repositories)
-  db/          Database setup, migrations, generated types, and seeds
-  middleware/  Request validation and shared middleware
-  openapi/     OpenAPI registration and response schemas
-  redis/       Redis client lifecycle
-  cron/        Scheduled maintenance jobs
-  shared/      Shared HTTP and database utilities
-tests/         Unit, integration, and database regression tests
-scripts/       OpenAPI generation, test clients, and development utilities
-docs/          Domain and architecture documentation
+  app/         Application composition and routing
+  module/      Domain modules
+  db/          Database, migrations, and types
+  redis/       Redis client and lifecycle
+  middleware/  Shared HTTP middleware
+  openapi/     API schema registration
+  shared/      Shared utilities
+tests/         Unit, integration, and database tests
+docs/          Architecture documentation
+scripts/       Development tooling
 ```
 
-The server also runs background work for expiring punishments, marking inactive servers, and flushing buffered chat messages.
+## Architecture docs
 
-## Further reading
+- [Actors and domain boundaries](docs/actors-and-domain-boundaries.md)
+- [Authentication and authorization](docs/authentication-and-authorization.md)
+- [Stress-seeding utilities](scripts/stress_seed/README.md)
 
-- [Actors and domain boundaries](docs/actors-and-domain-boundaries.md) — identity links, player archival, and moderation attribution.
-- [Authentication and authorization](docs/authentication-and-authorization.md) — credential resolution, route policies, roles, scopes, and Minecraft permission evaluation.
-- [Stress-seeding utilities](scripts/stress_seed/README.md) — optional local workload and dataset generation.
-
-Inferris API is an internal platform application. Its routes, authorization rules, and data contracts should be treated as implementation-owned and verified against the current OpenAPI specification.
-
-[^1]: Permission nodes may checked server-side via `requireMinecraftPermission`, but are intended to be paired with a staff privilege requirement *if* it is a protected resource. Thus, this requirement can actually detect drift between what a player can execute and what they cannot actually access.
+**Status:** Active development. Refer to the generated OpenAPI specifications for current route contracts.
