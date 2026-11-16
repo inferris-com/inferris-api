@@ -13,6 +13,8 @@ export type ArgusAccountSecurityLock = "change_password" | "reset_password";
 
 export type ArgusAccountStatus = "active" | "disabled" | "suspended" | "verify_email";
 
+export type BugReportStatus = "closed" | "confirmed" | "duplicate" | "in_progress" | "invalid" | "open" | "resolved" | "reviewing";
+
 export type FriendRequestStatus = "accepted" | "cancelled" | "denied" | "expired" | "pending";
 
 export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
@@ -41,14 +43,6 @@ export type ModCaseStatus = "closed" | "dismissed" | "investigating" | "open" | 
 
 export type ModerationCaseActorRole = "assigned_mod" | "related_actor" | "reporter" | "reviewer" | "subject" | "suspected_alt" | "victim" | "witness";
 
-export type ModerationEventType = "appeal_closed" | "appeal_opened" | "assigned" | "closed" | "comment_added" | "comment_edited" | "created" | "escalated_to_case" | "evidence_added" | "evidence_removed" | "infraction_issued" | "linked_resource" | "priority_changed" | "reopened" | "severity_changed" | "status_changed" | "triaged" | "unlinked_resource" | "updated" | "watchlist_added" | "watchlist_cleared";
-
-export type ModerationEvidenceType = "bug_report" | "chat_context" | "chat_message" | "command_log" | "external_url" | "file" | "other" | "screenshot" | "server_log" | "staff_observation" | "video";
-
-export type ModerationLinkType = "appeals" | "appellant_of" | "attached_to" | "blocked_by" | "created_from" | "duplicate_of" | "escalated_to" | "evidence_for" | "involves" | "mentions" | "related_to" | "reporter_of" | "resolved_by" | "resulted_in" | "subject_of";
-
-export type ModerationResourceType = "actor" | "appeal" | "bug_report" | "chat_message" | "external_url" | "file" | "infraction" | "mod_case" | "punishment" | "report" | "report_comment" | "server" | "watchlist_entry";
-
 export type Numeric = ColumnType<string, number | string, number | string>;
 
 export type PermissionCategory = "administration" | "command" | "development" | "feature" | "general" | "moderation";
@@ -60,8 +54,6 @@ export type Platform = "argus" | "bot" | "discord" | "minecraft" | "other";
 export type PrincipalType = "argus_user" | "discord_bot" | "internal_worker" | "minecraft_session" | "server_api_key" | "server_instance" | "service_actor_api_key" | "system" | "unknown" | "user_api_key";
 
 export type Punishment = "ban" | "kick" | "mute" | "warn";
-
-export type PunishmentAppealStatus = "accepted" | "open" | "rejected" | "under_review" | "withdrawn";
 
 export type PunishmentLiftedCause = "appeal_accepted" | "expired" | "revoked";
 
@@ -284,18 +276,6 @@ export interface ChatMessages {
   verdict: Generated<MessageVerdict>;
 }
 
-export interface EntitlementItems {
-  created_at_ms: Generated<Int8>;
-  description: string | null;
-  id: Generated<string>;
-  is_active: Generated<boolean>;
-  item_type: string;
-  label: string;
-  metadata: Generated<Json>;
-  sku: string;
-  updated_at_ms: Generated<Int8>;
-}
-
 export interface FriendRequests {
   created_at_ms: Generated<Int8>;
   id: Generated<string>;
@@ -317,6 +297,21 @@ export interface Groups {
   key: string;
   label: string;
   priority: Generated<number>;
+  updated_at_ms: Int8 | null;
+}
+
+export interface Issues {
+  assigned_to_actor_id: string | null;
+  closed_at_ms: Int8 | null;
+  closed_by_actor_id: string | null;
+  created_at_ms: Generated<Int8>;
+  created_by_actor_id: string | null;
+  description: string;
+  id: Generated<string>;
+  platform: Generated<string>;
+  severity: Severity | null;
+  status: Generated<BugReportStatus>;
+  title: string;
   updated_at_ms: Int8 | null;
 }
 
@@ -364,47 +359,6 @@ export interface ModCases {
   updated_at_ms: Int8 | null;
 }
 
-export interface ModerationEvents {
-  actor_id: string | null;
-  created_at_ms: Generated<Int8>;
-  event_type: ModerationEventType;
-  id: Generated<string>;
-  metadata: Generated<Json>;
-  new_value: Json | null;
-  object_id: string;
-  object_type: ModerationResourceType;
-  previous_value: Json | null;
-}
-
-export interface ModerationEvidence {
-  chat_message_id: string | null;
-  created_at_ms: Generated<Int8>;
-  description: string | null;
-  evidence_type: ModerationEvidenceType;
-  id: Generated<string>;
-  is_removed: Generated<boolean>;
-  metadata: Generated<Json>;
-  object_id: string;
-  object_type: ModerationResourceType;
-  removed_at_ms: Int8 | null;
-  removed_by_actor_id: string | null;
-  submitted_by_actor_id: string | null;
-  title: string | null;
-  url: string | null;
-}
-
-export interface ModerationResourceLinks {
-  created_at_ms: Generated<Int8>;
-  created_by_actor_id: string | null;
-  id: Generated<string>;
-  link_type: Generated<ModerationLinkType>;
-  note: string | null;
-  source_id: string;
-  source_type: ModerationResourceType;
-  target_id: string;
-  target_type: ModerationResourceType;
-}
-
 export interface NetworkSessions {
   connected_at_ms: Generated<Int8>;
   disconnect_reason: string | null;
@@ -448,20 +402,6 @@ export interface PlayerBadges {
   earned_at_ms: Generated<Int8>;
   player_id: string;
   source: string | null;
-}
-
-export interface PlayerEntitlements {
-  actor_id: string;
-  entitlement_item_id: string;
-  expires_at_ms: Int8 | null;
-  granted_at_ms: Generated<Int8>;
-  id: Generated<string>;
-  metadata: Generated<Json>;
-  quantity: Generated<Int8>;
-  revoked_at_ms: Int8 | null;
-  source: string;
-  source_ref_id: string | null;
-  status: Generated<string>;
 }
 
 export interface PlayerFlagDefinitions {
@@ -531,17 +471,6 @@ export interface PrivilegedSubjects {
   updated_at_ms: Int8 | null;
 }
 
-export interface PunishmentAppeals {
-  appellant_actor_id: string;
-  closed_at_ms: Int8 | null;
-  closed_by_actor_id: string | null;
-  created_at_ms: Generated<Int8>;
-  id: Generated<string>;
-  infraction_category: Punishment;
-  infraction_ref_id: string | null;
-  status: Generated<PunishmentAppealStatus>;
-}
-
 export interface Punishments {
   code: string;
   created_at_ms: Generated<Int8>;
@@ -562,30 +491,6 @@ export interface Punishments {
   updated_at_ms: Int8 | null;
 }
 
-export interface PurchaseOrderItems {
-  entitlement_item_id: string;
-  granted_entitlement_id: string | null;
-  id: Generated<string>;
-  label: string;
-  line_total: Int8;
-  purchase_order_id: string;
-  quantity: Generated<number>;
-  shop_listing_id: string | null;
-  sku: string;
-  unit_price: Int8;
-}
-
-export interface PurchaseOrders {
-  actor_id: string;
-  cancelled_at_ms: Int8 | null;
-  completed_at_ms: Int8 | null;
-  created_at_ms: Generated<Int8>;
-  currency_type: Generated<string>;
-  id: Generated<string>;
-  status: string;
-  total_amount: Int8;
-}
-
 export interface Ranks {
   created_at_ms: Generated<Int8>;
   description: string | null;
@@ -597,34 +502,6 @@ export interface Ranks {
   tier: Generated<number>;
   updated_at_ms: Int8 | null;
   visuals: Generated<Json>;
-}
-
-export interface RedemptionCampaignRewards {
-  amount: Int8 | null;
-  campaign_id: string;
-  id: Generated<string>;
-  quantity: Generated<number | null>;
-  reward_type: string;
-  shop_item_id: string | null;
-}
-
-export interface RedemptionCampaigns {
-  code: string;
-  created_at_ms: Generated<Int8>;
-  expires_at_ms: Int8 | null;
-  id: Generated<string>;
-  is_active: Generated<boolean>;
-  label: string;
-  max_redemptions: Int8 | null;
-  max_redemptions_per_actor: Generated<number>;
-  starts_at_ms: Int8 | null;
-}
-
-export interface Redemptions {
-  actor_id: string;
-  campaign_id: string;
-  id: Generated<string>;
-  redeemed_at_ms: Generated<Int8>;
 }
 
 export interface ReportComments {
@@ -774,31 +651,6 @@ export interface Servers {
   type: Generated<ServerType>;
 }
 
-export interface ShopOfferings {
-  created_at_ms: Generated<Int8>;
-  ends_at_ms: Int8 | null;
-  entitlement_item_id: string;
-  id: Generated<string>;
-  is_active: Generated<boolean>;
-  label: string | null;
-  metadata: Generated<Json>;
-  price: Int8;
-  quantity: Generated<number>;
-  starts_at_ms: Int8 | null;
-  updated_at_ms: Generated<Int8>;
-}
-
-export interface VirtualTransactions {
-  actor_id: string;
-  amount: Int8;
-  balance_after: Int8;
-  created_at_ms: Generated<Int8>;
-  id: Generated<string>;
-  source: string;
-  source_ref_id: string | null;
-  transaction_type: string;
-}
-
 export interface DB {
   actor_watchlist_entries: ActorWatchlistEntries;
   actors: Actors;
@@ -817,36 +669,26 @@ export interface DB {
   badges: Badges;
   chat_channels: ChatChannels;
   chat_messages: ChatMessages;
-  entitlement_items: EntitlementItems;
   friend_requests: FriendRequests;
   friendships: Friendships;
   groups: Groups;
+  issues: Issues;
   lockdowns: Lockdowns;
   mod_case_actors: ModCaseActors;
   mod_cases: ModCases;
-  moderation_events: ModerationEvents;
-  moderation_evidence: ModerationEvidence;
-  moderation_resource_links: ModerationResourceLinks;
   network_sessions: NetworkSessions;
   network_sessions_current: NetworkSessionsCurrent;
   permission_nodes: PermissionNodes;
   permission_policies: PermissionPolicies;
   player_badges: PlayerBadges;
-  player_entitlements: PlayerEntitlements;
   player_flag_definitions: PlayerFlagDefinitions;
   player_nicknames: PlayerNicknames;
   player_profiles: PlayerProfiles;
   player_ranks: PlayerRanks;
   players: Players;
   privileged_subjects: PrivilegedSubjects;
-  punishment_appeals: PunishmentAppeals;
   punishments: Punishments;
-  purchase_order_items: PurchaseOrderItems;
-  purchase_orders: PurchaseOrders;
   ranks: Ranks;
-  redemption_campaign_rewards: RedemptionCampaignRewards;
-  redemption_campaigns: RedemptionCampaigns;
-  redemptions: Redemptions;
   report_comments: ReportComments;
   reports: Reports;
   server_access_policies: ServerAccessPolicies;
@@ -857,6 +699,4 @@ export interface DB {
   server_latest_metrics: ServerLatestMetrics;
   server_registration_api_keys: ServerRegistrationApiKeys;
   servers: Servers;
-  shop_offerings: ShopOfferings;
-  virtual_transactions: VirtualTransactions;
 }
