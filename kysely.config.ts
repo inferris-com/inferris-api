@@ -1,4 +1,4 @@
-import { defineConfig } from "kysely-ctl";
+import { defineConfig, getKnexTimestampPrefix } from "kysely-ctl";
 import { Pool } from "pg";
 
 import { config } from "@/config.js";
@@ -12,9 +12,11 @@ export default defineConfig({
     }),
   },
   migrations: {
+    getMigrationPrefix: getKnexTimestampPrefix,
     migrationFolder: "src/db/migrations",
   },
   seeds: {
+    getSeedPrefix: getKnexTimestampPrefix,
     seedFolder: "src/db/seeds",
   },
 });
