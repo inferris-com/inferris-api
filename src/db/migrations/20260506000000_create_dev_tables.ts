@@ -1326,37 +1326,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     ON report_comments (report_id, created_at_ms)
     WHERE is_sticky = TRUE;
 
-  CREATE TABLE punishment_appeals
-  (
-    id                  UUID PRIMARY KEY                  DEFAULT gen_random_uuid(),
-    appellant_actor_id  UUID                     NOT NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    infraction_ref_id   UUID                     NULL REFERENCES punishments (id) ON DELETE SET NULL,
-    infraction_category punishment               NOT NULL,
-    status              punishment_appeal_status NOT NULL DEFAULT 'open',
-    closed_by_actor_id  UUID                     NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    created_at_ms       BIGINT                   NOT NULL DEFAULT get_unix_ms(),
-    closed_at_ms        BIGINT                   NULL,
-
-    CONSTRAINT chk_punishment_appeals_closed_consistent
-      CHECK (
-        (closed_at_ms IS NULL AND closed_by_actor_id IS NULL)
-          OR
-        (closed_at_ms IS NOT NULL AND closed_by_actor_id IS NOT NULL)
-        )
-  );
-  CREATE INDEX idx_punishment_appeals_appellant_created
-    ON punishment_appeals (appellant_actor_id, created_at_ms DESC);
-  CREATE INDEX idx_punishment_appeals_status_created
-    ON punishment_appeals (status, created_at_ms DESC);
-  CREATE INDEX idx_punishment_appeals_infraction_ref
-    ON punishment_appeals (infraction_ref_id)
-    WHERE infraction_ref_id IS NOT NULL;
-  CREATE INDEX idx_punishment_appeals_category_created
-    ON punishment_appeals (infraction_category, created_at_ms DESC);
-  CREATE INDEX idx_punishment_appeals_closed_by_actor
-    ON punishment_appeals (closed_by_actor_id, closed_at_ms DESC)
-    WHERE closed_by_actor_id IS NOT NULL;
-
   -- ============================================================
 -- Mod cases / investigations
 -- ============================================================
