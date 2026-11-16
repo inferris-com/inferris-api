@@ -2,10 +2,7 @@ import type { Kysely, Selectable } from "kysely";
 
 import type { ArgusAlerts, DB } from "@/db/types.js";
 import type { PaginatedResult } from "@/shared/pagination.schemas.js";
-import {
-  toArgusAlertInsert,
-  toArgusAlertUpdate,
-} from "@/module/argus/alert/argus-alert.mapper.js";
+import { toArgusAlertInsert, toArgusAlertUpdate } from "@/module/argus/alert/argus-alert.mapper.js";
 import type {
   CreateArgusAlertBody,
   ListArgusAlertsQuery,
