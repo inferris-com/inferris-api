@@ -1527,55 +1527,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     ON actor_watchlist_entries (cleared_by_actor_id, cleared_at_ms DESC)
     WHERE cleared_by_actor_id IS NOT NULL;
 
-  CREATE TABLE bug_reports
-  (
-    id                   UUID PRIMARY KEY           DEFAULT gen_random_uuid(),
-
-    platform             VARCHAR(30)       NOT NULL DEFAULT 'minecraft',
-    title                VARCHAR(100)      NOT NULL,
-    description          TEXT              NOT NULL,
-
-    status               bug_report_status NOT NULL DEFAULT 'open',
-    severity             severity          NULL,
-
-    created_by_actor_id  UUID              NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    assigned_to_actor_id UUID              NULL REFERENCES actors (id) ON DELETE SET NULL,
-
-    closed_by_actor_id   UUID              NULL REFERENCES actors (id) ON DELETE RESTRICT,
-    closed_at_ms         BIGINT            NULL,
-
-    created_at_ms        BIGINT            NOT NULL DEFAULT get_unix_ms(),
-    updated_at_ms        BIGINT            NULL,
-
-    CONSTRAINT chk_bug_reports_closed_consistent
-      CHECK (
-        (closed_at_ms IS NULL AND closed_by_actor_id IS NULL)
-          OR
-        (closed_at_ms IS NOT NULL AND closed_by_actor_id IS NOT NULL)
-        )
-  );
-
-  CREATE INDEX idx_bug_reports_status_severity_created
-    ON bug_reports (status, severity, created_at_ms DESC);
-
-  CREATE INDEX idx_bug_reports_created_by_actor
-    ON bug_reports (created_by_actor_id, created_at_ms DESC)
-    WHERE created_by_actor_id IS NOT NULL;
-
-  CREATE INDEX idx_bug_reports_assigned_status_created
-    ON bug_reports (assigned_to_actor_id, status, created_at_ms DESC)
-    WHERE assigned_to_actor_id IS NOT NULL;
-
-  CREATE INDEX idx_bug_reports_closed_by_actor
-    ON bug_reports (closed_by_actor_id, closed_at_ms DESC)
-    WHERE closed_by_actor_id IS NOT NULL;
-
-  CREATE INDEX idx_bug_reports_title_description_fts
-    ON bug_reports
-      USING GIN (
-                 to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, ''))
-        );
-
   -- ============================================================
 -- Generic moderation resource links
 -- This is the bridge layer that lets reports, cases, appeals,
@@ -1640,7 +1591,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     evidence_type         moderation_evidence_type NOT NULL,
 
     chat_message_id       UUID                     NULL REFERENCES chat_messages (id) ON DELETE SET NULL,
-    bug_report_id         UUID                     NULL REFERENCES bug_reports (id) ON DELETE SET NULL,
 
     title                 TEXT                     NULL,
     description           TEXT                     NULL,
@@ -1665,7 +1615,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     CONSTRAINT chk_moderation_evidence_has_payload
       CHECK (
         chat_message_id IS NOT NULL
-          OR bug_report_id IS NOT NULL
           OR url IS NOT NULL
           OR description IS NOT NULL
           OR metadata <> '{}'::jsonb
@@ -1681,10 +1630,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   CREATE INDEX idx_moderation_evidence_chat_message
     ON moderation_evidence (chat_message_id)
     WHERE chat_message_id IS NOT NULL;
-
-  CREATE INDEX idx_moderation_evidence_bug_report
-    ON moderation_evidence (bug_report_id)
-    WHERE bug_report_id IS NOT NULL;
 
   CREATE INDEX idx_moderation_evidence_submitted_by
     ON moderation_evidence (submitted_by_actor_id, created_at_ms DESC)

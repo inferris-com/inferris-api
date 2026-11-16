@@ -13,8 +13,6 @@ export type ArgusAccountSecurityLock = "change_password" | "reset_password";
 
 export type ArgusAccountStatus = "active" | "disabled" | "suspended" | "verify_email";
 
-export type BugReportStatus = "closed" | "confirmed" | "duplicate" | "in_progress" | "invalid" | "open" | "resolved" | "reviewing";
-
 export type FriendRequestStatus = "accepted" | "cancelled" | "denied" | "expired" | "pending";
 
 export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
@@ -261,21 +259,6 @@ export interface Badges {
   label: string;
 }
 
-export interface BugReports {
-  assigned_to_actor_id: string | null;
-  closed_at_ms: Int8 | null;
-  closed_by_actor_id: string | null;
-  created_at_ms: Generated<Int8>;
-  created_by_actor_id: string | null;
-  description: string;
-  id: Generated<string>;
-  platform: Generated<string>;
-  severity: Severity | null;
-  status: Generated<BugReportStatus>;
-  title: string;
-  updated_at_ms: Int8 | null;
-}
-
 export interface ChatChannels {
   created_at_ms: Generated<Int8>;
   description: string | null;
@@ -394,7 +377,6 @@ export interface ModerationEvents {
 }
 
 export interface ModerationEvidence {
-  bug_report_id: string | null;
   chat_message_id: string | null;
   created_at_ms: Generated<Int8>;
   description: string | null;
@@ -833,7 +815,6 @@ export interface DB {
   backend_sessions: BackendSessions;
   backend_sessions_current: BackendSessionsCurrent;
   badges: Badges;
-  bug_reports: BugReports;
   chat_channels: ChatChannels;
   chat_messages: ChatMessages;
   entitlement_items: EntitlementItems;
