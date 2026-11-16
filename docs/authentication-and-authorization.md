@@ -186,20 +186,20 @@ authenticated request, though current route code generally uses explicit policie
 
 Argus account roles:
 
-| Role | Rank |
-| --- | ---: |
-| `moderator` | 1 |
-| `admin` | 2 |
+| Role        | Rank |
+| ----------- | ---: |
+| `moderator` |    1 |
+| `admin`     |    2 |
 
 Privileged actor roles:
 
-| Role | Rank |
-| --- | ---: |
-| `none` | 0 |
-| `collaborator` | 1 |
-| `moderator` | 2 |
-| `administrator` | 3 |
-| `superadmin` | 4 |
+| Role            | Rank |
+| --------------- | ---: |
+| `none`          |    0 |
+| `collaborator`  |    1 |
+| `moderator`     |    2 |
+| `administrator` |    3 |
+| `superadmin`    |    4 |
 
 Argus roles and privileged roles are intentionally separate:
 
@@ -259,33 +259,33 @@ For API-key-backed actor delegation, `actor_id` represents the request actor whe
 
 The following matrix summarizes the policy declarations currently used by routers.
 
-| Area | Policy | API scopes | Argus role | Privileged role |
-| --- | --- | --- | --- | --- |
-| Actors | Read actors | `actors:read` | `moderator` | none |
-| Actors | Write actors | `actors:write` | `admin` | `administrator` |
-| Catalog | Read player catalog | `players:read` | `moderator` | none |
-| Catalog | Read server catalog | `servers:read` | `moderator` | `moderator` |
-| Chat messages | Read chat | `chat:read` | `moderator` | `moderator` |
-| Chat messages | Write chat | `chat:write` | none | none |
-| Mod cases | Read mod cases | `moderation:read` | `moderator` | `moderator` |
-| Mod cases | Manage mod cases | `moderation:write` | `moderator` | `moderator` |
-| Permissions | Read permissions | `permissions:read` | `moderator` | none |
-| Permissions | Write permissions | `permissions:write` | `admin` | `administrator` |
-| Players | Read players | `players:read` | `moderator` | none |
-| Players | Write players | `players:write` | `moderator` | none |
-| Players | Manage player staff state | `players:write` | `moderator` | `moderator` |
-| Players | Administer players | `players:write` | `admin` | `administrator` |
-| Punishments | Read punishments | `moderation:read` | `moderator` | `moderator` |
-| Punishments | Write punishments | `moderation:write` | `moderator` | `moderator` |
-| Reports | Submit reports | `moderation:write` | none | none |
-| Reports | Read reports | `moderation:read` | `moderator` | `moderator` |
-| Reports | Manage reports | `moderation:write` | `moderator` | `moderator` |
-| Servers | Read servers | `servers:read` | `moderator` | `moderator` |
-| Servers | Write servers | `servers:write` | `admin` | `administrator` |
-| Servers | Manage lockdowns | `servers:write` | `moderator` | `moderator` |
-| Servers | Manage Minecraft sessions | `minecraft:sessions:manage` | none | none |
-| Watchlist | Read watchlist | `moderation:read` | `moderator` | `moderator` |
-| Watchlist | Write watchlist | `moderation:write` | `moderator` | `moderator` |
+| Area          | Policy                    | API scopes                  | Argus role  | Privileged role |
+| ------------- | ------------------------- | --------------------------- | ----------- | --------------- |
+| Actors        | Read actors               | `actors:read`               | `moderator` | none            |
+| Actors        | Write actors              | `actors:write`              | `admin`     | `administrator` |
+| Catalog       | Read player catalog       | `players:read`              | `moderator` | none            |
+| Catalog       | Read server catalog       | `servers:read`              | `moderator` | `moderator`     |
+| Chat messages | Read chat                 | `chat:read`                 | `moderator` | `moderator`     |
+| Chat messages | Write chat                | `chat:write`                | none        | none            |
+| Mod cases     | Read mod cases            | `moderation:read`           | `moderator` | `moderator`     |
+| Mod cases     | Manage mod cases          | `moderation:write`          | `moderator` | `moderator`     |
+| Permissions   | Read permissions          | `permissions:read`          | `moderator` | none            |
+| Permissions   | Write permissions         | `permissions:write`         | `admin`     | `administrator` |
+| Players       | Read players              | `players:read`              | `moderator` | none            |
+| Players       | Write players             | `players:write`             | `moderator` | none            |
+| Players       | Manage player staff state | `players:write`             | `moderator` | `moderator`     |
+| Players       | Administer players        | `players:write`             | `admin`     | `administrator` |
+| Punishments   | Read punishments          | `moderation:read`           | `moderator` | `moderator`     |
+| Punishments   | Write punishments         | `moderation:write`          | `moderator` | `moderator`     |
+| Reports       | Submit reports            | `moderation:write`          | none        | none            |
+| Reports       | Read reports              | `moderation:read`           | `moderator` | `moderator`     |
+| Reports       | Manage reports            | `moderation:write`          | `moderator` | `moderator`     |
+| Servers       | Read servers              | `servers:read`              | `moderator` | `moderator`     |
+| Servers       | Write servers             | `servers:write`             | `admin`     | `administrator` |
+| Servers       | Manage lockdowns          | `servers:write`             | `moderator` | `moderator`     |
+| Servers       | Manage Minecraft sessions | `minecraft:sessions:manage` | none        | none            |
+| Watchlist     | Read watchlist            | `moderation:read`           | `moderator` | `moderator`     |
+| Watchlist     | Write watchlist           | `moderation:write`          | `moderator` | `moderator`     |
 
 Some individual mutation routes also call `requireActor()` after `authorize(...)` so the service
 can record a concrete actor id in domain data. This is separate from permission to call the route.
