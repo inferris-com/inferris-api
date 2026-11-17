@@ -52,7 +52,6 @@ export const createModCaseBodySchema = z
     originServerId: z.guid().optional().nullable(),
     severity: severitySchema.optional().nullable(),
     isSticky: z.boolean().optional().default(false),
-    relatedReportId: z.guid().optional().nullable(),
     actors: z.array(createModCaseActorBodySchema).max(25).optional().default([]),
   })
   .strict();

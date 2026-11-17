@@ -1,3 +1,4 @@
+import { registerIssuesOpenApi } from "@/module/issues/issues.openapi.js";
 import { OpenApiGeneratorV31, OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 import { registerActorOpenApi } from "@/module/actor/actor.openapi.js";
@@ -76,6 +77,7 @@ registerReportOpenApi(registry);
 registerModCaseOpenApi(registry);
 registerChatMessageOpenApi(registry);
 registerWatchlistOpenApi(registry);
+registerIssuesOpenApi(registry);
 registerMetricsOpenApi(registry);
 
 const generator = new OpenApiGeneratorV31(registry.definitions);

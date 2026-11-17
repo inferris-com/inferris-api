@@ -19,3 +19,5 @@ export const UsernameSchema = z
   .regex(/^[a-zA-Z0-9_]+$/, {
     message: "Username may only contain letters, numbers, and underscores.",
   });
+
+export const PlatformSchema = z.enum(["minecraft", "argus", "discord", "bot", "other"]);

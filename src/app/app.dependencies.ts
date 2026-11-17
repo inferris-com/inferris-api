@@ -1,3 +1,5 @@
+import { IssuesPgRepository } from "@/module/issues/issues.pg-repository.js";
+import { IssueService } from "@/module/issues/issues.service.js";
 import type { RequestHandler } from "express";
 import { sql } from "kysely";
 
@@ -89,6 +91,7 @@ export type AppDependencies = {
     serverInstance: ServerInstanceService;
     server: ServerService;
     staffPrivilege: StaffPrivilegeService;
+    issues: IssueService;
     watchlist: WatchlistService;
   };
   workers: {
@@ -171,6 +174,7 @@ export function createAppDependencies({
       ),
       server: new ServerService(serverRepository, redisClient, playerService),
       staffPrivilege: new StaffPrivilegeService(staffPrivilegeRepository),
+      issues: new IssueService(new IssuesPgRepository(database)),
       watchlist: new WatchlistService(watchlistRepository),
     },
     workers: {
@@ -182,7 +186,13 @@ export function createAppDependencies({
     },
     health: {
       ready: async () => {
-        await Promise.all([sql`SELECT 1`.execute(database), redisClient.ping()]);
+        await Promise.all([
+          sql`
+            SELECT
+              1
+          `.execute(database),
+          redisClient.ping(),
+        ]);
       },
     },
   };

@@ -2318,6 +2318,81 @@ components:
         - "clearedAtMs"
         - "addedAtMs"
         - "updatedAtMs"
+    IssueResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        platform:
+          type: "string"
+          enum:
+            - "minecraft"
+            - "argus"
+            - "discord"
+            - "bot"
+            - "other"
+        title:
+          type: "string"
+          minLength: 3
+          maxLength: 255
+        description:
+          type: "string"
+          minLength: 1
+          maxLength: 1000
+        status:
+          type: "string"
+          enum:
+            - "open"
+            - "reviewing"
+            - "confirmed"
+            - "in_progress"
+            - "resolved"
+            - "duplicate"
+            - "invalid"
+            - "closed"
+        severity:
+          type:
+            - "string"
+            - "null"
+          enum:
+            - "low"
+            - "medium"
+            - "high"
+            - "critical"
+            - null
+        createdByActorId:
+          type: "string"
+        assignedToActorId:
+          type:
+            - "string"
+            - "null"
+        closedByActorId:
+          type:
+            - "string"
+            - "null"
+        closedAtMs:
+          type: "string"
+          pattern: "^-?\\d+$"
+        createdAtMs:
+          type: "string"
+          pattern: "^-?\\d+$"
+        updatedAtMs:
+          type: "string"
+          pattern: "^-?\\d+$"
+      required:
+        - "id"
+        - "platform"
+        - "title"
+        - "description"
+        - "status"
+        - "severity"
+        - "createdByActorId"
+        - "assignedToActorId"
+        - "closedByActorId"
+        - "closedAtMs"
+        - "createdAtMs"
+        - "updatedAtMs"
+      additionalProperties: false
   parameters:
     {}
 paths:
@@ -10847,10 +10922,6 @@ paths:
                 isSticky:
                   type: "boolean"
                   default: false
-                relatedReportId:
-                  type:
-                    - "string"
-                    - "null"
                 actors:
                   type: "array"
                   items:
@@ -11853,6 +11924,390 @@ paths:
                 properties:
                   data:
                     "$ref": "#/components/schemas/WatchlistEntryResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/issues":
+    get:
+      tags:
+        - "Issues"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      operationId: "listIssues"
+      summary: "List issues"
+      parameters:
+        - schema:
+            type: "integer"
+            minimum: 1
+            maximum: 100
+            default: 25
+          required: false
+          name: "limit"
+          in: "query"
+        - schema:
+            type:
+              - "integer"
+              - "null"
+            minimum: 0
+            default: 0
+          required: false
+          name: "offset"
+          in: "query"
+        - schema:
+            type: "string"
+            enum:
+              - "minecraft"
+              - "argus"
+              - "discord"
+              - "bot"
+              - "other"
+          required: false
+          name: "platform"
+          in: "query"
+        - schema:
+            type: "string"
+            enum:
+              - "open"
+              - "reviewing"
+              - "confirmed"
+              - "in_progress"
+              - "resolved"
+              - "duplicate"
+              - "invalid"
+              - "closed"
+          required: false
+          name: "status"
+          in: "query"
+        - schema:
+            type: "string"
+            enum:
+              - "low"
+              - "medium"
+              - "high"
+              - "critical"
+          required: false
+          name: "severity"
+          in: "query"
+        - schema:
+            type: "string"
+          required: false
+          name: "createdByActorId"
+          in: "query"
+        - schema:
+            type: "string"
+          required: false
+          name: "assignedToActorId"
+          in: "query"
+        - schema:
+            type: "string"
+            minLength: 1
+            maxLength: 255
+          required: false
+          name: "search"
+          in: "query"
+      responses:
+        "200":
+          description: "Successful list response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/IssueResponse"
+                  meta:
+                    type: "object"
+                    properties:
+                      count:
+                        type: "integer"
+                        minimum: 0
+                    required:
+                      - "count"
+                required:
+                  - "data"
+                  - "meta"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+    post:
+      tags:
+        - "Issues"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      operationId: "createIssue"
+      summary: "Create an issue"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                platform:
+                  type: "string"
+                  enum:
+                    - "minecraft"
+                    - "argus"
+                    - "discord"
+                    - "bot"
+                    - "other"
+                title:
+                  type: "string"
+                  minLength: 3
+                  maxLength: 255
+                description:
+                  type:
+                    - "string"
+                    - "null"
+                  minLength: 1
+                  maxLength: 1000
+                  default: "No description"
+                status:
+                  type: "string"
+                  enum:
+                    - "open"
+                    - "reviewing"
+                    - "confirmed"
+                    - "in_progress"
+                    - "resolved"
+                    - "duplicate"
+                    - "invalid"
+                    - "closed"
+                  default: "open"
+                severity:
+                  type:
+                    - "string"
+                    - "null"
+                  enum:
+                    - "low"
+                    - "medium"
+                    - "high"
+                    - "critical"
+                    - null
+                  default: null
+              required:
+                - "platform"
+                - "title"
+              additionalProperties: false
+      responses:
+        "201":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/IssueResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+  "/issues/{id}":
+    get:
+      tags:
+        - "Issues"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      operationId: "getIssue"
+      summary: "Get an issue"
+      parameters:
+        - schema:
+            type: "string"
+          required: true
+          name: "id"
+          in: "path"
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/IssueResponse"
+                required:
+                  - "data"
+        "400":
+          description: "Bad request"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "401":
+          description: "Unauthorized"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "403":
+          description: "Forbidden"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+        "404":
+          description: "Not found"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiErrorEnvelope"
+    patch:
+      tags:
+        - "Issues"
+      security:
+        - bearerAuth:
+            []
+        - apiKeyAuth:
+            []
+      operationId: "updateIssue"
+      summary: "Update an issue"
+      description: "Resolved, duplicate, invalid and closed issues receive the acting actor and closure time automatically. Reopening clears closure details. Omitted fields are preserved; null clears assignment/severity and resets description to No description."
+      parameters:
+        - schema:
+            type: "string"
+          required: true
+          name: "id"
+          in: "path"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                platform:
+                  type: "string"
+                  enum:
+                    - "minecraft"
+                    - "argus"
+                    - "discord"
+                    - "bot"
+                    - "other"
+                title:
+                  type: "string"
+                  minLength: 3
+                  maxLength: 255
+                description:
+                  type:
+                    - "string"
+                    - "null"
+                  minLength: 1
+                  maxLength: 1000
+                status:
+                  type: "string"
+                  enum:
+                    - "open"
+                    - "reviewing"
+                    - "confirmed"
+                    - "in_progress"
+                    - "resolved"
+                    - "duplicate"
+                    - "invalid"
+                    - "closed"
+                severity:
+                  type:
+                    - "string"
+                    - "null"
+                  enum:
+                    - "low"
+                    - "medium"
+                    - "high"
+                    - "critical"
+                    - null
+                assignedToActorId:
+                  type:
+                    - "string"
+                    - "null"
+              additionalProperties: false
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/IssueResponse"
                 required:
                   - "data"
         "400":

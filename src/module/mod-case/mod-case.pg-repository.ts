@@ -109,20 +109,6 @@ export class ModCasePgRepository {
           .execute();
       }
 
-      if (input.relatedReportId) {
-        await trx
-          .insertInto("moderation_resource_links")
-          .values({
-            source_type: "report",
-            source_id: input.relatedReportId,
-            target_type: "mod_case",
-            target_id: modCase.id,
-            link_type: "created_from",
-            created_by_actor_id: input.openedByActorId,
-          })
-          .execute();
-      }
-
       return modCase;
     });
   }
@@ -147,8 +133,8 @@ export class ModCasePgRepository {
           is_sticky: input.isSticky,
           closed_by_actor_id: input.closedByActorId,
           closed_by_argus_user_id: input.closedByArgusUserId,
-          closed_at_ms: input.closedByActorId === undefined ? undefined : sql`get_unix_ms()`,
-          updated_at_ms: sql`get_unix_ms()`,
+          closed_at_ms: input.closedByActorId === undefined ? undefined : sql`get_unix_ms ()`,
+          updated_at_ms: sql`get_unix_ms ()`,
         })
         .where("id", "=", id)
         .returningAll()

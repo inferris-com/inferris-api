@@ -1,3 +1,4 @@
+import { createIssuesRouter } from "@/module/issues/issues.route.js";
 import type { Express, RequestHandler } from "express";
 
 import { createAccountRouter } from "@/module/argus/account/account.route.js";
@@ -106,6 +107,7 @@ export function registerAppRoutes(app: Express, dependencies: AppDependencies): 
     authenticateRequest,
     createPunishmentRouter(services.punishment, authRepository),
   );
+  app.use("/issues", authenticateRequest, createIssuesRouter(services.issues, authRepository));
   app.use("/reports", authenticateRequest, createReportRouter(services.report, authRepository));
   app.use(
     "/watchlist",

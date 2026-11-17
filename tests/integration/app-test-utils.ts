@@ -215,6 +215,12 @@ export type TestDependencies = Omit<AppDependencies, "authRepository" | "service
       updatePrivilege: AsyncMock;
       revokePrivilege: AsyncMock;
     };
+    issues: {
+      listIssues: AsyncMock;
+      getIssueById: AsyncMock;
+      createIssue: AsyncMock;
+      updateIssue: AsyncMock;
+    };
     watchlist: {
       listEntries: AsyncMock;
       getActiveEntry: AsyncMock;
@@ -593,6 +599,12 @@ export function createTestDependencies(): TestDependencies {
         createPrivilege: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         updatePrivilege: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
         revokePrivilege: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+      },
+      issues: {
+        listIssues: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        getIssueById: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        createIssue: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+        updateIssue: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
       },
       watchlist: {
         listEntries: jest.fn<(...args: unknown[]) => Promise<unknown>>(),

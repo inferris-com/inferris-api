@@ -305,10 +305,10 @@ export interface Issues {
   closed_at_ms: Int8 | null;
   closed_by_actor_id: string | null;
   created_at_ms: Generated<Int8>;
-  created_by_actor_id: string | null;
+  created_by_actor_id: string;
   description: string;
   id: Generated<string>;
-  platform: Generated<string>;
+  platform: Platform;
   severity: Severity | null;
   status: Generated<BugReportStatus>;
   title: string;

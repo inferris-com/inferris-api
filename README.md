@@ -51,6 +51,35 @@ Route definitions, request schemas, and response contracts are documented in:
 
 Supported credentials include Argus bearer tokens, Minecraft session tokens, API keys, and server-instance tokens. Access is enforced through route scopes, roles, privileges, and resource-specific policies; see [Authentication and authorization](docs/authentication-and-authorization.md).
 
+## Issues
+
+`GET /issues` supports pagination and filters for platform, status, severity,
+creator, assignee, and full-text `search`. `POST /issues`, `GET /issues/:id`, and
+`PATCH /issues/:id` create, retrieve, and update issues. Reads use
+`moderation:read`; writes use `moderation:write` and require an actor-bearing
+credential. Argus and privileged credentials use the existing moderator policy.
+
+Creation defaults to `open`, no severity, and `No description`. Creator and
+closure attribution come from the authenticated actor. `resolved`, `duplicate`,
+`invalid`, and `closed` are terminal states: entering one records the closing
+actor and time; moving between them preserves the first closure. Reopening
+clears both closure fields. Updates preserve omitted fields; null clears
+severity or assignment and resets description to `No description`.
+
+Run migrations before deploying this version. The alignment migration widens
+titles to 255 characters, validates platforms, and normalizes legacy closure
+details using the stored creator and timestamps where details were absent.
+Legacy issues with null creators must receive verified attribution before the
+migration can proceed. Migration rollback keeps the wider title column to avoid
+truncating data. The obsolete mod-case `relatedReportId` option is rejected
+because its resource-link table was removed.
+
+Issues database tests use `TEST_DATABASE_URL` and create only a disposable schema:
+
+```sh
+TEST_DATABASE_URL=postgres://... npm test -- --runInBand tests/database/issues.test.ts
+```
+
 ## Development
 
 | Command                    | Purpose                          |

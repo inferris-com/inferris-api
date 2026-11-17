@@ -77,3 +77,15 @@ describe("mod case routes", () => {
     );
   });
 });
+
+// Resource links were removed from the database; reject the obsolete option
+// during validation instead of failing a case creation at query time.
+test("POST /mod-cases rejects removed relatedReportId option", async () => {
+  const { dependencies, request } = createTestApp();
+  const response = await request
+    .post("/mod-cases")
+    .set("Authorization", "Bearer moderator-token")
+    .send({ title: "Test case", relatedReportId: ids.report });
+  expect(response.status).toBe(400);
+  expect(dependencies.services.modCase.createModCase).not.toHaveBeenCalled();
+});
