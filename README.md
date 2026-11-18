@@ -3,7 +3,7 @@
 > [!NOTE]
 > The API is under active development and is subject to quickly change. This project does not include the specific Argus and Plugin projects.
 
-[![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) [![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Express 5](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)](https://expressjs.com/) [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-6BA539?logo=openapiinitiative&logoColor=white)](openapi.json)
+[![CI (development)](https://github.com/inferris-com/inferris-api/actions/workflows/ci.yml/badge.svg?branch=development&event=push)](https://github.com/inferris-com/inferris-api/actions/workflows/ci.yml?query=branch%3Adevelopment) [![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) [![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Express 5](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)](https://expressjs.com/) [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-6BA539?logo=openapiinitiative&logoColor=white)](openapi.json)
 
 **Inferris API** is the backend for the [Inferris](https://github.com/inferris-com) network and Argus staff panel. It provides shared identity, moderation, server management, and administrative services through a REST API.
 
@@ -65,14 +65,6 @@ closure attribution come from the authenticated actor. `resolved`, `duplicate`,
 actor and time; moving between them preserves the first closure. Reopening
 clears both closure fields. Updates preserve omitted fields; null clears
 severity or assignment and resets description to `No description`.
-
-Run migrations before deploying this version. The alignment migration widens
-titles to 255 characters, validates platforms, and normalizes legacy closure
-details using the stored creator and timestamps where details were absent.
-Legacy issues with null creators must receive verified attribution before the
-migration can proceed. Migration rollback keeps the wider title column to avoid
-truncating data. The obsolete mod-case `relatedReportId` option is rejected
-because its resource-link table was removed.
 
 Issues database tests use `TEST_DATABASE_URL` and create only a disposable schema:
 
