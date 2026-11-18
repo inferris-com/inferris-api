@@ -3,7 +3,7 @@
 > [!NOTE]
 > The API is under active development and is subject to quickly change. This project does not include the specific Argus and Plugin projects.
 
-[![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) [![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Express 5](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)](https://expressjs.com/) [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-6BA539?logo=openapiinitiative&logoColor=white)](openapi.json) [![CI (development)](https://github.com/inferris-com/inferris-api/actions/workflows/ci.yml/badge.svg?branch=development&event=push)](https://github.com/inferris-com/inferris-api/actions/workflows/ci.yml?query=branch%3Adevelopment)
+[![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) [![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Express 5](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)](https://expressjs.com/) [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-6BA539?logo=openapiinitiative&logoColor=white)](openapi.json) [![CI](https://github.com/inferris-com/inferris-api/actions/workflows/ci.yml/badge.svg)](https://github.com/inferris-com/inferris-api/actions/workflows/ci.yml)
 
 **Inferris API** is the backend for the [Inferris](https://github.com/inferris-com) network and Argus staff panel. It provides shared identity, moderation, server management and metrics, and administrative services through a REST API.
 
