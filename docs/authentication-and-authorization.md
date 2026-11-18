@@ -22,7 +22,7 @@ global authentication middleware in `src/app/app.routes.ts`.
 The request authentication middleware is `authenticate(service)` in
 `src/module/auth/auth.middleware.ts`. It accepts credentials in this order:
 
-1. `Authorization: Bearer <jwt>` for Argus users.
+1. `Authorization: Bearer <token>` for Argus JWTs or server-instance tokens.
 2. `Authorization: MinecraftSession <token>` for online Minecraft player sessions.
 3. `Authorization: ApiKey <keyId.secret>` for API keys.
 4. `x-api-key: <keyId.secret>` for API keys.
@@ -93,6 +93,52 @@ API key permissions are route scopes. They are not Minecraft permission nodes.
 In non-production environments only, `is_super_key` makes an API key pass every API scope check.
 In production, super keys do not bypass scope checks.
 
+### Server-Instance Tokens
+
+Running Minecraft server instances authenticate independently of players. A server-instance token
+is distinct from both a server API key and a Minecraft player session token.
+
+An authorized caller registers an instance with `POST /server-instances/register`, supplying
+`serverId`, `bootId`, and optional runtime information. Registration accepts an API key with
+`minecraft:sessions:manage` or `servers:write`, an Argus `admin`, or a privileged
+`administrator`. API-key registration additionally requires a binding to the target server in
+`server_registration_api_keys`.
+
+Registration returns the instance record and a new opaque `token`. The server uses that token
+on subsequent requests:
+
+```http
+Authorization: Bearer <server-instance-token>
+```
+
+Server-instance tokens are generated from 48 cryptographically random bytes, encoded as
+base64url. Only the SHA-256 token hash is stored in `server_instance_tokens`; the plaintext
+token must be treated as a secret.
+
+The instance token authorizes these instance-specific reporting routes:
+
+- `PUT /server-instances/:serverInstanceId/heartbeat`
+- `POST /server-instances/:serverInstanceId/metrics`
+- `PUT /server-instances/:serverInstanceId/presence`
+- `POST /server-instances/:serverInstanceId/events`
+
+Each route requires `requireServerInstance()` and checks that the authenticated instance id
+matches the `:serverInstanceId` path parameter. A token cannot report on behalf of another
+instance. The authentication context uses `principalType: "server_instance"`, has no actor id,
+and includes the instance id, server id, server type, and instance state.
+
+Only unrevoked tokens for instances in `active` or `draining` state authenticate. Tokens are
+revoked when an instance is superseded or stopped. Server-instance tokens do not confer
+general API-key scopes or Argus permissions.
+
+Relevant files:
+
+- `src/module/server-instance/server-instance.route.ts`
+- `src/module/server-instance/server-instance.service.ts`
+- `src/module/auth/auth.service.ts`
+- `src/module/auth/auth.repository.ts`
+- `src/module/auth/auth.crypto.ts`
+
 ### Minecraft Session Tokens
 
 Minecraft session tokens are online-player credentials issued by server-plugin endpoints.
@@ -147,7 +193,7 @@ Authenticated requests receive `req.auth`, shaped by `AuthContext` in
 Important fields:
 
 - `principalType`: how the request authenticated, such as `argus_user`, `minecraft_session`,
-  `server_api_key`, or `service_actor_api_key`.
+  `server_instance`, `server_api_key`, or `service_actor_api_key`.
 - `principalId`: the id of the authenticating principal.
 - `actorId`: the actor represented by the request, when the credential resolves to one.
 - `credentialOwnerActorId`: the actor that owns an API key, when different from the request actor.
@@ -155,6 +201,7 @@ Important fields:
 - `apiKey`: API key id, scopes, and super-key flag.
 - `argus`: Argus user id and Argus account role.
 - `minecraftSession`: player, Mojang id, server, and session event ids.
+- `serverInstance`: server instance id, server id, server type, and instance state.
 - `privileged`: active privileged subject id and role for the resolved actor.
 
 `actorId` can be `null`. Use `requireActor()` when an endpoint must write actor-attributed
@@ -302,6 +349,9 @@ Core tables:
 - `permission_policies`: rank bindings for Minecraft permission nodes.
 - `player_session_events`: historical Minecraft player sessions.
 - `player_sessions_current`: current online Minecraft sessions.
+- `server_instances`: running instances and their lifecycle state.
+- `server_instance_tokens`: hashed instance bearer credentials and revocation state.
+- `server_registration_api_keys`: API key-to-server registration bindings.
 - `audit_logs`: allow, deny, and failure audit records.
 
 Redis keys:
