@@ -12,4 +12,5 @@ coverage/
 transient_docs/
 *.tar.gz
 
+__pycache__
 __internal__
