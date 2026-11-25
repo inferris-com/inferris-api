@@ -69,7 +69,7 @@ export class ArgusUserPgRepository {
   async updateUser(userId: string, input: UpdateArgusUserBody) {
     return this.db
       .updateTable("argus_users")
-      .set({ ...toArgusUserUpdate(input), updated_at_ms: sql`get_unix_ms()` })
+      .set({ ...toArgusUserUpdate(input), updated_at_ms: sql`get_unix_ms ()` })
       .where("id", "=", userId)
       .returningAll()
       .executeTakeFirst();
@@ -78,7 +78,7 @@ export class ArgusUserPgRepository {
   async disableUser(userId: string) {
     return this.db
       .updateTable("argus_users")
-      .set({ account_state: "disabled", updated_at_ms: sql`get_unix_ms()` })
+      .set({ account_state: "disabled", updated_at_ms: sql`get_unix_ms ()` })
       .where("id", "=", userId)
       .returningAll()
       .executeTakeFirst();

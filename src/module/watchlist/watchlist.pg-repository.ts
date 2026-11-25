@@ -40,7 +40,7 @@ export class WatchlistPgRepository {
               .where((eb) =>
                 eb.or([
                   eb("actor_watchlist_entries.expires_at_ms", "is", null),
-                  eb("actor_watchlist_entries.expires_at_ms", ">", sql<string>`get_unix_ms()`),
+                  eb("actor_watchlist_entries.expires_at_ms", ">", sql<string>`get_unix_ms ()`),
                 ]),
               )
           : qb.where("actor_watchlist_entries.cleared_at_ms", "is not", null),
@@ -84,7 +84,7 @@ export class WatchlistPgRepository {
         .where((eb) =>
           eb.or([
             eb("actor_watchlist_entries.expires_at_ms", "is", null),
-            eb("actor_watchlist_entries.expires_at_ms", ">", sql<string>`get_unix_ms()`),
+            eb("actor_watchlist_entries.expires_at_ms", ">", sql<string>`get_unix_ms ()`),
           ]),
         )
         .where("actor_watchlist_entries.subject_actor_id", "=", subjectActorId)
@@ -111,7 +111,7 @@ export class WatchlistPgRepository {
         alert_on_chat: input.alertOnChat,
         alert_note: input.alertNote ?? null,
         expires_at_ms: input.expiresAtMs ?? null,
-        updated_at_ms: sql<string>`get_unix_ms()`,
+        updated_at_ms: sql<string>`get_unix_ms ()`,
       };
 
       const row = existing
@@ -147,8 +147,8 @@ export class WatchlistPgRepository {
         .updateTable("actor_watchlist_entries")
         .set({
           cleared_by_actor_id: input.clearedByActorId,
-          cleared_at_ms: sql`get_unix_ms()`,
-          updated_at_ms: sql`get_unix_ms()`,
+          cleared_at_ms: sql`get_unix_ms ()`,
+          updated_at_ms: sql`get_unix_ms ()`,
         })
         .where("subject_actor_id", "=", input.subjectActorId)
         .where("cleared_at_ms", "is", null)
@@ -239,13 +239,13 @@ async function clearExpiredEntriesForActor(db: Kysely<DB>, subjectActorId: strin
   await db
     .updateTable("actor_watchlist_entries")
     .set({
-      cleared_at_ms: sql`get_unix_ms()`,
-      updated_at_ms: sql`get_unix_ms()`,
+      cleared_at_ms: sql`get_unix_ms ()`,
+      updated_at_ms: sql`get_unix_ms ()`,
     })
     .where("subject_actor_id", "=", subjectActorId)
     .where("cleared_at_ms", "is", null)
     .where("expires_at_ms", "is not", null)
-    .where("expires_at_ms", "<=", sql<string>`get_unix_ms()`)
+    .where("expires_at_ms", "<=", sql<string>`get_unix_ms ()`)
     .execute();
 }
 
@@ -269,8 +269,16 @@ async function setWatchlistedFlag(
     .updateTable("players")
     .set({
       flags: enabled
-        ? sql`(players.flags | ${bit.toString()}::bigint)`
-        : sql`(players.flags & ~${bit.toString()}::bigint)`,
+        ? sql`
+            (
+              players.flags | ${bit.toString()}::bigint
+            )
+          `
+        : sql`
+            (
+              players.flags & ~ ${bit.toString()}::bigint
+            )
+          `,
     })
     .where((eb) => eb("players.actor_id", "=", subjectActorId))
     .execute();

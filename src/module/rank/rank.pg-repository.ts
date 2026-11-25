@@ -35,7 +35,7 @@ export class RankPgRepository {
   async updateRank(rankKey: string, input: UpdateRankBody) {
     return this.db
       .updateTable("ranks")
-      .set({ ...toRankUpdate(input), updated_at_ms: sql`get_unix_ms()` })
+      .set({ ...toRankUpdate(input), updated_at_ms: sql`get_unix_ms ()` })
       .where("key", "=", rankKey)
       .returningAll()
       .executeTakeFirst();

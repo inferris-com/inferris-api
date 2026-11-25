@@ -656,10 +656,14 @@ const seed = {
       .execute();
 
     await sql`
-	      INSERT INTO server_registration_api_keys (api_key_id, server_id)
-	      SELECT api_key_id::uuid, server_id::uuid
-	      FROM unnest(
-	        ${[
+      INSERT INTO
+        server_registration_api_keys (api_key_id, server_id)
+      SELECT
+        api_key_id::uuid,
+        server_id::uuid
+      FROM
+        unnest(
+          ${[
             ids.api_keys.dev_super,
             ids.api_keys.dev_super,
             ids.api_keys.dev_super,
@@ -670,8 +674,8 @@ const seed = {
             ids.api_keys.dev,
             ids.api_keys.dev,
             ids.api_keys.dev,
-          ]}::uuid[],
-	        ${[
+          ]}::UUID[],
+          ${[
             ids.servers.velocity,
             ids.servers.lobby,
             ids.servers.lockdownMinigames,
@@ -682,9 +686,9 @@ const seed = {
             ids.servers.lockdownMinigames,
             ids.servers.devMinRank,
             ids.servers.devPermission,
-          ]}::uuid[]
-	      ) AS bindings(api_key_id, server_id)
-	    `.execute(db);
+          ]}::UUID[]
+        ) AS bindings (api_key_id, server_id)
+    `.execute(db);
 
     await db
       .insertInto("server_access_policies")
@@ -1942,25 +1946,27 @@ async function insertMetricObservations(
   observations: MetricObservation[],
 ): Promise<void> {
   await sql`
-    INSERT INTO server_heartbeat_observations (
-      id,
-      server_id,
-      observed_at_ms,
-      online_player_count,
-      max_players,
-      tps_1m,
-      tps_5m,
-      tps_15m,
-      mspt_avg,
-      mspt_p95,
-      heap_used_bytes,
-      heap_max_bytes,
-      loaded_chunks,
-      loaded_worlds,
-      backend_server_count,
-      extra
-    )
-    VALUES ${sql.join(observations.map(metricObservationSql))}
+    INSERT INTO
+      server_heartbeat_observations (
+        id,
+        server_id,
+        observed_at_ms,
+        online_player_count,
+        max_players,
+        tps_1m,
+        tps_5m,
+        tps_15m,
+        mspt_avg,
+        mspt_p95,
+        heap_used_bytes,
+        heap_max_bytes,
+        loaded_chunks,
+        loaded_worlds,
+        backend_server_count,
+        extra
+      )
+    VALUES
+      ${sql.join(observations.map(metricObservationSql))}
   `.execute(db);
 }
 
@@ -1969,46 +1975,50 @@ async function insertLatestMetrics(
   observations: MetricObservation[],
 ): Promise<void> {
   await sql`
-    INSERT INTO server_latest_metrics (
-      server_id,
-      observation_id,
-      observed_at_ms,
-      online_player_count,
-      max_players,
-      tps_1m,
-      tps_5m,
-      tps_15m,
-      mspt_avg,
-      mspt_p95,
-      heap_used_bytes,
-      heap_max_bytes,
-      loaded_chunks,
-      loaded_worlds,
-      backend_server_count,
-      extra
-    )
-    VALUES ${sql.join(
-      observations.map((observation) => {
-        return sql`(
-          ${observation.serverId}::uuid,
-          ${observation.id}::uuid,
-          ${observation.observedAtMs}::bigint,
-          ${observation.onlinePlayerCount},
-          ${observation.maxPlayers ?? null},
-          ${observation.tps1m ?? null},
-          ${observation.tps5m ?? null},
-          ${observation.tps15m ?? null},
-          ${observation.msptAvg ?? null},
-          ${observation.msptP95 ?? null},
-          ${observation.heapUsedBytes ?? null},
-          ${observation.heapMaxBytes ?? null},
-          ${observation.loadedChunks ?? null},
-          ${observation.loadedWorlds ?? null},
-          ${observation.backendServerCount ?? null},
-          '{}'::jsonb
-        )`;
-      }),
-    )}
+    INSERT INTO
+      server_latest_metrics (
+        server_id,
+        observation_id,
+        observed_at_ms,
+        online_player_count,
+        max_players,
+        tps_1m,
+        tps_5m,
+        tps_15m,
+        mspt_avg,
+        mspt_p95,
+        heap_used_bytes,
+        heap_max_bytes,
+        loaded_chunks,
+        loaded_worlds,
+        backend_server_count,
+        extra
+      )
+    VALUES
+      ${sql.join(
+        observations.map((observation) => {
+          return sql`
+            (
+              ${observation.serverId}::uuid,
+              ${observation.id}::uuid,
+              ${observation.observedAtMs}::bigint,
+              ${observation.onlinePlayerCount},
+              ${observation.maxPlayers ?? null},
+              ${observation.tps1m ?? null},
+              ${observation.tps5m ?? null},
+              ${observation.tps15m ?? null},
+              ${observation.msptAvg ?? null},
+              ${observation.msptP95 ?? null},
+              ${observation.heapUsedBytes ?? null},
+              ${observation.heapMaxBytes ?? null},
+              ${observation.loadedChunks ?? null},
+              ${observation.loadedWorlds ?? null},
+              ${observation.backendServerCount ?? null},
+              '{}'::jsonb
+            )
+          `;
+        }),
+      )}
   `.execute(db);
 }
 
@@ -2027,24 +2037,26 @@ function latestMetricObservations(observations: MetricObservation[]): MetricObse
 }
 
 function metricObservationSql(observation: MetricObservation) {
-  return sql`(
-    ${observation.id}::uuid,
-    ${observation.serverId}::uuid,
-    ${observation.observedAtMs}::bigint,
-    ${observation.onlinePlayerCount},
-    ${observation.maxPlayers ?? null},
-    ${observation.tps1m ?? null},
-    ${observation.tps5m ?? null},
-    ${observation.tps15m ?? null},
-    ${observation.msptAvg ?? null},
-    ${observation.msptP95 ?? null},
-    ${observation.heapUsedBytes ?? null},
-    ${observation.heapMaxBytes ?? null},
-    ${observation.loadedChunks ?? null},
-    ${observation.loadedWorlds ?? null},
-    ${observation.backendServerCount ?? null},
-    '{}'::jsonb
-  )`;
+  return sql`
+    (
+      ${observation.id}::uuid,
+      ${observation.serverId}::uuid,
+      ${observation.observedAtMs}::bigint,
+      ${observation.onlinePlayerCount},
+      ${observation.maxPlayers ?? null},
+      ${observation.tps1m ?? null},
+      ${observation.tps5m ?? null},
+      ${observation.tps15m ?? null},
+      ${observation.msptAvg ?? null},
+      ${observation.msptP95 ?? null},
+      ${observation.heapUsedBytes ?? null},
+      ${observation.heapMaxBytes ?? null},
+      ${observation.loadedChunks ?? null},
+      ${observation.loadedWorlds ?? null},
+      ${observation.backendServerCount ?? null},
+      '{}'::jsonb
+    )
+  `;
 }
 
 export default seed;

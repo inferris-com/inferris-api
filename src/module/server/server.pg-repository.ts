@@ -58,13 +58,21 @@ export class ServerPgRepository {
       SELECT
         s.*,
         CASE
-          WHEN count(si.id) FILTER (WHERE si.state IN ('active', 'draining')) > 0 THEN 'online'
+          WHEN count(si.id) FILTER (
+            WHERE
+              si.state IN ('active', 'draining')
+          ) > 0 THEN 'online'
           ELSE 'offline'
         END AS status
-      FROM servers s
-      LEFT JOIN server_instances si ON si.server_id = s.id
-      GROUP BY s.id
-      ORDER BY s.environment ASC, s.type ASC, s.name ASC
+      FROM
+        servers s
+        LEFT JOIN server_instances si ON si.server_id = s.id
+      GROUP BY
+        s.id
+      ORDER BY
+        s.environment ASC,
+        s.type ASC,
+        s.name ASC
     `.execute(this.db);
 
     return rows.rows;
@@ -126,9 +134,9 @@ export class ServerPgRepository {
       await trx
         .updateTable("network_sessions")
         .set({
-          disconnected_at_ms: sql`get_unix_ms()`,
+          disconnected_at_ms: sql`get_unix_ms ()`,
           disconnect_reason: "replaced",
-          updated_at_ms: sql`get_unix_ms()`,
+          updated_at_ms: sql`get_unix_ms ()`,
         })
         .where("player_id", "=", player.playerId)
         .where("disconnected_at_ms", "is", null)
@@ -146,7 +154,7 @@ export class ServerPgRepository {
       await trx
         .updateTable("players")
         .set({
-          last_seen_at_ms: sql`get_unix_ms()`,
+          last_seen_at_ms: sql`get_unix_ms ()`,
           last_server_id: serverId,
         })
         .where("id", "=", player.playerId)
@@ -169,9 +177,9 @@ export class ServerPgRepository {
       const session = await trx
         .updateTable("network_sessions")
         .set({
-          disconnected_at_ms: sql`get_unix_ms()`,
+          disconnected_at_ms: sql`get_unix_ms ()`,
           disconnect_reason: reason,
-          updated_at_ms: sql`get_unix_ms()`,
+          updated_at_ms: sql`get_unix_ms ()`,
         })
         .where("player_id", "=", player.playerId)
         .where("proxy_server_id", "=", serverId)
@@ -219,9 +227,9 @@ export class ServerPgRepository {
       await trx
         .updateTable("backend_sessions")
         .set({
-          left_at_ms: sql`get_unix_ms()`,
+          left_at_ms: sql`get_unix_ms ()`,
           leave_reason: "transfer",
-          updated_at_ms: sql`get_unix_ms()`,
+          updated_at_ms: sql`get_unix_ms ()`,
         })
         .where("network_session_id", "=", networkSession.network_session_id)
         .where("left_at_ms", "is", null)
@@ -240,7 +248,7 @@ export class ServerPgRepository {
       await trx
         .updateTable("players")
         .set({
-          last_seen_at_ms: sql`get_unix_ms()`,
+          last_seen_at_ms: sql`get_unix_ms ()`,
           last_server_id: serverId,
         })
         .where("id", "=", player.playerId)
@@ -264,9 +272,9 @@ export class ServerPgRepository {
       const visit = await trx
         .updateTable("backend_sessions")
         .set({
-          left_at_ms: sql`get_unix_ms()`,
+          left_at_ms: sql`get_unix_ms ()`,
           leave_reason: reason,
-          updated_at_ms: sql`get_unix_ms()`,
+          updated_at_ms: sql`get_unix_ms ()`,
         })
         .where("player_id", "=", player.playerId)
         .where("backend_server_id", "=", serverId)
@@ -356,30 +364,36 @@ export class ServerPgRepository {
     return this.db.transaction().execute(async (trx) => {
       await sql`
         UPDATE network_sessions ns
-        SET disconnected_at_ms = get_unix_ms(),
-            disconnect_reason = CASE si.state
-              WHEN 'superseded' THEN 'proxy_superseded'
-              WHEN 'lost' THEN 'proxy_lost'
-              ELSE 'proxy_stopped'
-            END,
-            updated_at_ms = get_unix_ms()
-        FROM server_instances si
-        WHERE si.id = ns.proxy_server_instance_id
+        SET
+          disconnected_at_ms = get_unix_ms (),
+          disconnect_reason = CASE si.state
+            WHEN 'superseded' THEN 'proxy_superseded'
+            WHEN 'lost' THEN 'proxy_lost'
+            ELSE 'proxy_stopped'
+          END,
+          updated_at_ms = get_unix_ms ()
+        FROM
+          server_instances si
+        WHERE
+          si.id = ns.proxy_server_instance_id
           AND si.state IN ('stopped', 'lost', 'superseded')
           AND ns.disconnected_at_ms IS NULL
       `.execute(trx);
 
       await sql`
         UPDATE backend_sessions bs
-        SET left_at_ms = get_unix_ms(),
-            leave_reason = CASE si.state
-              WHEN 'superseded' THEN 'backend_superseded'
-              WHEN 'lost' THEN 'backend_lost'
-              ELSE 'backend_stopped'
-            END,
-            updated_at_ms = get_unix_ms()
-        FROM server_instances si
-        WHERE si.id = bs.backend_server_instance_id
+        SET
+          left_at_ms = get_unix_ms (),
+          leave_reason = CASE si.state
+            WHEN 'superseded' THEN 'backend_superseded'
+            WHEN 'lost' THEN 'backend_lost'
+            ELSE 'backend_stopped'
+          END,
+          updated_at_ms = get_unix_ms ()
+        FROM
+          server_instances si
+        WHERE
+          si.id = bs.backend_server_instance_id
           AND si.state IN ('stopped', 'lost', 'superseded')
           AND bs.left_at_ms IS NULL
       `.execute(trx);
@@ -390,7 +404,13 @@ export class ServerPgRepository {
         .select(["server_instances.id", "servers.type"])
         .where("server_instances.state", "in", ["active", "draining"])
         .where(
-          sql`coalesce(server_instances.last_heartbeat_at_ms, server_instances.started_at_ms, server_instances.created_at_ms)`,
+          sql`
+            coalesce(
+              server_instances.last_heartbeat_at_ms,
+              server_instances.started_at_ms,
+              server_instances.created_at_ms
+            )
+          `,
           "<=",
           inactiveBeforeMs,
         )
@@ -411,9 +431,9 @@ export class ServerPgRepository {
         await trx
           .updateTable("network_sessions")
           .set({
-            disconnected_at_ms: sql`get_unix_ms()`,
+            disconnected_at_ms: sql`get_unix_ms ()`,
             disconnect_reason: "proxy_lost",
-            updated_at_ms: sql`get_unix_ms()`,
+            updated_at_ms: sql`get_unix_ms ()`,
           })
           .where("proxy_server_instance_id", "in", proxyInstanceIds)
           .where("disconnected_at_ms", "is", null)
@@ -424,9 +444,9 @@ export class ServerPgRepository {
         await trx
           .updateTable("backend_sessions")
           .set({
-            left_at_ms: sql`get_unix_ms()`,
+            left_at_ms: sql`get_unix_ms ()`,
             leave_reason: "backend_lost",
-            updated_at_ms: sql`get_unix_ms()`,
+            updated_at_ms: sql`get_unix_ms ()`,
           })
           .where("backend_server_instance_id", "in", backendInstanceIds)
           .where("left_at_ms", "is", null)
@@ -437,8 +457,8 @@ export class ServerPgRepository {
         .updateTable("server_instances")
         .set({
           state: "lost",
-          lost_at_ms: sql`get_unix_ms()`,
-          updated_at_ms: sql`get_unix_ms()`,
+          lost_at_ms: sql`get_unix_ms ()`,
+          updated_at_ms: sql`get_unix_ms ()`,
         })
         .where("id", "in", instanceIds)
         .where("state", "in", ["active", "draining"])
@@ -447,7 +467,7 @@ export class ServerPgRepository {
       await trx
         .updateTable("server_instance_tokens")
         .set({
-          revoked_at_ms: sql`get_unix_ms()`,
+          revoked_at_ms: sql`get_unix_ms ()`,
           revoked_reason: "lost",
         })
         .where("server_instance_id", "in", instanceIds)
@@ -615,7 +635,9 @@ export class ServerPgRepository {
           note: input.note,
         })
         .onConflict((oc) =>
-          oc.column("server_id").doUpdateSet({ ...mappedInput, updated_at_ms: sql`get_unix_ms()` }),
+          oc
+            .column("server_id")
+            .doUpdateSet({ ...mappedInput, updated_at_ms: sql`get_unix_ms ()` }),
         )
         .returningAll()
         .executeTakeFirstOrThrow();
@@ -666,7 +688,7 @@ export class ServerPgRepository {
         .set({
           ...toServerLockdownUpdate(input),
           ...(input.scope === "global" ? { server_id: null } : {}),
-          updated_at_ms: sql`get_unix_ms()`,
+          updated_at_ms: sql`get_unix_ms ()`,
         })
         .where("id", "=", lockdownExists.id)
         .returningAll()
@@ -681,13 +703,19 @@ export class ServerPgRepository {
       SELECT
         s.*,
         CASE
-          WHEN count(si.id) FILTER (WHERE si.state IN ('active', 'draining')) > 0 THEN 'online'
+          WHEN count(si.id) FILTER (
+            WHERE
+              si.state IN ('active', 'draining')
+          ) > 0 THEN 'online'
           ELSE 'offline'
         END AS status
-      FROM servers s
-      LEFT JOIN server_instances si ON si.server_id = s.id
-      WHERE s.id = ${id}::uuid
-      GROUP BY s.id
+      FROM
+        servers s
+        LEFT JOIN server_instances si ON si.server_id = s.id
+      WHERE
+        s.id = ${id}::uuid
+      GROUP BY
+        s.id
     `.execute(this.db);
 
     return rows.rows[0] ?? null;
@@ -698,13 +726,19 @@ export class ServerPgRepository {
       SELECT
         s.*,
         CASE
-          WHEN count(si.id) FILTER (WHERE si.state IN ('active', 'draining')) > 0 THEN 'online'
+          WHEN count(si.id) FILTER (
+            WHERE
+              si.state IN ('active', 'draining')
+          ) > 0 THEN 'online'
           ELSE 'offline'
         END AS status
-      FROM servers s
-      LEFT JOIN server_instances si ON si.server_id = s.id
-      WHERE s.name = ${name}
-      GROUP BY s.id
+      FROM
+        servers s
+        LEFT JOIN server_instances si ON si.server_id = s.id
+      WHERE
+        s.name = ${name}
+      GROUP BY
+        s.id
     `.execute(this.db);
 
     return rows.rows[0] ?? null;
@@ -821,41 +855,44 @@ async function recordHeartbeatObservation(
   const onlinePlayerCount = metrics.onlinePlayerCount ?? input.onlineMojangIds.length;
   const extra = JSON.stringify(metrics.extra ?? {});
   const inserted = await sql<{ id: string }>`
-    INSERT INTO server_heartbeat_observations (
-      server_id,
-      observed_at_ms,
-      online_player_count,
-      max_players,
-      tps_1m,
-      tps_5m,
-      tps_15m,
-      mspt_avg,
-      mspt_p95,
-      heap_used_bytes,
-      heap_max_bytes,
-      loaded_chunks,
-      loaded_worlds,
-      backend_server_count,
-      extra
-    )
-    VALUES (
-      ${serverId}::uuid,
-      ${observedAtMs}::bigint,
-      ${onlinePlayerCount},
-      ${nullableMetric(metrics.maxPlayers)},
-      ${nullableMetric(metrics.tps1m)},
-      ${nullableMetric(metrics.tps5m)},
-      ${nullableMetric(metrics.tps15m)},
-      ${nullableMetric(metrics.msptAvg)},
-      ${nullableMetric(metrics.msptP95)},
-      ${nullableMetric(metrics.heapUsedBytes)},
-      ${nullableMetric(metrics.heapMaxBytes)},
-      ${nullableMetric(metrics.loadedChunks)},
-      ${nullableMetric(metrics.loadedWorlds)},
-      ${nullableMetric(metrics.backendServerCount)},
-      ${extra}::jsonb
-    )
-    RETURNING id
+    INSERT INTO
+      server_heartbeat_observations (
+        server_id,
+        observed_at_ms,
+        online_player_count,
+        max_players,
+        tps_1m,
+        tps_5m,
+        tps_15m,
+        mspt_avg,
+        mspt_p95,
+        heap_used_bytes,
+        heap_max_bytes,
+        loaded_chunks,
+        loaded_worlds,
+        backend_server_count,
+        extra
+      )
+    VALUES
+      (
+        ${serverId}::uuid,
+        ${observedAtMs}::bigint,
+        ${onlinePlayerCount},
+        ${nullableMetric(metrics.maxPlayers)},
+        ${nullableMetric(metrics.tps1m)},
+        ${nullableMetric(metrics.tps5m)},
+        ${nullableMetric(metrics.tps15m)},
+        ${nullableMetric(metrics.msptAvg)},
+        ${nullableMetric(metrics.msptP95)},
+        ${nullableMetric(metrics.heapUsedBytes)},
+        ${nullableMetric(metrics.heapMaxBytes)},
+        ${nullableMetric(metrics.loadedChunks)},
+        ${nullableMetric(metrics.loadedWorlds)},
+        ${nullableMetric(metrics.backendServerCount)},
+        ${extra}::jsonb
+      )
+    RETURNING
+      id
   `.execute(db);
   const observationId = inserted.rows[0]?.id;
 
@@ -864,45 +901,48 @@ async function recordHeartbeatObservation(
   }
 
   await sql`
-    INSERT INTO server_latest_metrics (
-      server_id,
-      observation_id,
-      observed_at_ms,
-      online_player_count,
-      max_players,
-      tps_1m,
-      tps_5m,
-      tps_15m,
-      mspt_avg,
-      mspt_p95,
-      heap_used_bytes,
-      heap_max_bytes,
-      loaded_chunks,
-      loaded_worlds,
-      backend_server_count,
-      extra,
-      updated_at_ms
-    )
-    VALUES (
-      ${serverId}::uuid,
-      ${observationId}::uuid,
-      ${observedAtMs}::bigint,
-      ${onlinePlayerCount},
-      ${nullableMetric(metrics.maxPlayers)},
-      ${nullableMetric(metrics.tps1m)},
-      ${nullableMetric(metrics.tps5m)},
-      ${nullableMetric(metrics.tps15m)},
-      ${nullableMetric(metrics.msptAvg)},
-      ${nullableMetric(metrics.msptP95)},
-      ${nullableMetric(metrics.heapUsedBytes)},
-      ${nullableMetric(metrics.heapMaxBytes)},
-      ${nullableMetric(metrics.loadedChunks)},
-      ${nullableMetric(metrics.loadedWorlds)},
-      ${nullableMetric(metrics.backendServerCount)},
-      ${extra}::jsonb,
-      get_unix_ms()
-    )
-    ON CONFLICT (server_id) DO UPDATE SET
+    INSERT INTO
+      server_latest_metrics (
+        server_id,
+        observation_id,
+        observed_at_ms,
+        online_player_count,
+        max_players,
+        tps_1m,
+        tps_5m,
+        tps_15m,
+        mspt_avg,
+        mspt_p95,
+        heap_used_bytes,
+        heap_max_bytes,
+        loaded_chunks,
+        loaded_worlds,
+        backend_server_count,
+        extra,
+        updated_at_ms
+      )
+    VALUES
+      (
+        ${serverId}::uuid,
+        ${observationId}::uuid,
+        ${observedAtMs}::bigint,
+        ${onlinePlayerCount},
+        ${nullableMetric(metrics.maxPlayers)},
+        ${nullableMetric(metrics.tps1m)},
+        ${nullableMetric(metrics.tps5m)},
+        ${nullableMetric(metrics.tps15m)},
+        ${nullableMetric(metrics.msptAvg)},
+        ${nullableMetric(metrics.msptP95)},
+        ${nullableMetric(metrics.heapUsedBytes)},
+        ${nullableMetric(metrics.heapMaxBytes)},
+        ${nullableMetric(metrics.loadedChunks)},
+        ${nullableMetric(metrics.loadedWorlds)},
+        ${nullableMetric(metrics.backendServerCount)},
+        ${extra}::jsonb,
+        get_unix_ms ()
+      )
+    ON CONFLICT (server_id) DO UPDATE
+    SET
       observation_id = EXCLUDED.observation_id,
       observed_at_ms = EXCLUDED.observed_at_ms,
       online_player_count = EXCLUDED.online_player_count,

@@ -450,8 +450,14 @@ databaseTests("actor and player identity (PostgreSQL)", () => {
   });
   test("actor display-label migration preserves player identity constraints", async () => {
     const constraints = await sql<{ constraint_name: string }>`
-      SELECT constraint_name FROM information_schema.table_constraints
-      WHERE table_schema = ${schema} AND table_name = 'players' AND constraint_type = 'UNIQUE'
+      SELECT
+        constraint_name
+      FROM
+        information_schema.table_constraints
+      WHERE
+        table_schema = ${schema}
+        AND table_name = 'players'
+        AND constraint_type = 'UNIQUE'
     `.execute(db);
     expect(constraints.rows.map((row) => row.constraint_name)).toEqual(
       expect.arrayContaining([

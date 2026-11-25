@@ -274,13 +274,16 @@ export class AuthRepository {
         si.server_id,
         s.type::text AS server_type,
         si.state::text AS state
-      FROM server_instance_tokens sit
-      INNER JOIN server_instances si ON si.id = sit.server_instance_id
-      INNER JOIN servers s ON s.id = si.server_id
-      WHERE sit.token_hash = ${tokenHash}
+      FROM
+        server_instance_tokens sit
+        INNER JOIN server_instances si ON si.id = sit.server_instance_id
+        INNER JOIN servers s ON s.id = si.server_id
+      WHERE
+        sit.token_hash = ${tokenHash}
         AND sit.revoked_at_ms IS NULL
         AND si.state IN ('active', 'draining')
-      LIMIT 1
+      LIMIT
+        1
     `.execute(this.db);
 
     const row = rows.rows[0];
@@ -351,7 +354,7 @@ export class AuthRepository {
     const result = await this.db
       .updateTable("argus_sessions")
       .set({
-        revoked_at_ms: sql`get_unix_ms()`,
+        revoked_at_ms: sql`get_unix_ms ()`,
         revoked_by_actor_id: input.revokedByActorId ?? null,
         revoked_by_argus_user_id: input.revokedByArgusUserId ?? null,
       })

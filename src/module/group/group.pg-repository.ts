@@ -37,7 +37,7 @@ export class GroupPgRepository {
   async updateGroup(groupKey: string, input: UpdateGroupBody) {
     return this.db
       .updateTable("groups")
-      .set({ ...toGroupUpdate(input), updated_at_ms: sql`get_unix_ms()` })
+      .set({ ...toGroupUpdate(input), updated_at_ms: sql`get_unix_ms ()` })
       .where("key", "=", groupKey)
       .returningAll()
       .executeTakeFirst();

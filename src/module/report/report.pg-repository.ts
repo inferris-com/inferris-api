@@ -152,10 +152,10 @@ export class ReportPgRepository {
           resolution: input.resolution,
           resolution_note: input.resolutionNote,
           triaged_by_actor_id: input.triagedByActorId,
-          triaged_at_ms: input.triagedByActorId === undefined ? undefined : sql`get_unix_ms()`,
+          triaged_at_ms: input.triagedByActorId === undefined ? undefined : sql`get_unix_ms ()`,
           closed_by_actor_id: input.closedByActorId,
-          closed_at_ms: input.closedByActorId === undefined ? undefined : sql`get_unix_ms()`,
-          updated_at_ms: sql`get_unix_ms()`,
+          closed_at_ms: input.closedByActorId === undefined ? undefined : sql`get_unix_ms ()`,
+          updated_at_ms: sql`get_unix_ms ()`,
         })
         .where("id", "=", id)
         .returningAll()
@@ -209,7 +209,7 @@ export class ReportPgRepository {
         .set({
           comment_text: input.commentText,
           is_sticky: input.isSticky,
-          edited_at_ms: sql`get_unix_ms()`,
+          edited_at_ms: sql`get_unix_ms ()`,
         })
         .where("report_id", "=", input.reportId)
         .where("id", "=", input.commentId)
@@ -231,7 +231,7 @@ export class ReportPgRepository {
           comment_text: "[deleted]",
           is_sticky: false,
           edited_at_ms: null,
-          deleted_at_ms: sql`get_unix_ms()`,
+          deleted_at_ms: sql`get_unix_ms ()`,
           deleted_by_actor_id: deletedByActorId,
           deleted_by_argus_user_id: deletedByArgusUserId ?? null,
         })

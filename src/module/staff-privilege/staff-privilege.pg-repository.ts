@@ -65,7 +65,7 @@ export class StaffPrivilegePgRepository {
   async updatePrivilege(privilegeId: string, input: UpdateStaffPrivilegeBody) {
     return this.db
       .updateTable("privileged_subjects")
-      .set({ ...toStaffPrivilegeUpdate(input), updated_at_ms: sql`get_unix_ms()` })
+      .set({ ...toStaffPrivilegeUpdate(input), updated_at_ms: sql`get_unix_ms ()` })
       .where("id", "=", privilegeId)
       .returningAll()
       .executeTakeFirst();
@@ -77,7 +77,7 @@ export class StaffPrivilegePgRepository {
       .set({
         status: "revoked",
         revoked_by_actor_id: revokedByActorId,
-        updated_at_ms: sql`get_unix_ms()`,
+        updated_at_ms: sql`get_unix_ms ()`,
       })
       .where("id", "=", privilegeId)
       .returningAll()

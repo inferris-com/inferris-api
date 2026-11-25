@@ -129,11 +129,15 @@ export class ServerInstancePgRepository {
 
       if (!auth.bypassServerBinding) {
         const bound = await sql<{ ok: number }>`
-          SELECT 1 AS ok
-          FROM server_registration_api_keys
-          WHERE api_key_id = ${auth.apiKeyId}::uuid
+          SELECT
+            1 AS ok
+          FROM
+            server_registration_api_keys
+          WHERE
+            api_key_id = ${auth.apiKeyId}::uuid
             AND server_id = ${input.serverId}::uuid
-          LIMIT 1
+          LIMIT
+            1
         `.execute(trx);
 
         if (!bound.rows[0]) {
@@ -156,18 +160,25 @@ export class ServerInstancePgRepository {
       }
 
       const superseded = await sql<{ id: string; server_type: string }>`
-        WITH superseded AS (
-          UPDATE server_instances
-          SET state = 'superseded',
-              superseded_at_ms = get_unix_ms(),
-              updated_at_ms = get_unix_ms()
-          WHERE server_id = ${input.serverId}::uuid
-            AND state IN ('active', 'draining')
-          RETURNING id
-        )
-        SELECT superseded.id, servers.type::text AS server_type
-        FROM superseded
-        INNER JOIN servers ON servers.id = ${input.serverId}::uuid
+        WITH
+          superseded AS (
+            UPDATE server_instances
+            SET
+              state = 'superseded',
+              superseded_at_ms = get_unix_ms (),
+              updated_at_ms = get_unix_ms ()
+            WHERE
+              server_id = ${input.serverId}::uuid
+              AND state IN ('active', 'draining')
+            RETURNING
+              id
+          )
+        SELECT
+          superseded.id,
+          servers.type::text AS server_type
+        FROM
+          superseded
+          INNER JOIN servers ON servers.id = ${input.serverId}::uuid
       `.execute(trx);
 
       const supersededProxyIds = superseded.rows
@@ -198,35 +209,46 @@ export class ServerInstancePgRepository {
       if (superseded.rows.length > 0) {
         await sql`
           UPDATE server_instance_tokens sit
-          SET revoked_at_ms = get_unix_ms(),
-              revoked_reason = 'superseded'
-          WHERE sit.server_instance_id IN (${sql.join(superseded.rows.map((row) => row.id))})
+          SET
+            revoked_at_ms = get_unix_ms (),
+            revoked_reason = 'superseded'
+          WHERE
+            sit.server_instance_id IN (${sql.join(superseded.rows.map((row) => row.id))})
             AND sit.revoked_at_ms IS NULL
         `.execute(trx);
       }
 
       const rows = await sql<ServerInstanceRow>`
-        INSERT INTO server_instances (
-          server_id,
-          boot_id,
-          runtime_port,
-          version,
-          heartbeat_interval_ms,
-          last_heartbeat_at_ms
-        )
-        VALUES (
-          ${input.serverId}::uuid,
-          ${input.bootId},
-          ${input.runtimePort ?? null},
-          ${input.version ?? null},
-          ${input.heartbeatIntervalMs ?? null},
-          get_unix_ms()
-        )
+        INSERT INTO
+          server_instances (
+            server_id,
+            boot_id,
+            runtime_port,
+            version,
+            heartbeat_interval_ms,
+            last_heartbeat_at_ms
+          )
+        VALUES
+          (
+            ${input.serverId}::uuid,
+            ${input.bootId},
+            ${input.runtimePort ?? null},
+            ${input.version ?? null},
+            ${input.heartbeatIntervalMs ?? null},
+            get_unix_ms ()
+          )
         RETURNING
           id,
           server_id,
           boot_id,
-          (SELECT type::text FROM servers WHERE servers.id = server_instances.server_id) AS server_type,
+          (
+            SELECT
+              type::text
+            FROM
+              servers
+            WHERE
+              servers.id = server_instances.server_id
+          ) AS server_type,
           state::text,
           runtime_port,
           version,
@@ -281,9 +303,11 @@ export class ServerInstancePgRepository {
         si.is_synthetic_backfill,
         si.created_at_ms::text,
         si.updated_at_ms::text
-      FROM server_instances si
-      INNER JOIN servers s ON s.id = si.server_id
-      WHERE si.id = ${instanceId}::uuid
+      FROM
+        server_instances si
+        INNER JOIN servers s ON s.id = si.server_id
+      WHERE
+        si.id = ${instanceId}::uuid
     `.execute(this.db);
 
     return rows.rows[0] ?? null;
@@ -300,15 +324,26 @@ export class ServerInstancePgRepository {
       last_heartbeat_at_ms: string;
     }>`
       UPDATE server_instances
-      SET last_heartbeat_at_ms = GREATEST(COALESCE(last_heartbeat_at_ms, 0), ${receivedAtMs}::bigint),
-          heartbeat_interval_ms = COALESCE(${input.heartbeatIntervalMs ?? null}::bigint, heartbeat_interval_ms),
-          runtime_port = COALESCE(${input.runtimePort ?? null}, runtime_port),
-          version = COALESCE(${input.version ?? null}, version),
-          updated_at_ms = get_unix_ms()
-      WHERE id = ${instance.id}::uuid
+      SET
+        last_heartbeat_at_ms = GREATEST(
+          COALESCE(last_heartbeat_at_ms, 0),
+          ${receivedAtMs}::bigint
+        ),
+        heartbeat_interval_ms = COALESCE(
+          ${input.heartbeatIntervalMs ?? null}::bigint,
+          heartbeat_interval_ms
+        ),
+        runtime_port = COALESCE(${input.runtimePort ?? null}, runtime_port),
+        version = COALESCE(${input.version ?? null}, version),
+        updated_at_ms = get_unix_ms ()
+      WHERE
+        id = ${instance.id}::uuid
         AND server_id = ${instance.serverId}::uuid
         AND state IN ('active', 'draining')
-      RETURNING id, state::text, last_heartbeat_at_ms::text
+      RETURNING
+        id,
+        state::text,
+        last_heartbeat_at_ms::text
     `.execute(this.db);
 
     const row = rows.rows[0];
@@ -340,44 +375,48 @@ export class ServerInstancePgRepository {
         id: string;
         observed_at_ms: string;
       }>`
-      INSERT INTO server_heartbeat_observations (
-        server_id,
-        server_instance_id,
-        observed_at_ms,
-        online_player_count,
-        max_players,
-        tps_1m,
-        tps_5m,
-        tps_15m,
-        mspt_avg,
-        mspt_p95,
-        heap_used_bytes,
-        heap_max_bytes,
-        loaded_chunks,
-        loaded_worlds,
-        backend_server_count,
-        extra
-      )
-      VALUES (
-        ${instance.serverId}::uuid,
-        ${instance.id}::uuid,
-        ${observedAtMs}::bigint,
-        ${input.onlinePlayerCount ?? null},
-        ${input.maxPlayers ?? null},
-        ${input.tps1m ?? null},
-        ${input.tps5m ?? null},
-        ${input.tps15m ?? null},
-        ${input.msptAvg ?? null},
-        ${input.msptP95 ?? null},
-        ${input.heapUsedBytes ?? null},
-        ${input.heapMaxBytes ?? null},
-        ${input.loadedChunks ?? null},
-        ${input.loadedWorlds ?? null},
-        ${input.backendServerCount ?? null},
-        ${JSON.stringify(input.extra ?? {})}::jsonb
-      )
-      RETURNING id, observed_at_ms::text
-    `.execute(trx);
+        INSERT INTO
+          server_heartbeat_observations (
+            server_id,
+            server_instance_id,
+            observed_at_ms,
+            online_player_count,
+            max_players,
+            tps_1m,
+            tps_5m,
+            tps_15m,
+            mspt_avg,
+            mspt_p95,
+            heap_used_bytes,
+            heap_max_bytes,
+            loaded_chunks,
+            loaded_worlds,
+            backend_server_count,
+            extra
+          )
+        VALUES
+          (
+            ${instance.serverId}::uuid,
+            ${instance.id}::uuid,
+            ${observedAtMs}::bigint,
+            ${input.onlinePlayerCount ?? null},
+            ${input.maxPlayers ?? null},
+            ${input.tps1m ?? null},
+            ${input.tps5m ?? null},
+            ${input.tps15m ?? null},
+            ${input.msptAvg ?? null},
+            ${input.msptP95 ?? null},
+            ${input.heapUsedBytes ?? null},
+            ${input.heapMaxBytes ?? null},
+            ${input.loadedChunks ?? null},
+            ${input.loadedWorlds ?? null},
+            ${input.backendServerCount ?? null},
+            ${JSON.stringify(input.extra ?? {})}::jsonb
+          )
+        RETURNING
+          id,
+          observed_at_ms::text
+      `.execute(trx);
 
       const observation = rows.rows[0];
 
@@ -386,66 +425,70 @@ export class ServerInstancePgRepository {
       }
 
       await sql`
-      INSERT INTO server_latest_metrics (
-        server_id,
-        server_instance_id,
-        observation_id,
-        observed_at_ms,
-        online_player_count,
-        max_players,
-        tps_1m,
-        tps_5m,
-        tps_15m,
-        mspt_avg,
-        mspt_p95,
-        heap_used_bytes,
-        heap_max_bytes,
-        loaded_chunks,
-        loaded_worlds,
-        backend_server_count,
-        extra,
-        updated_at_ms
-      )
-      VALUES (
-        ${instance.serverId}::uuid,
-        ${instance.id}::uuid,
-        ${observation.id}::uuid,
-        ${observation.observed_at_ms}::bigint,
-        ${input.onlinePlayerCount ?? null},
-        ${input.maxPlayers ?? null},
-        ${input.tps1m ?? null},
-        ${input.tps5m ?? null},
-        ${input.tps15m ?? null},
-        ${input.msptAvg ?? null},
-        ${input.msptP95 ?? null},
-        ${input.heapUsedBytes ?? null},
-        ${input.heapMaxBytes ?? null},
-        ${input.loadedChunks ?? null},
-        ${input.loadedWorlds ?? null},
-        ${input.backendServerCount ?? null},
-        ${JSON.stringify(input.extra ?? {})}::jsonb,
-        get_unix_ms()
-      )
-      ON CONFLICT (server_id) DO UPDATE SET
-        server_instance_id = excluded.server_instance_id,
-        observation_id = excluded.observation_id,
-        observed_at_ms = excluded.observed_at_ms,
-        online_player_count = excluded.online_player_count,
-        max_players = excluded.max_players,
-        tps_1m = excluded.tps_1m,
-        tps_5m = excluded.tps_5m,
-        tps_15m = excluded.tps_15m,
-        mspt_avg = excluded.mspt_avg,
-        mspt_p95 = excluded.mspt_p95,
-        heap_used_bytes = excluded.heap_used_bytes,
-        heap_max_bytes = excluded.heap_max_bytes,
-        loaded_chunks = excluded.loaded_chunks,
-        loaded_worlds = excluded.loaded_worlds,
-        backend_server_count = excluded.backend_server_count,
-        extra = excluded.extra,
-        updated_at_ms = excluded.updated_at_ms
-      WHERE server_latest_metrics.observed_at_ms <= excluded.observed_at_ms
-    `.execute(trx);
+        INSERT INTO
+          server_latest_metrics (
+            server_id,
+            server_instance_id,
+            observation_id,
+            observed_at_ms,
+            online_player_count,
+            max_players,
+            tps_1m,
+            tps_5m,
+            tps_15m,
+            mspt_avg,
+            mspt_p95,
+            heap_used_bytes,
+            heap_max_bytes,
+            loaded_chunks,
+            loaded_worlds,
+            backend_server_count,
+            extra,
+            updated_at_ms
+          )
+        VALUES
+          (
+            ${instance.serverId}::uuid,
+            ${instance.id}::uuid,
+            ${observation.id}::uuid,
+            ${observation.observed_at_ms}::bigint,
+            ${input.onlinePlayerCount ?? null},
+            ${input.maxPlayers ?? null},
+            ${input.tps1m ?? null},
+            ${input.tps5m ?? null},
+            ${input.tps15m ?? null},
+            ${input.msptAvg ?? null},
+            ${input.msptP95 ?? null},
+            ${input.heapUsedBytes ?? null},
+            ${input.heapMaxBytes ?? null},
+            ${input.loadedChunks ?? null},
+            ${input.loadedWorlds ?? null},
+            ${input.backendServerCount ?? null},
+            ${JSON.stringify(input.extra ?? {})}::jsonb,
+            get_unix_ms ()
+          )
+        ON CONFLICT (server_id) DO UPDATE
+        SET
+          server_instance_id = excluded.server_instance_id,
+          observation_id = excluded.observation_id,
+          observed_at_ms = excluded.observed_at_ms,
+          online_player_count = excluded.online_player_count,
+          max_players = excluded.max_players,
+          tps_1m = excluded.tps_1m,
+          tps_5m = excluded.tps_5m,
+          tps_15m = excluded.tps_15m,
+          mspt_avg = excluded.mspt_avg,
+          mspt_p95 = excluded.mspt_p95,
+          heap_used_bytes = excluded.heap_used_bytes,
+          heap_max_bytes = excluded.heap_max_bytes,
+          loaded_chunks = excluded.loaded_chunks,
+          loaded_worlds = excluded.loaded_worlds,
+          backend_server_count = excluded.backend_server_count,
+          extra = excluded.extra,
+          updated_at_ms = excluded.updated_at_ms
+        WHERE
+          server_latest_metrics.observed_at_ms <= excluded.observed_at_ms
+      `.execute(trx);
 
       return {
         serverInstanceId: instance.id,
@@ -540,11 +583,22 @@ export class ServerInstancePgRepository {
         payload: unknown;
         processing_result: Record<string, unknown>;
       }>`
-        SELECT event_id, sequence::text, type::text, payload, processing_result
-        FROM server_events
-        WHERE server_instance_id = ${instance.id}::uuid
-          AND (event_id = ${input.eventId} OR sequence = ${input.sequence}::bigint)
-        LIMIT 1
+        SELECT
+          event_id,
+          sequence::text,
+          type::text,
+          payload,
+          processing_result
+        FROM
+          server_events
+        WHERE
+          server_instance_id = ${instance.id}::uuid
+          AND (
+            event_id = ${input.eventId}
+            OR sequence = ${input.sequence}::bigint
+          )
+        LIMIT
+          1
       `.execute(trx);
 
       const existingEvent = existing.rows[0];
@@ -576,9 +630,12 @@ export class ServerInstancePgRepository {
       }
 
       const cursorRows = await sql<{ last_event_sequence: string }>`
-        SELECT last_event_sequence::text
-        FROM server_instances
-        WHERE id = ${instance.id}::uuid
+        SELECT
+          last_event_sequence::text
+        FROM
+          server_instances
+        WHERE
+          id = ${instance.id}::uuid
           AND server_id = ${instance.serverId}::uuid
           AND state IN ('active', 'draining')
         FOR UPDATE
@@ -615,31 +672,35 @@ export class ServerInstancePgRepository {
       }
 
       await sql`
-        INSERT INTO server_events (
-          server_instance_id,
-          event_id,
-          sequence,
-          type,
-          payload,
-          processing_result,
-          occurred_at_ms
-        )
-        VALUES (
-          ${instance.id}::uuid,
-          ${input.eventId},
-          ${input.sequence}::bigint,
-          ${input.type}::server_event_type,
-          ${JSON.stringify(eventPayload)}::jsonb,
-          ${JSON.stringify(processingResult)}::jsonb,
-          ${input.occurredAtMs}::bigint
-        )
+        INSERT INTO
+          server_events (
+            server_instance_id,
+            event_id,
+            sequence,
+            type,
+            payload,
+            processing_result,
+            occurred_at_ms
+          )
+        VALUES
+          (
+            ${instance.id}::uuid,
+            ${input.eventId},
+            ${input.sequence}::bigint,
+            ${input.type}::server_event_type,
+            ${JSON.stringify(eventPayload)}::jsonb,
+            ${JSON.stringify(processingResult)}::jsonb,
+            ${input.occurredAtMs}::bigint
+          )
       `.execute(trx);
 
       await sql`
         UPDATE server_instances
-        SET last_event_sequence = ${input.sequence}::bigint,
-            updated_at_ms = get_unix_ms()
-        WHERE id = ${instance.id}::uuid
+        SET
+          last_event_sequence = ${input.sequence}::bigint,
+          updated_at_ms = get_unix_ms ()
+        WHERE
+          id = ${instance.id}::uuid
       `.execute(trx);
 
       const startedSession = sessionIdentityPayload(processingResult.startedSession);
@@ -761,10 +822,15 @@ export class ServerInstancePgRepository {
   ): Promise<void> {
     await sql`
       UPDATE server_instances
-      SET state = 'draining',
-          draining_at_ms = COALESCE(draining_at_ms, ${occurredAtMs}::bigint),
-          updated_at_ms = get_unix_ms()
-      WHERE id = ${serverInstanceId}::uuid
+      SET
+        state = 'draining',
+        draining_at_ms = COALESCE(
+          draining_at_ms,
+          ${occurredAtMs}::bigint
+        ),
+        updated_at_ms = get_unix_ms ()
+      WHERE
+        id = ${serverInstanceId}::uuid
         AND state = 'active'
     `.execute(trx);
   }
@@ -776,18 +842,28 @@ export class ServerInstancePgRepository {
   ): Promise<Pick<SessionIdentity, "playerId">[]> {
     await sql`
       UPDATE server_instances
-      SET state = 'stopped',
-          stopped_at_ms = COALESCE(stopped_at_ms, ${occurredAtMs}::bigint),
-          updated_at_ms = get_unix_ms()
-      WHERE id = ${instance.id}::uuid
+      SET
+        state = 'stopped',
+        stopped_at_ms = COALESCE(
+          stopped_at_ms,
+          ${occurredAtMs}::bigint
+        ),
+        updated_at_ms = get_unix_ms ()
+      WHERE
+        id = ${instance.id}::uuid
         AND state IN ('active', 'draining')
     `.execute(trx);
 
     await sql`
       UPDATE server_instance_tokens
-      SET revoked_at_ms = COALESCE(revoked_at_ms, ${occurredAtMs}::bigint),
-          revoked_reason = COALESCE(revoked_reason, 'stopped')
-      WHERE server_instance_id = ${instance.id}::uuid
+      SET
+        revoked_at_ms = COALESCE(
+          revoked_at_ms,
+          ${occurredAtMs}::bigint
+        ),
+        revoked_reason = COALESCE(revoked_reason, 'stopped')
+      WHERE
+        server_instance_id = ${instance.id}::uuid
         AND revoked_at_ms IS NULL
     `.execute(trx);
 
@@ -807,37 +883,45 @@ export class ServerInstancePgRepository {
   ): Promise<{ closedSessions: Pick<SessionIdentity, "playerId">[] }> {
     const closed = await sql<{ player_id: string }>`
       UPDATE network_sessions
-      SET disconnected_at_ms = ${occurredAtMs}::bigint,
-          disconnect_reason = 'replaced',
-          updated_at_ms = get_unix_ms()
-      WHERE player_id = ${player.playerId}::uuid
+      SET
+        disconnected_at_ms = ${occurredAtMs}::bigint,
+        disconnect_reason = 'replaced',
+        updated_at_ms = get_unix_ms ()
+      WHERE
+        player_id = ${player.playerId}::uuid
         AND disconnected_at_ms IS NULL
-      RETURNING player_id
+      RETURNING
+        player_id
     `.execute(trx);
 
     const rows = await sql<{ id: string }>`
-      INSERT INTO network_sessions (
-        id,
-        player_id,
-        proxy_server_id,
-        proxy_server_instance_id,
-        connected_at_ms
-      )
-      VALUES (
-        ${networkSessionId}::uuid,
-        ${player.playerId}::uuid,
-        ${instance.serverId}::uuid,
-        ${instance.id}::uuid,
-        ${occurredAtMs}::bigint
-      )
-      RETURNING id
+      INSERT INTO
+        network_sessions (
+          id,
+          player_id,
+          proxy_server_id,
+          proxy_server_instance_id,
+          connected_at_ms
+        )
+      VALUES
+        (
+          ${networkSessionId}::uuid,
+          ${player.playerId}::uuid,
+          ${instance.serverId}::uuid,
+          ${instance.id}::uuid,
+          ${occurredAtMs}::bigint
+        )
+      RETURNING
+        id
     `.execute(trx);
 
     await sql`
       UPDATE players
-      SET last_seen_at_ms = ${occurredAtMs}::bigint,
-          last_server_id = ${instance.serverId}::uuid
-      WHERE id = ${player.playerId}::uuid
+      SET
+        last_seen_at_ms = ${occurredAtMs}::bigint,
+        last_server_id = ${instance.serverId}::uuid
+      WHERE
+        id = ${player.playerId}::uuid
     `.execute(trx);
 
     const row = rows.rows[0];
@@ -858,10 +942,13 @@ export class ServerInstancePgRepository {
     occurredAtMs: string,
   ): Promise<string | null> {
     const validBackend = await sql<{ ok: number }>`
-      SELECT 1 AS ok
-      FROM servers backend
-      LEFT JOIN server_instances bsi ON bsi.id = ${backendServerInstanceId}::uuid
-      WHERE backend.id = ${backendServerId}::uuid
+      SELECT
+        1 AS ok
+      FROM
+        servers backend
+        LEFT JOIN server_instances bsi ON bsi.id = ${backendServerInstanceId}::uuid
+      WHERE
+        backend.id = ${backendServerId}::uuid
         AND backend.type <> 'velocity'
         AND (
           ${backendServerInstanceId}::uuid IS NULL
@@ -870,7 +957,8 @@ export class ServerInstancePgRepository {
             AND bsi.state IN ('active', 'draining')
           )
         )
-      LIMIT 1
+      LIMIT
+        1
     `.execute(trx);
 
     if (!validBackend.rows[0]) {
@@ -879,14 +967,19 @@ export class ServerInstancePgRepository {
 
     await sql`
       UPDATE backend_sessions
-      SET left_at_ms = ${occurredAtMs}::bigint,
-          leave_reason = 'transfer',
-          updated_at_ms = get_unix_ms()
-      WHERE network_session_id = ${networkSessionId}::uuid
+      SET
+        left_at_ms = ${occurredAtMs}::bigint,
+        leave_reason = 'transfer',
+        updated_at_ms = get_unix_ms ()
+      WHERE
+        network_session_id = ${networkSessionId}::uuid
         AND EXISTS (
-          SELECT 1
-          FROM network_sessions ns
-          WHERE ns.id = ${networkSessionId}::uuid
+          SELECT
+            1
+          FROM
+            network_sessions ns
+          WHERE
+            ns.id = ${networkSessionId}::uuid
             AND ns.proxy_server_instance_id = ${instance.id}::uuid
             AND ns.disconnected_at_ms IS NULL
         )
@@ -894,24 +987,28 @@ export class ServerInstancePgRepository {
     `.execute(trx);
 
     const rows = await sql<{ id: string }>`
-      INSERT INTO backend_sessions (
-        network_session_id,
-        player_id,
-        backend_server_id,
-        backend_server_instance_id,
-        joined_at_ms
-      )
+      INSERT INTO
+        backend_sessions (
+          network_session_id,
+          player_id,
+          backend_server_id,
+          backend_server_instance_id,
+          joined_at_ms
+        )
       SELECT
         ns.id,
         ns.player_id,
         ${backendServerId}::uuid,
         ${backendServerInstanceId}::uuid,
         ${occurredAtMs}::bigint
-      FROM network_sessions ns
-      WHERE ns.id = ${networkSessionId}::uuid
+      FROM
+        network_sessions ns
+      WHERE
+        ns.id = ${networkSessionId}::uuid
         AND ns.proxy_server_instance_id = ${instance.id}::uuid
         AND ns.disconnected_at_ms IS NULL
-      RETURNING id
+      RETURNING
+        id
     `.execute(trx);
 
     const row = rows.rows[0];
@@ -931,13 +1028,16 @@ export class ServerInstancePgRepository {
   ): Promise<Pick<SessionIdentity, "playerId">[]> {
     const rows = await sql<{ player_id: string }>`
       UPDATE network_sessions
-      SET disconnected_at_ms = ${occurredAtMs}::bigint,
-          disconnect_reason = 'disconnect',
-          updated_at_ms = get_unix_ms()
-      WHERE id = ${networkSessionId}::uuid
+      SET
+        disconnected_at_ms = ${occurredAtMs}::bigint,
+        disconnect_reason = 'disconnect',
+        updated_at_ms = get_unix_ms ()
+      WHERE
+        id = ${networkSessionId}::uuid
         AND proxy_server_instance_id = ${instance.id}::uuid
         AND disconnected_at_ms IS NULL
-      RETURNING player_id
+      RETURNING
+        player_id
     `.execute(trx);
 
     return rows.rows.map((row) => ({ playerId: row.player_id }));
@@ -950,21 +1050,30 @@ export class ServerInstancePgRepository {
     observedAtMs: string,
   ): Promise<{ count: number; sessions: Pick<SessionIdentity, "playerId">[] }> {
     const result = await sql<{ player_id: string }>`
-      WITH closed AS (
-        UPDATE network_sessions ns
-        SET disconnected_at_ms = ${observedAtMs}::bigint,
+      WITH
+        closed AS (
+          UPDATE network_sessions ns
+          SET
+            disconnected_at_ms = ${observedAtMs}::bigint,
             disconnect_reason = 'presence_absent',
-            updated_at_ms = get_unix_ms()
-        FROM players p
-        WHERE p.id = ns.player_id
-          AND ns.proxy_server_instance_id = ${proxyServerInstanceId}::uuid
-          AND ns.disconnected_at_ms IS NULL
-          AND ns.connected_at_ms <= ${observedAtMs}::bigint
-          AND NOT (p.mojang_id = ANY(${onlineMojangIds}::uuid[]))
-        RETURNING ns.player_id
-      )
-      SELECT player_id
-      FROM closed
+            updated_at_ms = get_unix_ms ()
+          FROM
+            players p
+          WHERE
+            p.id = ns.player_id
+            AND ns.proxy_server_instance_id = ${proxyServerInstanceId}::uuid
+            AND ns.disconnected_at_ms IS NULL
+            AND ns.connected_at_ms <= ${observedAtMs}::bigint
+            AND NOT (
+              p.mojang_id = ANY (${onlineMojangIds}::UUID[])
+            )
+          RETURNING
+            ns.player_id
+        )
+      SELECT
+        player_id
+      FROM
+        closed
     `.execute(trx);
 
     return {
@@ -980,21 +1089,30 @@ export class ServerInstancePgRepository {
     observedAtMs: string,
   ): Promise<{ count: number; sessions: Pick<SessionIdentity, "playerId">[] }> {
     const result = await sql<{ player_id: string }>`
-      WITH closed AS (
-        UPDATE backend_sessions bs
-        SET left_at_ms = ${observedAtMs}::bigint,
+      WITH
+        closed AS (
+          UPDATE backend_sessions bs
+          SET
+            left_at_ms = ${observedAtMs}::bigint,
             leave_reason = 'presence_absent',
-            updated_at_ms = get_unix_ms()
-        FROM players p
-        WHERE p.id = bs.player_id
-          AND bs.backend_server_instance_id = ${backendServerInstanceId}::uuid
-          AND bs.left_at_ms IS NULL
-          AND bs.joined_at_ms <= ${observedAtMs}::bigint
-          AND NOT (p.mojang_id = ANY(${onlineMojangIds}::uuid[]))
-        RETURNING bs.player_id
-      )
-      SELECT player_id
-      FROM closed
+            updated_at_ms = get_unix_ms ()
+          FROM
+            players p
+          WHERE
+            p.id = bs.player_id
+            AND bs.backend_server_instance_id = ${backendServerInstanceId}::uuid
+            AND bs.left_at_ms IS NULL
+            AND bs.joined_at_ms <= ${observedAtMs}::bigint
+            AND NOT (
+              p.mojang_id = ANY (${onlineMojangIds}::UUID[])
+            )
+          RETURNING
+            bs.player_id
+        )
+      SELECT
+        player_id
+      FROM
+        closed
     `.execute(trx);
 
     return {
@@ -1015,12 +1133,17 @@ export class ServerInstancePgRepository {
 
     const rows = await sql<{ player_id: string }>`
       UPDATE network_sessions
-      SET disconnected_at_ms = ${occurredAtMs === "get_unix_ms()" ? sql`get_unix_ms()` : sql`${occurredAtMs}::bigint`},
-          disconnect_reason = ${reason},
-          updated_at_ms = get_unix_ms()
-      WHERE proxy_server_instance_id IN (${sql.join(serverInstanceIds)})
+      SET
+        disconnected_at_ms = ${occurredAtMs === "get_unix_ms()"
+          ? sql`get_unix_ms ()`
+          : sql`${occurredAtMs}::bigint`},
+        disconnect_reason = ${reason},
+        updated_at_ms = get_unix_ms ()
+      WHERE
+        proxy_server_instance_id IN (${sql.join(serverInstanceIds)})
         AND disconnected_at_ms IS NULL
-      RETURNING player_id
+      RETURNING
+        player_id
     `.execute(trx);
 
     return rows.rows.map((row) => ({ playerId: row.player_id }));
@@ -1038,12 +1161,17 @@ export class ServerInstancePgRepository {
 
     const rows = await sql<{ player_id: string }>`
       UPDATE backend_sessions
-      SET left_at_ms = ${occurredAtMs === "get_unix_ms()" ? sql`get_unix_ms()` : sql`${occurredAtMs}::bigint`},
-          leave_reason = ${reason},
-          updated_at_ms = get_unix_ms()
-      WHERE backend_server_instance_id IN (${sql.join(serverInstanceIds)})
+      SET
+        left_at_ms = ${occurredAtMs === "get_unix_ms()"
+          ? sql`get_unix_ms ()`
+          : sql`${occurredAtMs}::bigint`},
+        leave_reason = ${reason},
+        updated_at_ms = get_unix_ms ()
+      WHERE
+        backend_server_instance_id IN (${sql.join(serverInstanceIds)})
         AND left_at_ms IS NULL
-      RETURNING player_id
+      RETURNING
+        player_id
     `.execute(trx);
 
     return rows.rows.map((row) => ({ playerId: row.player_id }));
@@ -1051,9 +1179,12 @@ export class ServerInstancePgRepository {
 
   private async lockActiveInstance(trx: DbExecutor, instance: InstanceIdentity): Promise<boolean> {
     const rows = await sql<{ id: string }>`
-      SELECT id
-      FROM server_instances
-      WHERE id = ${instance.id}::uuid
+      SELECT
+        id
+      FROM
+        server_instances
+      WHERE
+        id = ${instance.id}::uuid
         AND server_id = ${instance.serverId}::uuid
         AND state IN ('active', 'draining')
       FOR UPDATE
@@ -1070,10 +1201,12 @@ export class ServerInstancePgRepository {
   ): Promise<boolean> {
     const rows = await sql<{ id: string }>`
       UPDATE server_instances
-      SET last_presence_sequence = ${snapshotSequence}::bigint,
-          last_presence_observed_at_ms = ${observedAtMs}::bigint,
-          updated_at_ms = get_unix_ms()
-      WHERE id = ${serverInstanceId}::uuid
+      SET
+        last_presence_sequence = ${snapshotSequence}::bigint,
+        last_presence_observed_at_ms = ${observedAtMs}::bigint,
+        updated_at_ms = get_unix_ms ()
+      WHERE
+        id = ${serverInstanceId}::uuid
         AND (
           last_presence_sequence IS NULL
           OR last_presence_sequence < ${snapshotSequence}::bigint
@@ -1082,7 +1215,8 @@ export class ServerInstancePgRepository {
             AND COALESCE(last_presence_observed_at_ms, 0) <= ${observedAtMs}::bigint
           )
         )
-      RETURNING id
+      RETURNING
+        id
     `.execute(trx);
 
     return rows.rows.length > 0;
@@ -1106,11 +1240,13 @@ export class ServerInstancePgRepository {
               p.mojang_id AS "mojangId",
               ns.proxy_server_id AS "proxyServerId",
               ns.id AS "networkSessionId"
-            FROM network_sessions ns
-            INNER JOIN players p ON p.id = ns.player_id
-            WHERE ns.proxy_server_instance_id = ${instance.id}::uuid
+            FROM
+              network_sessions ns
+              INNER JOIN players p ON p.id = ns.player_id
+            WHERE
+              ns.proxy_server_instance_id = ${instance.id}::uuid
               AND ns.disconnected_at_ms IS NULL
-              AND p.mojang_id = ANY(${onlineMojangIds}::uuid[])
+              AND p.mojang_id = ANY (${onlineMojangIds}::UUID[])
           `.execute(trx)
         : await sql<SessionIdentity>`
             SELECT
@@ -1119,13 +1255,15 @@ export class ServerInstancePgRepository {
               p.mojang_id AS "mojangId",
               ns.proxy_server_id AS "proxyServerId",
               ns.id AS "networkSessionId"
-            FROM backend_sessions bs
-            INNER JOIN network_sessions ns ON ns.id = bs.network_session_id
-            INNER JOIN players p ON p.id = ns.player_id
-            WHERE bs.backend_server_instance_id = ${instance.id}::uuid
+            FROM
+              backend_sessions bs
+              INNER JOIN network_sessions ns ON ns.id = bs.network_session_id
+              INNER JOIN players p ON p.id = ns.player_id
+            WHERE
+              bs.backend_server_instance_id = ${instance.id}::uuid
               AND bs.left_at_ms IS NULL
               AND ns.disconnected_at_ms IS NULL
-              AND p.mojang_id = ANY(${onlineMojangIds}::uuid[])
+              AND p.mojang_id = ANY (${onlineMojangIds}::UUID[])
           `.execute(trx);
 
     return rows.rows;
@@ -1155,12 +1293,15 @@ export class ServerInstancePgRepository {
         si.is_synthetic_backfill,
         si.created_at_ms::text,
         si.updated_at_ms::text
-      FROM server_instances si
-      INNER JOIN servers s ON s.id = si.server_id
-      WHERE si.server_id = ${serverId}::uuid
+      FROM
+        server_instances si
+        INNER JOIN servers s ON s.id = si.server_id
+      WHERE
+        si.server_id = ${serverId}::uuid
         AND si.boot_id = ${bootId}
         AND si.state IN ('active', 'draining')
-      LIMIT 1
+      LIMIT
+        1
     `.execute(trx);
 
     return rows.rows[0] ?? null;

@@ -117,22 +117,44 @@ databaseTests("Issues PostgreSQL lifecycle and migrations", () => {
   test("fresh schema enforces required creators, platforms and closure metadata", async () => {
     await expect(
       sql`
-        INSERT INTO issues (platform, title, description)
-        VALUES ('minecraft', 'Missing creator', 'No actor')
+        INSERT INTO
+          issues (platform, title, description)
+        VALUES
+          ('minecraft', 'Missing creator', 'No actor')
       `.execute(db),
     ).rejects.toMatchObject({ code: "23502" });
 
     await expect(
       sql`
-        INSERT INTO issues (title, description, created_by_actor_id)
-        VALUES ('Missing platform', 'No platform', ${creator}::uuid)
+        INSERT INTO
+          issues (title, description, created_by_actor_id)
+        VALUES
+          (
+            'Missing platform',
+            'No platform',
+            ${creator}::uuid
+          )
       `.execute(db),
     ).rejects.toMatchObject({ code: "23502" });
 
     await expect(
       sql`
-        INSERT INTO issues (platform, title, description, status, created_by_actor_id)
-        VALUES ('minecraft', 'Terminal without closer', 'No closure metadata', 'resolved', ${creator}::uuid)
+        INSERT INTO
+          issues (
+            platform,
+            title,
+            description,
+            status,
+            created_by_actor_id
+          )
+        VALUES
+          (
+            'minecraft',
+            'Terminal without closer',
+            'No closure metadata',
+            'resolved',
+            ${creator}::uuid
+          )
       `.execute(db),
     ).rejects.toMatchObject({ code: "23514" });
 

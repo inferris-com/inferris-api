@@ -134,7 +134,7 @@ export class ArgusDmPgRepository {
             invited_by_argus_user_id: argusUserId === ownerArgusUserId ? null : ownerArgusUserId,
             last_read_at_ms:
               argusUserId === ownerArgusUserId
-                ? (message?.created_at_ms ?? sql`get_unix_ms()`)
+                ? (message?.created_at_ms ?? sql`get_unix_ms ()`)
                 : null,
           })),
         )
@@ -165,16 +165,16 @@ export class ArgusDmPgRepository {
               conversation_id: conversationId,
               argus_user_id: argusUserId,
               invited_by_argus_user_id: invitedByArgusUserId,
-              last_read_at_ms: latestMessage?.created_at_ms ?? sql`get_unix_ms()`,
+              last_read_at_ms: latestMessage?.created_at_ms ?? sql`get_unix_ms ()`,
               left_at_ms: null,
             })),
           )
           .onConflict((oc) =>
             oc.columns(["conversation_id", "argus_user_id"]).doUpdateSet({
               invited_by_argus_user_id: invitedByArgusUserId,
-              last_read_at_ms: latestMessage?.created_at_ms ?? sql`get_unix_ms()`,
+              last_read_at_ms: latestMessage?.created_at_ms ?? sql`get_unix_ms ()`,
               left_at_ms: null,
-              joined_at_ms: sql`get_unix_ms()`,
+              joined_at_ms: sql`get_unix_ms ()`,
             }),
           )
           .execute();
@@ -185,7 +185,7 @@ export class ArgusDmPgRepository {
           .updateTable("argus_dm_conversations")
           .set({
             title: input.title,
-            updated_at_ms: sql`get_unix_ms()`,
+            updated_at_ms: sql`get_unix_ms ()`,
           })
           .where("id", "=", conversationId)
           .returningAll()
@@ -198,7 +198,7 @@ export class ArgusDmPgRepository {
     return this.db.transaction().execute(async (trx) => {
       const participantResult = await trx
         .updateTable("argus_dm_participants")
-        .set({ left_at_ms: sql`get_unix_ms()` })
+        .set({ left_at_ms: sql`get_unix_ms ()` })
         .where("conversation_id", "=", conversationId)
         .where("argus_user_id", "=", argusUserId)
         .where("left_at_ms", "is", null)
@@ -212,7 +212,7 @@ export class ArgusDmPgRepository {
         .updateTable("argus_dm_conversations")
         .set({
           owner_argus_user_id: null,
-          updated_at_ms: sql`get_unix_ms()`,
+          updated_at_ms: sql`get_unix_ms ()`,
         })
         .where("id", "=", conversationId)
         .where("owner_argus_user_id", "=", argusUserId)
@@ -289,7 +289,7 @@ export class ArgusDmPgRepository {
         .updateTable("argus_dm_messages")
         .set({
           body,
-          edited_at_ms: sql`get_unix_ms()`,
+          edited_at_ms: sql`get_unix_ms ()`,
         })
         .where("conversation_id", "=", conversationId)
         .where("id", "=", messageId)
@@ -310,7 +310,7 @@ export class ArgusDmPgRepository {
         .set({
           body: "[deleted]",
           edited_at_ms: null,
-          deleted_at_ms: sql`get_unix_ms()`,
+          deleted_at_ms: sql`get_unix_ms ()`,
           deleted_by_argus_user_id: deletedByArgusUserId,
         })
         .where("conversation_id", "=", conversationId)
@@ -324,7 +324,7 @@ export class ArgusDmPgRepository {
   async markConversationRead(conversationId: string, argusUserId: string): Promise<boolean> {
     const result = await this.db
       .updateTable("argus_dm_participants")
-      .set({ last_read_at_ms: sql`get_unix_ms()` })
+      .set({ last_read_at_ms: sql`get_unix_ms ()` })
       .where("conversation_id", "=", conversationId)
       .where("argus_user_id", "=", argusUserId)
       .where("left_at_ms", "is", null)

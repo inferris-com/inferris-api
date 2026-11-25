@@ -110,14 +110,19 @@ export class MetricsPgRepository {
         s.type::text AS type,
         s.environment::text AS environment,
         CASE
-          WHEN count(si.id) FILTER (WHERE si.state IN ('active', 'draining')) > 0 THEN 'online'
+          WHEN count(si.id) FILTER (
+            WHERE
+              si.state IN ('active', 'draining')
+          ) > 0 THEN 'online'
           ELSE 'offline'
         END AS status,
         max(si.last_heartbeat_at_ms)::text AS last_heartbeat_at_ms,
-        count(DISTINCT CASE
-          WHEN s.type = 'velocity' THEN nc.player_id
-          ELSE vc.player_id
-        END)::int AS online_player_count,
+        count(
+          DISTINCT CASE
+            WHEN s.type = 'velocity' THEN nc.player_id
+            ELSE vc.player_id
+          END
+        )::int AS online_player_count,
         lm.online_player_count AS reported_online_player_count,
         lm.max_players,
         lm.tps_1m,
@@ -130,13 +135,19 @@ export class MetricsPgRepository {
         lm.loaded_chunks,
         lm.loaded_worlds,
         lm.backend_server_count
-      FROM servers s
-      LEFT JOIN network_sessions_current nc ON nc.proxy_server_id = s.id
-      LEFT JOIN backend_sessions_current vc ON vc.backend_server_id = s.id
-      LEFT JOIN server_latest_metrics lm ON lm.server_id = s.id
-      LEFT JOIN server_instances si ON si.server_id = s.id
-      GROUP BY s.id, lm.server_id
-      ORDER BY s.environment ASC, s.type ASC, s.name ASC
+      FROM
+        servers s
+        LEFT JOIN network_sessions_current nc ON nc.proxy_server_id = s.id
+        LEFT JOIN backend_sessions_current vc ON vc.backend_server_id = s.id
+        LEFT JOIN server_latest_metrics lm ON lm.server_id = s.id
+        LEFT JOIN server_instances si ON si.server_id = s.id
+      GROUP BY
+        s.id,
+        lm.server_id
+      ORDER BY
+        s.environment ASC,
+        s.type ASC,
+        s.name ASC
     `.execute(this.db);
 
     return rows.rows.map((row) => toServerSnapshot(row, nowMs));
@@ -153,14 +164,19 @@ export class MetricsPgRepository {
         s.type::text AS type,
         s.environment::text AS environment,
         CASE
-          WHEN count(si.id) FILTER (WHERE si.state IN ('active', 'draining')) > 0 THEN 'online'
+          WHEN count(si.id) FILTER (
+            WHERE
+              si.state IN ('active', 'draining')
+          ) > 0 THEN 'online'
           ELSE 'offline'
         END AS status,
         max(si.last_heartbeat_at_ms)::text AS last_heartbeat_at_ms,
-        count(DISTINCT CASE
-          WHEN s.type = 'velocity' THEN nc.player_id
-          ELSE vc.player_id
-        END)::int AS online_player_count,
+        count(
+          DISTINCT CASE
+            WHEN s.type = 'velocity' THEN nc.player_id
+            ELSE vc.player_id
+          END
+        )::int AS online_player_count,
         lm.online_player_count AS reported_online_player_count,
         lm.max_players,
         lm.tps_1m,
@@ -173,13 +189,17 @@ export class MetricsPgRepository {
         lm.loaded_chunks,
         lm.loaded_worlds,
         lm.backend_server_count
-      FROM servers s
-      LEFT JOIN network_sessions_current nc ON nc.proxy_server_id = s.id
-      LEFT JOIN backend_sessions_current vc ON vc.backend_server_id = s.id
-      LEFT JOIN server_latest_metrics lm ON lm.server_id = s.id
-      LEFT JOIN server_instances si ON si.server_id = s.id
-      WHERE s.id = ${serverId}::uuid
-      GROUP BY s.id, lm.server_id
+      FROM
+        servers s
+        LEFT JOIN network_sessions_current nc ON nc.proxy_server_id = s.id
+        LEFT JOIN backend_sessions_current vc ON vc.backend_server_id = s.id
+        LEFT JOIN server_latest_metrics lm ON lm.server_id = s.id
+        LEFT JOIN server_instances si ON si.server_id = s.id
+      WHERE
+        s.id = ${serverId}::uuid
+      GROUP BY
+        s.id,
+        lm.server_id
     `.execute(this.db);
 
     const row = rows.rows[0];
@@ -188,50 +208,75 @@ export class MetricsPgRepository {
 
   private async listNetworkBuckets(startMs: number, nowMs: number): Promise<NetworkMetricBucket[]> {
     const rows = await sql<NetworkBucketRow>`
-      WITH buckets AS (
-        SELECT generate_series(
-          ${bucketStart(startMs)}::bigint,
-          ${bucketStart(nowMs)}::bigint,
-          ${bucketSizeMs}::bigint
-        ) AS bucket_start_ms
-      ),
-      joins AS (
-        SELECT floor(connected_at_ms / ${bucketSizeMs})::bigint * ${bucketSizeMs} AS bucket_start_ms,
-               count(*)::int AS count
-        FROM network_sessions
-        WHERE connected_at_ms >= ${startMs}::bigint
-          AND connected_at_ms <= ${nowMs}::bigint
-        GROUP BY 1
-      ),
-      disconnects AS (
-        SELECT floor(disconnected_at_ms / ${bucketSizeMs})::bigint * ${bucketSizeMs} AS bucket_start_ms,
-               count(*)::int AS count
-        FROM network_sessions
-        WHERE disconnected_at_ms IS NOT NULL
-          AND disconnected_at_ms >= ${startMs}::bigint
-          AND disconnected_at_ms <= ${nowMs}::bigint
-        GROUP BY 1
-      ),
-      chat AS (
-        SELECT floor(created_at_ms / ${bucketSizeMs})::bigint * ${bucketSizeMs} AS bucket_start_ms,
-               count(*)::int AS count,
-               count(*) FILTER (WHERE is_flagged)::int AS flagged_count
-        FROM chat_messages
-        WHERE created_at_ms >= ${startMs}::bigint
-          AND created_at_ms <= ${nowMs}::bigint
-        GROUP BY 1
-      )
+      WITH
+        buckets AS (
+          SELECT
+            generate_series(
+              ${bucketStart(startMs)}::bigint,
+              ${bucketStart(nowMs)}::bigint,
+              ${bucketSizeMs}::bigint
+            ) AS bucket_start_ms
+        ),
+        joins AS (
+          SELECT
+            floor(
+              connected_at_ms / ${bucketSizeMs}
+            )::bigint * ${bucketSizeMs} AS bucket_start_ms,
+            count(*)::int AS count
+          FROM
+            network_sessions
+          WHERE
+            connected_at_ms >= ${startMs}::bigint
+            AND connected_at_ms <= ${nowMs}::bigint
+          GROUP BY
+            1
+        ),
+        disconnects AS (
+          SELECT
+            floor(
+              disconnected_at_ms / ${bucketSizeMs}
+            )::bigint * ${bucketSizeMs} AS bucket_start_ms,
+            count(*)::int AS count
+          FROM
+            network_sessions
+          WHERE
+            disconnected_at_ms IS NOT NULL
+            AND disconnected_at_ms >= ${startMs}::bigint
+            AND disconnected_at_ms <= ${nowMs}::bigint
+          GROUP BY
+            1
+        ),
+        chat AS (
+          SELECT
+            floor(
+              created_at_ms / ${bucketSizeMs}
+            )::bigint * ${bucketSizeMs} AS bucket_start_ms,
+            count(*)::int AS count,
+            count(*) FILTER (
+              WHERE
+                is_flagged
+            )::int AS flagged_count
+          FROM
+            chat_messages
+          WHERE
+            created_at_ms >= ${startMs}::bigint
+            AND created_at_ms <= ${nowMs}::bigint
+          GROUP BY
+            1
+        )
       SELECT
         b.bucket_start_ms::text,
         coalesce(j.count, 0)::int AS joins,
         coalesce(d.count, 0)::int AS disconnects,
         coalesce(c.count, 0)::int AS chat_messages,
         coalesce(c.flagged_count, 0)::int AS flagged_chat_messages
-      FROM buckets b
-      LEFT JOIN joins j USING (bucket_start_ms)
-      LEFT JOIN disconnects d USING (bucket_start_ms)
-      LEFT JOIN chat c USING (bucket_start_ms)
-      ORDER BY b.bucket_start_ms ASC
+      FROM
+        buckets b
+        LEFT JOIN joins j USING (bucket_start_ms)
+        LEFT JOIN disconnects d USING (bucket_start_ms)
+        LEFT JOIN chat c USING (bucket_start_ms)
+      ORDER BY
+        b.bucket_start_ms ASC
     `.execute(this.db);
 
     return rows.rows.map(toNetworkBucket);
@@ -243,66 +288,107 @@ export class MetricsPgRepository {
     nowMs: number,
   ): Promise<ServerMetricBucket[]> {
     const rows = await sql<ServerBucketRow>`
-      WITH buckets AS (
-        SELECT generate_series(
-          ${bucketStart(startMs)}::bigint,
-          ${bucketStart(nowMs)}::bigint,
-          ${bucketSizeMs}::bigint
-        ) AS bucket_start_ms
-      ),
-      observations AS (
-        SELECT floor(observed_at_ms / ${bucketSizeMs})::bigint * ${bucketSizeMs} AS bucket_start_ms,
-               max(online_player_count)::int AS online_player_count,
-               avg(tps_1m) AS tps_1m,
-               avg(mspt_avg) AS mspt_avg,
-               max(heap_used_bytes)::text AS heap_used_bytes
-        FROM server_heartbeat_observations
-        WHERE server_id = ${serverId}::uuid
-          AND observed_at_ms >= ${startMs}::bigint
-          AND observed_at_ms <= ${nowMs}::bigint
-        GROUP BY 1
-      ),
-      joins AS (
-        SELECT floor(connected_at_ms / ${bucketSizeMs})::bigint * ${bucketSizeMs} AS bucket_start_ms,
-               count(*)::int AS count
-        FROM (
-          SELECT proxy_server_id AS server_id, connected_at_ms
-          FROM network_sessions
-          UNION ALL
-          SELECT backend_server_id AS server_id, joined_at_ms AS connected_at_ms
-          FROM backend_sessions
-        ) sessions
-        WHERE server_id = ${serverId}::uuid
-          AND connected_at_ms >= ${startMs}::bigint
-          AND connected_at_ms <= ${nowMs}::bigint
-        GROUP BY 1
-      ),
-      disconnects AS (
-        SELECT floor(disconnected_at_ms / ${bucketSizeMs})::bigint * ${bucketSizeMs} AS bucket_start_ms,
-               count(*)::int AS count
-        FROM (
-          SELECT proxy_server_id AS server_id, disconnected_at_ms
-          FROM network_sessions
-          UNION ALL
-          SELECT backend_server_id AS server_id, left_at_ms AS disconnected_at_ms
-          FROM backend_sessions
-        ) sessions
-        WHERE server_id = ${serverId}::uuid
-          AND disconnected_at_ms IS NOT NULL
-          AND disconnected_at_ms >= ${startMs}::bigint
-          AND disconnected_at_ms <= ${nowMs}::bigint
-        GROUP BY 1
-      ),
-      chat AS (
-        SELECT floor(created_at_ms / ${bucketSizeMs})::bigint * ${bucketSizeMs} AS bucket_start_ms,
-               count(*)::int AS count,
-               count(*) FILTER (WHERE is_flagged)::int AS flagged_count
-        FROM chat_messages
-        WHERE origin_server_id = ${serverId}::uuid
-          AND created_at_ms >= ${startMs}::bigint
-          AND created_at_ms <= ${nowMs}::bigint
-        GROUP BY 1
-      )
+      WITH
+        buckets AS (
+          SELECT
+            generate_series(
+              ${bucketStart(startMs)}::bigint,
+              ${bucketStart(nowMs)}::bigint,
+              ${bucketSizeMs}::bigint
+            ) AS bucket_start_ms
+        ),
+        observations AS (
+          SELECT
+            floor(
+              observed_at_ms / ${bucketSizeMs}
+            )::bigint * ${bucketSizeMs} AS bucket_start_ms,
+            max(online_player_count)::int AS online_player_count,
+            avg(tps_1m) AS tps_1m,
+            avg(mspt_avg) AS mspt_avg,
+            max(heap_used_bytes)::text AS heap_used_bytes
+          FROM
+            server_heartbeat_observations
+          WHERE
+            server_id = ${serverId}::uuid
+            AND observed_at_ms >= ${startMs}::bigint
+            AND observed_at_ms <= ${nowMs}::bigint
+          GROUP BY
+            1
+        ),
+        joins AS (
+          SELECT
+            floor(
+              connected_at_ms / ${bucketSizeMs}
+            )::bigint * ${bucketSizeMs} AS bucket_start_ms,
+            count(*)::int AS count
+          FROM
+            (
+              SELECT
+                proxy_server_id AS server_id,
+                connected_at_ms
+              FROM
+                network_sessions
+              UNION ALL
+              SELECT
+                backend_server_id AS server_id,
+                joined_at_ms AS connected_at_ms
+              FROM
+                backend_sessions
+            ) sessions
+          WHERE
+            server_id = ${serverId}::uuid
+            AND connected_at_ms >= ${startMs}::bigint
+            AND connected_at_ms <= ${nowMs}::bigint
+          GROUP BY
+            1
+        ),
+        disconnects AS (
+          SELECT
+            floor(
+              disconnected_at_ms / ${bucketSizeMs}
+            )::bigint * ${bucketSizeMs} AS bucket_start_ms,
+            count(*)::int AS count
+          FROM
+            (
+              SELECT
+                proxy_server_id AS server_id,
+                disconnected_at_ms
+              FROM
+                network_sessions
+              UNION ALL
+              SELECT
+                backend_server_id AS server_id,
+                left_at_ms AS disconnected_at_ms
+              FROM
+                backend_sessions
+            ) sessions
+          WHERE
+            server_id = ${serverId}::uuid
+            AND disconnected_at_ms IS NOT NULL
+            AND disconnected_at_ms >= ${startMs}::bigint
+            AND disconnected_at_ms <= ${nowMs}::bigint
+          GROUP BY
+            1
+        ),
+        chat AS (
+          SELECT
+            floor(
+              created_at_ms / ${bucketSizeMs}
+            )::bigint * ${bucketSizeMs} AS bucket_start_ms,
+            count(*)::int AS count,
+            count(*) FILTER (
+              WHERE
+                is_flagged
+            )::int AS flagged_count
+          FROM
+            chat_messages
+          WHERE
+            origin_server_id = ${serverId}::uuid
+            AND created_at_ms >= ${startMs}::bigint
+            AND created_at_ms <= ${nowMs}::bigint
+          GROUP BY
+            1
+        )
       SELECT
         b.bucket_start_ms::text,
         coalesce(j.count, 0)::int AS joins,
@@ -313,12 +399,14 @@ export class MetricsPgRepository {
         o.tps_1m,
         o.mspt_avg,
         o.heap_used_bytes
-      FROM buckets b
-      LEFT JOIN observations o USING (bucket_start_ms)
-      LEFT JOIN joins j USING (bucket_start_ms)
-      LEFT JOIN disconnects d USING (bucket_start_ms)
-      LEFT JOIN chat c USING (bucket_start_ms)
-      ORDER BY b.bucket_start_ms ASC
+      FROM
+        buckets b
+        LEFT JOIN observations o USING (bucket_start_ms)
+        LEFT JOIN joins j USING (bucket_start_ms)
+        LEFT JOIN disconnects d USING (bucket_start_ms)
+        LEFT JOIN chat c USING (bucket_start_ms)
+      ORDER BY
+        b.bucket_start_ms ASC
     `.execute(this.db);
 
     return rows.rows.map(toServerBucket);
@@ -329,10 +417,12 @@ export class MetricsPgRepository {
     nowMs: number,
   ): Promise<number | null> {
     const rows = await sql<AverageSessionRow>`
-      SELECT avg((disconnected_at_ms - connected_at_ms) / 1000.0)
-        AS average_completed_session_seconds
-      FROM network_sessions
-      WHERE disconnected_at_ms IS NOT NULL
+      SELECT
+        avg((disconnected_at_ms - connected_at_ms) / 1000.0) AS average_completed_session_seconds
+      FROM
+        network_sessions
+      WHERE
+        disconnected_at_ms IS NOT NULL
         AND connected_at_ms >= ${startMs}::bigint
         AND connected_at_ms <= ${nowMs}::bigint
     `.execute(this.db);

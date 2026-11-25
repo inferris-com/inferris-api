@@ -53,11 +53,13 @@ export class ActorPgRepository {
       .select("players.id as player_id")
       .where("actors.name", "ilike", pattern)
       .orderBy(
-        sql<number>`case
-          when lower(actors.name) = lower(${q}) then 0
-          when actors.name ilike ${prefixPattern} then 1
-          else 2
-        end`,
+        sql<number>`
+          CASE
+            WHEN lower(actors.name) = lower(${q}) THEN 0
+            WHEN actors.name ILIKE ${prefixPattern} THEN 1
+            ELSE 2
+          END
+        `,
         "asc",
       )
       .orderBy("actors.name", "asc")
@@ -98,7 +100,7 @@ export class ActorPgRepository {
     return this.db.transaction().execute(async (trx) => {
       const actor = await trx
         .updateTable("actors")
-        .set({ name: input.name, last_updated_at_ms: sql`get_unix_ms()` })
+        .set({ name: input.name, last_updated_at_ms: sql`get_unix_ms ()` })
         .where("id", "=", id)
         .returningAll()
         .executeTakeFirst();

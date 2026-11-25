@@ -75,7 +75,7 @@ export class PunishmentPgRepository {
               .where((eb) =>
                 eb.or([
                   eb("punishments.ends_at_ms", "is", null),
-                  eb("punishments.ends_at_ms", ">", sql<string>`get_unix_ms()`),
+                  eb("punishments.ends_at_ms", ">", sql<string>`get_unix_ms ()`),
                 ]),
               )
           : qb.where((eb) =>
@@ -85,7 +85,7 @@ export class PunishmentPgRepository {
                 eb("punishments.lifted_cause", "is not", null),
                 eb.and([
                   eb("punishments.ends_at_ms", "is not", null),
-                  eb("punishments.ends_at_ms", "<=", sql<string>`get_unix_ms()`),
+                  eb("punishments.ends_at_ms", "<=", sql<string>`get_unix_ms ()`),
                 ]),
               ]),
             ),
@@ -190,9 +190,9 @@ export class PunishmentPgRepository {
           is_active: false,
           lifted_cause: "revoked",
           lifted_by_actor_id: input.liftedByActorId,
-          lifted_at_ms: sql`get_unix_ms()`,
+          lifted_at_ms: sql`get_unix_ms ()`,
           lift_note: input.reason,
-          updated_at_ms: sql`get_unix_ms()`,
+          updated_at_ms: sql`get_unix_ms ()`,
         })
         .where("id", "=", input.punishmentId)
         .where("is_active", "=", true)
@@ -211,8 +211,8 @@ export class PunishmentPgRepository {
       .set({
         is_active: false,
         lifted_cause: "expired",
-        lifted_at_ms: sql`get_unix_ms()`,
-        updated_at_ms: sql`get_unix_ms()`,
+        lifted_at_ms: sql`get_unix_ms ()`,
+        updated_at_ms: sql`get_unix_ms ()`,
       })
       .$if(punishmentId !== undefined, (qb) => qb.where("id", "=", punishmentId ?? ""))
       .$if(subjectActorId !== undefined, (qb) =>
@@ -222,7 +222,7 @@ export class PunishmentPgRepository {
       .where("is_active", "=", true)
       .where("type", "in", ["ban", "mute"])
       .where("ends_at_ms", "is not", null)
-      .where("ends_at_ms", "<=", sql<string>`get_unix_ms()`)
+      .where("ends_at_ms", "<=", sql<string>`get_unix_ms ()`)
       .returningAll()
       .execute();
   }
@@ -240,7 +240,7 @@ export class PunishmentPgRepository {
         .where("is_active", "=", true)
         .where("lifted_cause", "is", null)
         .where((eb) =>
-          eb.or([eb("ends_at_ms", "is", null), eb("ends_at_ms", ">", sql<string>`get_unix_ms()`)]),
+          eb.or([eb("ends_at_ms", "is", null), eb("ends_at_ms", ">", sql<string>`get_unix_ms ()`)]),
         )
         .executeTakeFirst()) ?? null
     );

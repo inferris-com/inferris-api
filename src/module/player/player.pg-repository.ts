@@ -66,11 +66,13 @@ export class PlayerPgRepository implements PlayerRepository {
       .where("players.username", "ilike", pattern)
       .$if(!sensitive, (qb) => qb.where("players.deleted_at_ms", "is", null))
       .orderBy(
-        sql<number>`case
-          when lower(players.username) = lower(${q}) then 0
-          when players.username ilike ${prefixPattern} then 1
-          else 2
-        end`,
+        sql<number>`
+          CASE
+            WHEN lower(players.username) = lower(${q}) THEN 0
+            WHEN players.username ILIKE ${prefixPattern} THEN 1
+            ELSE 2
+          END
+        `,
         "asc",
       )
       .orderBy("players.username", "asc")
@@ -200,7 +202,7 @@ export class PlayerPgRepository implements PlayerRepository {
           .updateTable("players")
           .set({
             username: input.username,
-            last_seen_at_ms: sql`get_unix_ms()`,
+            last_seen_at_ms: sql`get_unix_ms ()`,
             last_server_id: input.serverId,
             deleted_at_ms: null,
             deleted_reason: null,
@@ -228,7 +230,7 @@ export class PlayerPgRepository implements PlayerRepository {
           actor_id: actor.id,
           username: input.username,
           flags: "0",
-          last_seen_at_ms: sql`get_unix_ms()`,
+          last_seen_at_ms: sql`get_unix_ms ()`,
           last_server_id: input.serverId,
         })
         .returning(["id", "mojang_id", "actor_id", "username"])
@@ -363,7 +365,7 @@ export class PlayerPgRepository implements PlayerRepository {
         .onConflict((oc) =>
           oc.columns(["player_id", "group_key"]).doUpdateSet({
             rank_key: rankKey,
-            assigned_at_ms: sql`get_unix_ms()`,
+            assigned_at_ms: sql`get_unix_ms ()`,
             ...assignmentValues,
           }),
         )
@@ -528,7 +530,7 @@ export class PlayerPgRepository implements PlayerRepository {
         .set({
           is_active: false,
           revoked_by_actor_id: revokedByActorId,
-          revoked_at_ms: sql`get_unix_ms()`,
+          revoked_at_ms: sql`get_unix_ms ()`,
         })
         .where("player_id", "=", playerId)
         .where("is_active", "=", true)
@@ -544,7 +546,7 @@ export class PlayerPgRepository implements PlayerRepository {
   async deletePlayer(id: string): Promise<boolean> {
     const result = await this.db
       .updateTable("players")
-      .set({ deleted_at_ms: sql`get_unix_ms()`, deleted_reason: "api_delete" })
+      .set({ deleted_at_ms: sql`get_unix_ms ()`, deleted_reason: "api_delete" })
       .where("id", "=", id)
       .where("deleted_at_ms", "is", null)
       .executeTakeFirst();

@@ -49,7 +49,7 @@ export class AccountPgRepository {
       .updateTable("argus_users")
       .set({
         password_hash: passwordHash,
-        updated_at_ms: sql`get_unix_ms()`,
+        updated_at_ms: sql`get_unix_ms ()`,
       })
       .where("id", "=", id)
       .executeTakeFirstOrThrow();
@@ -61,7 +61,7 @@ export class AccountPgRepository {
       .set({
         password_hash: passwordHash,
         account_security_lock: null,
-        updated_at_ms: sql`get_unix_ms()`,
+        updated_at_ms: sql`get_unix_ms ()`,
       })
       .where("id", "=", id)
       .where("account_security_lock", "=", "change_password")
@@ -85,7 +85,7 @@ export class AccountPgRepository {
     const result = await this.db
       .updateTable("argus_notifications")
       .set({
-        read_at_ms: sql`get_unix_ms()`,
+        read_at_ms: sql`get_unix_ms ()`,
       })
       .where("account_id", "=", accountId)
       .where("id", "=", notificationId)
