@@ -57,10 +57,11 @@ describe("ServerInstancePgRepository", () => {
       query.sql.includes("UPDATE network_sessions"),
     );
     const insertInstanceIndex = queries.findIndex((query) =>
-      query.sql.includes("INSERT INTO server_instances"),
+      /\bINSERT\s+INTO\s+server_instances\b/i.test(query.sql),
     );
 
     expect(closeProxyIndex).toBeGreaterThan(-1);
+    expect(insertInstanceIndex).toBeGreaterThan(-1);
     expect(closeProxyIndex).toBeLessThan(insertInstanceIndex);
     expect(queries[closeProxyIndex]?.sql).toContain("proxy_server_instance_id IN");
     expect(queries[closeProxyIndex]?.parameters).toContain("proxy_superseded");
@@ -119,7 +120,7 @@ describe("ServerInstancePgRepository", () => {
       closedSessions: [{ playerId: "player-a" }, { playerId: "player-b" }],
     });
     expect(closeQuery?.sql).toContain("ns.proxy_server_instance_id");
-    expect(closeQuery?.sql).toContain("uuid[]");
+    expect(closeQuery?.sql).toMatch(/::uuid\[\]/i);
     expect(closeQuery?.sql).toContain("presence_absent");
     expect(closeQuery?.parameters).toContainEqual([mojangIdA, mojangIdB]);
   });
@@ -150,7 +151,7 @@ describe("ServerInstancePgRepository", () => {
       closedSessions: [{ playerId: "player-a" }],
     });
     expect(closeQuery?.sql).toContain("bs.backend_server_instance_id");
-    expect(closeQuery?.sql).toContain("uuid[]");
+    expect(closeQuery?.sql).toMatch(/::uuid\[\]/i);
     expect(closeQuery?.sql).toContain("presence_absent");
     expect(closeQuery?.parameters).toContainEqual([]);
   });
